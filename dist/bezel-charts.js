@@ -991,6 +991,15 @@ var BezelChart = class extends Base {
   static get observedAttributes() {
     return ATTRIBUTES;
   }
+  /** The default colour sets, so tools like the Studio can show them. */
+  static get themes() {
+    return THEMES;
+  }
+  /** Which theme the chart is drawing in right now: "dark" or "light". */
+  get resolvedTheme() {
+    const t = this.getAttribute("theme");
+    return t === "light" || t === "dark" ? t : this.options.autoTheme;
+  }
   /** The chart type this tag draws. Subclasses fix it; <bezel-chart> reads its type attribute. */
   get chartType() {
     return this.getAttribute("type") || "spark";

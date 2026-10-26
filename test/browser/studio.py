@@ -1,0 +1,125 @@
+"""Drives every Studio control for every chart type in a real browser.
+
+Run from the project folder after `npm run build`:
+    pip install playwright && python3 -m playwright install chromium
+    python3 test/browser/studio.py
+"""
+import json, os, subprocess, sys, time
+from playwright.sync_api import sync_playwright
+
+PORT = 4199
+server = subprocess.Popen([sys.executable, '-m', 'http.server', str(PORT)], cwd=os.path.join(os.path.dirname(__file__), '..', '..'),
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+time.sleep(1)
+URL = f'http://localhost:{PORT}/site/'
+problems = []
+def check(cond, msg):
+    if not cond:
+        problems.append(msg); print('FAIL', msg)
+
+with sync_playwright() as p:
+    b = p.chromium.launch()
+    ctx = b.new_context(viewport={'width': 1280, 'height': 900}, color_scheme='dark', permissions=['clipboard-read', 'clipboard-write'])
+    pg = ctx.new_page()
+    errs = []
+    pg.on('pageerror', lambda e: errs.append(str(e)))
+    pg.on('console', lambda m: errs.append(m.text) if m.type == 'error' and 'fonts.g' not in m.text and 'TUNNEL' not in m.text else None)
+    pg.goto(URL); pg.wait_for_timeout(1200)
+    code = lambda: pg.locator('#code').inner_text()
+    svg_ok = lambda: pg.evaluate("(() => { const el = document.querySelector('#frame').firstElementChild; const s = el && el.shadowRoot && el.shadowRoot.querySelector('svg'); return !!s && !/NaN|undefined/.test(el.shadowRoot.innerHTML) })()")
+
+    ids = ['spark','line','bars','grouped','scatter','ring','donut','gauge','progress','heatmap']
+    for cid in ids:
+        pg.click(f'[data-ui="{cid}"]'); pg.wait_for_timeout(250)
+        check(svg_ok(), f'{cid}: preview renders')
+        tag = 'bars' if cid == 'grouped' else cid
+        check(code().startswith(f'<bezel-{tag}'), f'{cid}: code tag')
+        # every tab, every toggle on then off, every select through its options
+        for tab in ['data','style','extras']:
+            pg.click(f'#tab-{tab}'); pg.wait_for_timeout(80)
+            for t in pg.locator(f'#pane-{tab} [data-toggle]').all():
+                if not t.is_visible() and not t.locator('xpath=..').is_visible(): continue
+                t.locator('xpath=..').click(); pg.wait_for_timeout(60)
+                check(svg_ok(), f'{cid}: toggle {t.get_attribute("data-toggle")} on')
+                pg.locator(f'#pane-{tab} [data-toggle="{t.get_attribute("data-toggle")}"]').locator('xpath=..').click(); pg.wait_for_timeout(60)
+            sels = pg.evaluate(f"[...document.querySelectorAll('#pane-{tab} select')].map(s => s.id).filter(Boolean)")
+            for sid in sels:
+                s = pg.locator('#' + sid)
+                if not s.count() or not s.is_visible(): continue
+                vals = [o.get_attribute('value') for o in s.locator('option').all()]
+                for v in vals:
+                    s = pg.locator('#' + sid)
+                    if not s.count() or not s.is_visible(): break
+                    s.select_option(v); pg.wait_for_timeout(40)
+                    check(svg_ok(), f'{cid}: select {sid}={v}')
+                if pg.locator('#' + sid).count() and pg.locator('#' + sid).is_visible(): pg.locator('#' + sid).select_option(index=0)
+            for seg in pg.locator(f'#pane-{tab} [data-seg]:visible').all():
+                seg.click(); pg.wait_for_timeout(50)
+                check(svg_ok(), f'{cid}: seg {seg.get_attribute("data-seg")}={seg.get_attribute("data-val")}')
+            pg.locator(f'#pane-{tab} [data-seg][data-val=""]:visible').evaluate_all('els => els.forEach(e => e.click())')
+        pg.click('#tab-data')
+        # bad number warns but still renders
+        ta = pg.locator('#pane-data [data-numbers], #pane-data [data-svalues], #pane-data [data-gx]').first
+        if ta.count():
+            ta.fill('5, 3, abc, 8'); pg.wait_for_timeout(150)
+            check(pg.locator('#pane-data .warn:visible').count() >= 1, f'{cid}: warning shown for "abc"')
+            check(svg_ok(), f'{cid}: renders with bad input')
+            ta.fill(''); pg.wait_for_timeout(150)
+            check(svg_ok() or 'No data' in pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML"), f'{cid}: empty data')
+        pg.click('#reset'); pg.wait_for_timeout(200)
+        check(svg_ok(), f'{cid}: reset')
+
+    # series editing on line
+    pg.click('[data-ui="line"]'); pg.wait_for_timeout(200)
+    pg.click('[data-sadd]'); pg.wait_for_timeout(150)
+    check(code().count('|') == 2, 'add series gives 3 series')
+    pg.locator('[data-sremove]').first.click(); pg.wait_for_timeout(150)
+    check(code().count('|') == 1, 'remove series gives 2')
+    # paste a spreadsheet table into series values
+    table = 'Month\tSales\tCosts\nJan\t£1,200\t800\nFeb\t1500\t900\nMar\t1700\t950'
+    pg.evaluate("""(t) => { const ta = document.querySelector('[data-svalues]'); const dt = new DataTransfer(); dt.setData('text/plain', t);
+      ta.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }""", table)
+    pg.wait_for_timeout(200)
+    c = code()
+    check('values="1200,1500,1700|800,900,950"' in c and 'series="Sales,Costs"' in c and 'labels="Jan,Feb,Mar"' in c, 'paste table fills series, names and labels: ' + c[:200])
+    # notes
+    pg.click('#tab-extras'); pg.click('[data-nadd]'); pg.wait_for_timeout(150)
+    pg.locator('[data-ntext]').last.fill('Peak'); pg.wait_for_timeout(150)
+    check('Peak' in code(), 'note added')
+    # colours
+    pg.click('#tab-style')
+    pg.locator('[data-colour="0"]').evaluate("el => { el.value = '#ff0000'; el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); }")
+    pg.wait_for_timeout(150)
+    check('color="#ff0000' in code(), 'colour set')
+    pg.click('[data-creset]'); pg.wait_for_timeout(150)
+    check('color=' not in code(), 'colour reset')
+    # scatter paste two columns
+    pg.click('[data-ui="scatter"]'); pg.wait_for_timeout(200)
+    pg.evaluate("""(t) => { const ta = document.querySelector('[data-gx]'); const dt = new DataTransfer(); dt.setData('text/plain', t);
+      ta.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true })); }""", 'Hours\tScore\n1\t40\n2\t55\n3\t61')
+    pg.wait_for_timeout(200)
+    check('x="1,2,3"' in code() and 'y="40,55,61"' in code(), 'scatter paste')
+    # share link round trip
+    pg.click('#share'); pg.wait_for_timeout(200)
+    link = pg.evaluate('navigator.clipboard.readText()')
+    check('#chart=' in link, 'share link copied')
+    before = code()
+    pg2 = ctx.new_page(); pg2.goto(link); pg2.wait_for_timeout(1200)
+    check(pg2.locator('#code').inner_text() == before, 'share link restores the same chart')
+    # customise from gallery
+    pg.locator('[data-card="donut"] [data-edit]').click(); pg.wait_for_timeout(600)
+    check(code().startswith('<bezel-donut') and 'Monthly budget' in code(), 'customise loads gallery chart')
+    pg.locator('[data-card="grouped"] [data-edit]').click(); pg.wait_for_timeout(400)
+    check(pg.locator('[data-ui="grouped"]').get_attribute('aria-checked') == 'true', 'grouped detected')
+    # SVG copy
+    pg.click('#copy-svg'); pg.wait_for_timeout(150)
+    check(pg.evaluate('navigator.clipboard.readText()').startswith('<svg xmlns'), 'copy svg')
+    # save svg triggers a download
+    with pg.expect_download() as dl:
+        pg.click('#save-svg')
+    check(dl.value.suggested_filename == 'revenue-by-quarter.svg', 'save svg filename ' + dl.value.suggested_filename)
+    check(not errs, 'console errors: ' + json.dumps(errs[:5]))
+    b.close()
+server.terminate()
+print(f'{len(problems)} problems' if problems else 'Studio: every check passed')
+sys.exit(1 if problems else 0)

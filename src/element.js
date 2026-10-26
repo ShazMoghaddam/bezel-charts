@@ -1,6 +1,7 @@
 /** The custom element shared by every chart tag. */
 import { render, toStatic } from './render.js';
 import { MONO, SANS, esc, clamp } from './core/util.js';
+import { THEMES } from './core/themes.js';
 
 export const ATTRIBUTES = [
   'type', 'values', 'labels', 'series', 'heading', 'prefix', 'suffix', 'decimals', 'compact', 'color', 'theme', 'frame',
@@ -34,6 +35,17 @@ const Base = typeof HTMLElement === 'undefined' ? class {} : HTMLElement;
 export class BezelChart extends Base {
   static get observedAttributes() {
     return ATTRIBUTES;
+  }
+
+  /** The default colour sets, so tools like the Studio can show them. */
+  static get themes() {
+    return THEMES;
+  }
+
+  /** Which theme the chart is drawing in right now: "dark" or "light". */
+  get resolvedTheme() {
+    const t = this.getAttribute('theme');
+    return t === 'light' || t === 'dark' ? t : this.options.autoTheme;
   }
 
   /** The chart type this tag draws. Subclasses fix it; <bezel-chart> reads its type attribute. */

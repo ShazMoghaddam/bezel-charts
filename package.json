@@ -18,7 +18,8 @@
     "test": "node --test test/*.test.js",
     "serve": "python3 -m http.server 4173",
     "check": "npm run build && npm test && npm run size",
-    "size": "node scripts/size.mjs"
+    "size": "node scripts/size.mjs",
+    "test:browser": "python3 test/browser/studio.py"
   },
   "keywords": [
     "web-components",
