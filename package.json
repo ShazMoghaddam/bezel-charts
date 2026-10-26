@@ -1,0 +1,48 @@
+{
+  "name": "bezel-charts",
+  "version": "1.0.0",
+  "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, bars, rings, donuts, gauges, progress bars and heatmaps, with one-click static SVG export for READMEs.",
+  "type": "module",
+  "main": "dist/bezel-charts.js",
+  "module": "dist/bezel-charts.js",
+  "exports": {
+    ".": "./dist/bezel-charts.js",
+    "./src/*": "./src/*"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.js",
+    "serve": "python3 -m http.server 4173",
+    "check": "npm run build && npm test && npm run size",
+    "size": "node scripts/size.mjs"
+  },
+  "keywords": [
+    "web-components",
+    "custom-elements",
+    "charts",
+    "sparkline",
+    "svg",
+    "dashboard",
+    "readme",
+    "data-visualization"
+  ],
+  "author": "Shaz Moghaddam (https://shazmoghaddam.github.io)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShazMoghaddam/bezel-charts.git"
+  },
+  "homepage": "https://shazmoghaddam.github.io/bezel-charts/",
+  "bugs": "https://github.com/ShazMoghaddam/bezel-charts/issues",
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.0",
+    "linkedom": "0.18.5"
+  }
+}

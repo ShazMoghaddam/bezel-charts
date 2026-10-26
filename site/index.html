@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bezel Charts</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Eight polished chart tiles as zero-dependency web components, with static SVG export for READMEs, Notion and slides.">
+<link rel="canonical" href="https://shazmoghaddam.github.io/bezel-charts/site/">
+<meta name="theme-color" content="#E7E9EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D0E10" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap">
+<script type="module" src="../dist/bezel-charts.min.js"></script>
+<style>
+/* Layout: Bezel family chrome (Geist, neutral grounds); a slim bar, a short hero, then the eight charts as the page itself */
+:root{
+  --ground:#E7E9EC; --panel:#F5F6F8; --line:#CDD1D7; --ink:#111316; --ink-2:#4A5059; --ink-3:#6B727C;
+  --accent:#6E70F0; --accent-2:#E2508C; --code-bg:#15171A; --code-ink:#E6E8EB; --code-dim:#8A929C; --code-key:#B9BBFF; --code-str:#FFA9CB;
+  --f-body:"Geist",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --f-mono:"Geist Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --maxw:1180px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#0D0E10; --panel:#16181B; --line:#2A2E34; --ink:#ECEEF1; --ink-2:#A9AFB8; --ink-3:#8A919B;
+  --accent:#9FA1FF; --accent-2:#F675A8; --code-bg:#0A0B0D; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --ground:#0D0E10; --panel:#16181B; --line:#2A2E34; --ink:#ECEEF1; --ink-2:#A9AFB8; --ink-3:#8A919B;
+  --accent:#9FA1FF; --accent-2:#F675A8; --code-bg:#0A0B0D; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font:15px/1.55 var(--f-body);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.in{max-width:var(--maxw);margin:0 auto;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.bar{border-bottom:1px solid var(--line)}
+.bar .in{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
+.mark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;text-decoration:none;letter-spacing:-.01em}
+.mark svg{width:28px;height:28px}
+.nav{display:flex;gap:4px}
+.nav a{font-size:14px;color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:999px}
+.nav a:hover,.nav a:focus-visible{color:var(--ink);background:var(--panel);outline:none}
+.hero{padding-block:56px 28px;display:grid;gap:14px}
+h1{font-size:clamp(32px,5.4vw,58px);line-height:1.04;letter-spacing:-.035em;font-weight:700;margin:0;max-width:16ch;text-wrap:balance}
+h1 em{font-style:normal;background:linear-gradient(110deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{margin:0;color:var(--ink-2);font-size:17px;max-width:58ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.facts span{font:500 12px var(--f-mono);color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-block:8px 18px}
+.toolbar h2{font-size:13px;font-family:var(--f-mono);font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel)}
+.seg button{font:500 13px var(--f-body);color:var(--ink-2);background:none;border:0;border-radius:999px;padding:6px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 22px;padding-bottom:40px}
+.card{display:grid;gap:12px;align-content:start;min-width:0}
+.card.wide{grid-column:span 2}
+.card.full{grid-column:1/-1}
+@media (max-width:960px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.grid{grid-template-columns:minmax(0,1fr)}.card.wide,.card.full{grid-column:auto}}
+.meta{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.meta b{display:block;font-size:15px;font-weight:600}
+.meta span{display:block;font-size:13px;color:var(--ink-3)}
+.meta code{font:500 12px var(--f-mono);color:var(--ink-3)}
+.acts{display:flex;gap:6px;flex-shrink:0}
+.acts button{font:500 12px var(--f-body);color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+.acts button:hover{border-color:var(--ink-3)}
+.acts button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.install{border-top:1px solid var(--line);padding-block:40px 56px;display:grid;gap:18px}
+.install h2{font-size:26px;letter-spacing:-.02em;margin:0}
+.install p{margin:0;color:var(--ink-2);max-width:62ch}
+pre{margin:0;background:var(--code-bg);color:var(--code-dim);border-radius:16px;padding:18px 20px;overflow-x:auto;font:13px/1.75 var(--f-mono)}
+pre .t{color:var(--code-key)} pre .a{color:var(--code-ink)} pre .s{color:var(--code-str)}
+.foot{border-top:1px solid var(--line)}
+.foot .in{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;padding-block:22px;font-size:13px;color:var(--ink-3)}
+.foot a{color:var(--ink);text-underline-offset:3px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--ground);font:500 13px var(--f-body);padding:10px 16px;border-radius:999px;opacity:0;transition:.2s;pointer-events:none;z-index:9}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="in">
+    <a class="mark" href="#top" aria-label="Bezel Charts home">
+      <svg viewBox="0 0 32 32" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="9" fill="var(--panel)" stroke="var(--ink)" stroke-width="2.4"/><path d="M9 21.5V17M14 21.5v-9M19 21.5V15M24 21.5V10" stroke="var(--accent)" stroke-width="2.6"/></svg>
+      Bezel Charts
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#charts">Charts</a>
+      <a href="#install">Get the code</a>
+      <a href="https://github.com/ShazMoghaddam/bezel-charts">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero in">
+    <h1>Charts that look <em>finished</em> the moment you add them.</h1>
+    <p class="lede">Eight polished chart tiles as web components. Write one HTML tag, pass your numbers, done. Every chart also exports as a static SVG for READMEs, Notion and slides, where JavaScript can't run.</p>
+    <div class="facts"><span>0 dependencies</span><span id="kb">10 kB gzipped</span><span>Pure SVG</span><span>MIT licence</span></div>
+  </section>
+
+  <section class="in" id="charts" aria-labelledby="charts-h">
+    <div class="toolbar">
+      <h2 id="charts-h">Eight chart types · sample data</h2>
+      <div class="seg" role="group" aria-label="Tile theme">
+        <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
+        <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
+        <button type="button" data-theme-set="light" aria-pressed="false">Light</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <article class="card" data-card="spark">
+        <bz-spark heading="London · 7 day high" values="17,16,15,15,13,12,14" labels="Mon,Tue,Wed,Thu,Fri,Sat,Sun" suffix="°C" delta-label="since Monday"></bz-spark>
+        <div class="meta"><div><b>Sparkline</b><span>A trend with its latest value up front.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card wide" data-card="line">
+        <bz-line heading="Site visitors" values="420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640" series="2026,2025" labels="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec" notes="Jun:Launch day" compact></bz-line>
+        <div class="meta"><div><b>Line</b><span>Compare series over time, with notes on key moments.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card" data-card="bars">
+        <bz-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total" show-values goal="7" goal-label="Target"></bz-bars>
+        <div class="meta"><div><b>Bars</b><span>Totals per period, peak highlighted.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card" data-card="ring">
+        <bz-ring heading="Today" values="72,45,90" labels="Move,Focus,Sleep"></bz-ring>
+        <div class="meta"><div><b>Rings</b><span>One goal, or several nested.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card" data-card="donut">
+        <bz-donut heading="Monthly budget" values="1200,420,210,160,140" labels="Rent,Food,Bills,Travel,Fun" prefix="£"></bz-donut>
+        <div class="meta"><div><b>Donut</b><span>How a total splits into parts.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card" data-card="gauge">
+        <bz-gauge heading="Server load" values="63" labels="CPU" zones="60,85" goal="80"></bz-gauge>
+        <div class="meta"><div><b>Gauge</b><span>A reading on a scale, coloured by zone.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card wide" data-card="progress">
+        <bz-progress heading="Sprint 14" values="18,6,3" labels="Done,In review,Blocked" max="34" goal="27"></bz-progress>
+        <div class="meta"><div><b>Progress</b><span>Stacked parts against a target.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card full" data-card="heatmap">
+        <bz-heatmap id="heat" heading="Contributions" suffix=" commits"></bz-heatmap>
+        <div class="meta"><div><b>Heatmap</b><span>Activity by day, GitHub style. Perfect for a README.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+    </div>
+  </section>
+
+  <section class="install in" id="install" aria-labelledby="install-h">
+    <h2 id="install-h">Get the code</h2>
+    <p>Add one script, then use any chart tag. Hover a chart for exact values. Every option is an attribute, so the same HTML works in plain pages, React, Vue or a CMS.</p>
+<pre><span class="t">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/bezel-charts.min.js"</span><span class="t">&gt;&lt;/script&gt;</span>
+
+<span class="t">&lt;bz-bars</span> <span class="a">heading</span>=<span class="s">"Commits"</span> <span class="a">values</span>=<span class="s">"4,9,6,3,8"</span> <span class="a">labels</span>=<span class="s">"M,T,W,T,F"</span><span class="t">&gt;&lt;/bz-bars&gt;</span></pre>
+    <p>Need a picture instead of a live chart? Call <code>chart.toSVG()</code>, or press Copy SVG above and paste the file into your README.</p>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="in">
+    <p>Designed by <a href="https://shazmoghaddam.github.io">Shaz Moghaddam</a>, London</p>
+    <p>Free to use under the MIT licence · a sibling of <a href="https://shazmoghaddam.github.io/bezel/">Bezel</a></p>
+  </div>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  // Six months of sample activity, quieter at weekends, ending today.
+  var days = 182, vals = [], seed = 7;
+  function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+  var start = new Date(Date.now() - (days - 1) * 864e5);
+  for (var i = 0; i < days; i++) {
+    var wd = (start.getDay() + i) % 7, weekend = wd === 0 || wd === 6, r = rnd();
+    vals.push(r < (weekend ? 0.6 : 0.2) ? 0 : Math.round(r * (weekend ? 4 : 11)));
+  }
+  var heat = document.getElementById('heat');
+  heat.setAttribute('start', start.toISOString().slice(0, 10));
+  heat.setAttribute('values', vals.join(','));
+
+  var toast = document.getElementById('toast'), timer;
+  function say(msg) { toast.textContent = msg; toast.classList.add('on'); clearTimeout(timer); timer = setTimeout(function () { toast.classList.remove('on'); }, 1800); }
+  function copy(textValue, done) {
+    var ok = function () { say(done); };
+    var fallback = function () {
+      var ta = document.createElement('textarea'); ta.value = textValue; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); ok(); } catch (e) { say('Copy failed. Select the text and copy it yourself.'); }
+      ta.remove();
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(textValue).then(ok, fallback);
+    else fallback();
+  }
+
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var chart = btn.closest('.card').firstElementChild;
+      if (btn.dataset.copy === 'svg') copy(chart.toSVG(), 'SVG copied. Save it as a .svg file.');
+      else {
+        var clone = chart.cloneNode(false); clone.removeAttribute('id');
+        copy(clone.outerHTML, 'HTML copied');
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-theme-set]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var t = btn.dataset.themeSet;
+      document.querySelectorAll('[data-theme-set]').forEach(function (b) { b.setAttribute('aria-pressed', String(b === btn)); });
+      document.querySelectorAll('.card > :first-child').forEach(function (c) {
+        if (t === 'auto') c.removeAttribute('theme'); else c.setAttribute('theme', t);
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
