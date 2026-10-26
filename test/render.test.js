@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { render, toSVG, types } from '../src/index.js';
+import { fit } from '../src/charts/scatter.js';
 
 const year = Array.from({ length: 365 }, (_, i) => ((i * 7) % 11 > 6 ? i % 9 : 0)).join(',');
 
@@ -13,7 +14,14 @@ const CASES = {
   bars: [{}, { values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '', goal: 7 },
     { values: '-3,5,-8,2', labels: 'a,b,c,d', 'show-values': '' }, { values: '0,0,0' },
     { values: '820,640,410,300', labels: 'Python,JavaScript,A very long language name,Go', horizontal: '', goal: 500 },
-    { values: '1,2,3', color: '#ff0000,#00ff00,#0000ff' }],
+    { values: '1,2,3', color: '#ff0000,#00ff00,#0000ff' },
+    { values: '4,9,6|3,7,8', series: '2026,2025', labels: 'Q1,Q2,Q3', 'show-values': '', goal: 5 },
+    { values: '4,9,6|3,7|1,2,3', horizontal: '', labels: 'North,South,East' },
+    { values: '-2,4|3,-5', series: 'A very long series name,Another long series name,Third', 'show-values': '', width: 200 }],
+  scatter: [{}, { x: '1,2,3,4,5', y: '2,4,5,4,6', trend: '', 'x-label': 'Hours', 'y-label': 'Score', notes: '4:Best' },
+    { x: '1,2,3|2,4,6', y: '5,7,6|3,8,9', series: 'Team A,Team B', trend: '', goal: 6 },
+    { x: '5', y: '5' }, { x: '1,1,1', y: '1,2,3', trend: '' }, { x: '1,2,3', y: '4' },
+    { x: Array.from({ length: 300 }, (_, i) => i).join(','), y: Array.from({ length: 300 }, (_, i) => (i * 37) % 101).join(','), prefix: '£' }],
   ring: [{}, { values: '72', labels: 'Move' }, { values: '72,45,90', labels: 'Move,Focus,Sleep' }, { values: '150' }, { values: '0' }, { values: '3,5', max: 8, suffix: ' h' }],
   donut: [{}, { values: '0,0' }, { values: '40,25,20,15', labels: 'Rent,Food,Travel,Fun', prefix: '£' }, { values: '9,8,7,6,5,4,3,2' }, { values: '10' }],
   gauge: [{}, { values: '63', labels: 'CPU', zones: '60,85', goal: 80 }, { values: '120' }, { values: '-5', min: -10, max: 10, suffix: '°C' }, { values: '0' }],
@@ -84,4 +92,30 @@ test('donut groups more than six slices into Other', () => {
 
 test('unknown types throw a helpful error', () => {
   assert.throws(() => render('pie', {}), /Choose one of: spark/);
+});
+
+test('grouped bars draw one bar per series in each group', () => {
+  const svg = toSVG('bars', { values: '4,9,6|3,7,8', series: 'A,B' });
+  assert.equal((svg.match(/<rect [^>]*fill-opacity="1"/g) || []).length, 6);
+  assert.match(svg, />A</);
+});
+
+test('trend line fit matches a known straight line', () => {
+  const f = fit([1, 2, 3, 4], [3, 5, 7, 9]);
+  assert.equal(f.slope, 2);
+  assert.equal(f.intercept, 1);
+  assert.equal(f.r, 1);
+  assert.equal(fit([1, 1], [2, 3]), null);
+});
+
+test('scatter shows the correlation when a trend is asked for', () => {
+  assert.match(render('scatter', { x: '1,2,3', y: '2,4,6', trend: '' }), /r = 1\.00/);
+});
+
+test('a long heatmap on a narrow tile keeps the most recent weeks', () => {
+  const values = Array.from({ length: 365 }, (_, i) => (i === 364 ? 99 : 1)).join(',');
+  const svg = toSVG('heatmap', { values, start: '2025-10-27', width: 300 });
+  assert.match(svg, /in \d+ days/);
+  assert.doesNotMatch(svg, /in 365 days/);
+  assert.match(svg, /fill-opacity="1"/);
 });

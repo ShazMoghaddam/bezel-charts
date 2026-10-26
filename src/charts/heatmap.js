@@ -7,7 +7,16 @@ export default function heatmap(o, th) {
   if (has(o.start) && /^\d{4}-\d{2}-\d{2}$/.test(String(o.start))) start = new Date(String(o.start) + 'T00:00:00Z');
   else { var t = new Date(); start = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Math.max(0, v.length - 1) * 864e5); }
   var offset = (start.getUTCDay() + 6) % 7, cols = Math.max(1, Math.ceil((offset + v.length) / 7));
-  var d0 = dims(o), leftW = 28, pitch = Math.min(18, (d0.w - leftW) / cols), gap = pitch < 8 ? 1 : 3, cell = pitch - gap;
+  var d0 = dims(o), leftW = 28, maxCols = Math.max(1, Math.floor((d0.w - leftW) / 10));
+  // On narrow screens keep the most recent weeks that fit, rather than shrinking cells until they are unreadable.
+  if (cols > maxCols) {
+    var drop = (cols - maxCols) * 7 - offset;
+    v = v.slice(drop);
+    start = new Date(start.getTime() + drop * 864e5);
+    offset = 0;
+    cols = maxCols;
+  }
+  var pitch = Math.min(18, (d0.w - leftW) / cols), gap = pitch < 8 ? 1 : 3, cell = pitch - gap;
   var h = 16 + 7 * pitch + 26;
   var max = v.length ? Math.max.apply(null, v) : 0;
   var dfm = function (opt) { try { return new Intl.DateTimeFormat(lang, Object.assign({ timeZone: 'UTC' }, opt)); } catch (e) { return new Intl.DateTimeFormat('en-GB', Object.assign({ timeZone: 'UTC' }, opt)); } };

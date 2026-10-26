@@ -6,7 +6,7 @@ export const ATTRIBUTES = [
   'type', 'values', 'labels', 'series', 'heading', 'prefix', 'suffix', 'decimals', 'compact', 'color', 'theme', 'frame',
   'width', 'height', 'goal', 'goal-label', 'notes', 'show-values', 'stat', 'delta', 'delta-label', 'max', 'min', 'value',
   'zones', 'horizontal', 'straight', 'zero', 'start', 'lang', 'corners', 'background', 'center-label', 'highlight',
-  'static', 'no-tooltips',
+  'x', 'y', 'x-label', 'y-label', 'trend', 'static', 'no-tooltips',
 ];
 
 const HOST_CSS =
@@ -36,7 +36,7 @@ export class BezelChart extends Base {
     return ATTRIBUTES;
   }
 
-  /** The chart type this tag draws. Subclasses fix it; <bz-chart> reads its type attribute. */
+  /** The chart type this tag draws. Subclasses fix it; <bezel-chart> reads its type attribute. */
   get chartType() {
     return this.getAttribute('type') || 'spark';
   }
@@ -133,7 +133,7 @@ export class BezelChart extends Base {
     }
     this.shadowRoot.innerHTML = `<style>${HOST_CSS}</style>${svg}<div class="tip" role="status"></div>`;
     this.#rendered = true;
-    this.dispatchEvent(new CustomEvent('bz-render', { bubbles: true }));
+    this.dispatchEvent(new CustomEvent('bezel-render', { bubbles: true }));
   }
 
   #tip(e) {

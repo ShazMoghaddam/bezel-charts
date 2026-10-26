@@ -9,8 +9,9 @@ import donut from './charts/donut.js';
 import gauge from './charts/gauge.js';
 import progress from './charts/progress.js';
 import heatmap from './charts/heatmap.js';
+import scatter from './charts/scatter.js';
 
-export const TYPES = { spark, line, bars, ring, donut, gauge, progress, heatmap };
+export const TYPES = { spark, line, bars, scatter, ring, donut, gauge, progress, heatmap };
 
 const camel = (k) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 

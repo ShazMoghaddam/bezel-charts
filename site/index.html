@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bezel Charts</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Eight polished chart tiles as zero-dependency web components, with static SVG export for READMEs, Notion and slides.">
+<meta name="description" content="Ten polished chart tiles as zero-dependency web components, with static SVG export for READMEs, Notion and slides.">
 <link rel="canonical" href="https://shazmoghaddam.github.io/bezel-charts/site/">
 <meta name="theme-color" content="#E7E9EC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0D0E10" media="(prefers-color-scheme: dark)">
@@ -37,7 +37,8 @@ a{color:inherit}
 .mark{display:flex;align-items:center;gap:10px;font-weight:700;font-size:16px;text-decoration:none;letter-spacing:-.01em}
 .mark svg{width:28px;height:28px}
 .nav{display:flex;gap:4px}
-.nav a{font-size:14px;color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:999px}
+.nav a{font-size:14px;color:var(--ink-2);text-decoration:none;padding:7px 12px;border-radius:999px;white-space:nowrap}
+@media (max-width:480px){.nav a{padding:7px 9px}.nav a[href="#charts"]{display:none}}
 .nav a:hover,.nav a:focus-visible{color:var(--ink);background:var(--panel);outline:none}
 .hero{padding-block:56px 28px;display:grid;gap:14px}
 h1{font-size:clamp(32px,5.4vw,58px);line-height:1.04;letter-spacing:-.035em;font-weight:700;margin:0;max-width:16ch;text-wrap:balance}
@@ -51,12 +52,12 @@ h1 em{font-style:normal;background:linear-gradient(110deg,var(--accent),var(--ac
 .seg button{font:500 13px var(--f-body);color:var(--ink-2);background:none;border:0;border-radius:999px;padding:6px 14px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground)}
 .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 22px;padding-bottom:40px}
+.grid{display:grid;grid-auto-flow:row dense;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 22px;padding-bottom:40px}
 .card{display:grid;gap:12px;align-content:start;min-width:0}
 .card.wide{grid-column:span 2}
 .card.full{grid-column:1/-1}
 @media (max-width:960px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:640px){.grid{grid-template-columns:minmax(0,1fr)}.card.wide,.card.full{grid-column:auto}}
+@media (max-width:640px){.meta{flex-direction:column;gap:10px}.grid{grid-template-columns:minmax(0,1fr)}.card.wide,.card.full{grid-column:auto}}
 .meta{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .meta b{display:block;font-size:15px;font-weight:600}
 .meta span{display:block;font-size:13px;color:var(--ink-3)}
@@ -97,13 +98,13 @@ pre .t{color:var(--code-key)} pre .a{color:var(--code-ink)} pre .s{color:var(--c
 <main id="top">
   <section class="hero in">
     <h1>Charts that look <em>finished</em> the moment you add them.</h1>
-    <p class="lede">Eight polished chart tiles as web components. Write one HTML tag, pass your numbers, done. Every chart also exports as a static SVG for READMEs, Notion and slides, where JavaScript can't run.</p>
-    <div class="facts"><span>0 dependencies</span><span id="kb">10 kB gzipped</span><span>Pure SVG</span><span>MIT licence</span></div>
+    <p class="lede">Ten polished chart tiles as web components. Write one HTML tag, pass your numbers, done. Every chart also exports as a static SVG for READMEs, Notion and slides, where JavaScript can't run.</p>
+    <div class="facts"><span>0 dependencies</span><span id="kb">12 kB gzipped</span><span>Pure SVG</span><span>MIT licence</span></div>
   </section>
 
   <section class="in" id="charts" aria-labelledby="charts-h">
     <div class="toolbar">
-      <h2 id="charts-h">Eight chart types · sample data</h2>
+      <h2 id="charts-h">Ten chart types · sample data</h2>
       <div class="seg" role="group" aria-label="Tile theme">
         <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
         <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
@@ -113,42 +114,52 @@ pre .t{color:var(--code-key)} pre .a{color:var(--code-ink)} pre .s{color:var(--c
 
     <div class="grid">
       <article class="card" data-card="spark">
-        <bz-spark heading="London · 7 day high" values="17,16,15,15,13,12,14" labels="Mon,Tue,Wed,Thu,Fri,Sat,Sun" suffix="°C" delta-label="since Monday"></bz-spark>
+        <bezel-spark heading="London · 7 day high" values="17,16,15,15,13,12,14" labels="Mon,Tue,Wed,Thu,Fri,Sat,Sun" suffix="°C" delta-label="since Monday"></bezel-spark>
         <div class="meta"><div><b>Sparkline</b><span>A trend with its latest value up front.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
       <article class="card wide" data-card="line">
-        <bz-line heading="Site visitors" values="420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640" series="2026,2025" labels="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec" notes="Jun:Launch day" compact></bz-line>
+        <bezel-line heading="Site visitors" values="420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640" series="2026,2025" labels="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec" notes="Jun:Launch day" compact></bezel-line>
         <div class="meta"><div><b>Line</b><span>Compare series over time, with notes on key moments.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
       <article class="card" data-card="bars">
-        <bz-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total" show-values goal="7" goal-label="Target"></bz-bars>
+        <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total" show-values goal="7" goal-label="Target"></bezel-bars>
         <div class="meta"><div><b>Bars</b><span>Totals per period, peak highlighted.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
       <article class="card" data-card="ring">
-        <bz-ring heading="Today" values="72,45,90" labels="Move,Focus,Sleep"></bz-ring>
+        <bezel-ring heading="Today" values="72,45,90" labels="Move,Focus,Sleep"></bezel-ring>
         <div class="meta"><div><b>Rings</b><span>One goal, or several nested.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
       <article class="card" data-card="donut">
-        <bz-donut heading="Monthly budget" values="1200,420,210,160,140" labels="Rent,Food,Bills,Travel,Fun" prefix="£"></bz-donut>
+        <bezel-donut heading="Monthly budget" values="1200,420,210,160,140" labels="Rent,Food,Bills,Travel,Fun" prefix="£"></bezel-donut>
         <div class="meta"><div><b>Donut</b><span>How a total splits into parts.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
+      <article class="card wide" data-card="scatter">
+        <bezel-scatter heading="Study hours vs exam score" x="2,3,3.5,4,5,5.5,6,6.5,7,8,8.5,9,10,11,12" y="48,52,61,55,63,58,70,66,72,75,71,82,80,88,91" x-label="Hours studied" y-label="Score" suffix="%" trend notes="12:Top student"></bezel-scatter>
+        <div class="meta"><div><b>Scatter</b><span>How two measures move together, with a trend line and its r value.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
       <article class="card" data-card="gauge">
-        <bz-gauge heading="Server load" values="63" labels="CPU" zones="60,85" goal="80"></bz-gauge>
+        <bezel-gauge heading="Server load" values="63" labels="CPU" zones="60,85" goal="80"></bezel-gauge>
         <div class="meta"><div><b>Gauge</b><span>A reading on a scale, coloured by zone.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
-      <article class="card wide" data-card="progress">
-        <bz-progress heading="Sprint 14" values="18,6,3" labels="Done,In review,Blocked" max="34" goal="27"></bz-progress>
+      <article class="card wide" data-card="grouped">
+        <bezel-bars heading="Revenue by quarter" values="182000,214000,236000,268000|151000,170000,198000,205000" series="2026,2025" labels="Q1,Q2,Q3,Q4" prefix="£" compact></bezel-bars>
+        <div class="meta"><div><b>Grouped bars</b><span>Compare series side by side. Separate them with a | in values.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card" data-card="progress">
+        <bezel-progress heading="Sprint 14" values="18,6,3" labels="Done,In review,Blocked" max="34" goal="27"></bezel-progress>
         <div class="meta"><div><b>Progress</b><span>Stacked parts against a target.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
       <article class="card full" data-card="heatmap">
-        <bz-heatmap id="heat" heading="Contributions" suffix=" commits"></bz-heatmap>
+        <bezel-heatmap id="heat" heading="Contributions" suffix=" commits"></bezel-heatmap>
         <div class="meta"><div><b>Heatmap</b><span>Activity by day, GitHub style. Perfect for a README.</span></div><div class="acts"><button type="button" data-copy="html">Copy HTML</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
     </div>
@@ -159,7 +170,7 @@ pre .t{color:var(--code-key)} pre .a{color:var(--code-ink)} pre .s{color:var(--c
     <p>Add one script, then use any chart tag. Hover a chart for exact values. Every option is an attribute, so the same HTML works in plain pages, React, Vue or a CMS.</p>
 <pre><span class="t">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/bezel-charts.min.js"</span><span class="t">&gt;&lt;/script&gt;</span>
 
-<span class="t">&lt;bz-bars</span> <span class="a">heading</span>=<span class="s">"Commits"</span> <span class="a">values</span>=<span class="s">"4,9,6,3,8"</span> <span class="a">labels</span>=<span class="s">"M,T,W,T,F"</span><span class="t">&gt;&lt;/bz-bars&gt;</span></pre>
+<span class="t">&lt;bezel-bars</span> <span class="a">heading</span>=<span class="s">"Commits"</span> <span class="a">values</span>=<span class="s">"4,9,6,3,8"</span> <span class="a">labels</span>=<span class="s">"M,T,W,T,F"</span><span class="t">&gt;&lt;/bezel-bars&gt;</span></pre>
     <p>Need a picture instead of a live chart? Call <code>chart.toSVG()</code>, or press Copy SVG above and paste the file into your README.</p>
   </section>
 </main>
@@ -174,8 +185,8 @@ pre .t{color:var(--code-key)} pre .a{color:var(--code-ink)} pre .s{color:var(--c
 
 <script>
 (function () {
-  // Six months of sample activity, quieter at weekends, ending today.
-  var days = 182, vals = [], seed = 7;
+  // A year of sample activity, quieter at weekends, ending today.
+  var days = 365, vals = [], seed = 7;
   function rnd() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
   var start = new Date(Date.now() - (days - 1) * 864e5);
   for (var i = 0; i < days; i++) {

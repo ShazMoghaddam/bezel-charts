@@ -180,6 +180,24 @@ function statOf(v, o, fallback) {
   if (k === "last" && v.length > 1 && o.delta !== "none") delta = v[v.length - 1] - v[0];
   return { val: map[k], delta };
 }
+function legend(names, pal, th, x0, y0, w) {
+  var x = x0, y = y0, s = "";
+  names.forEach(function(nm, k) {
+    var wd = 13 + tw(nm, 12) + 16;
+    if (x > x0 && x + wd - 16 > x0 + w) {
+      x = x0;
+      y += 20;
+    }
+    s += '<circle cx="' + r2(x + 4) + '" cy="' + r2(y + 6) + '" r="4" fill="' + pal[k % pal.length] + '"/>' + text(x + 13, y + 10, nm, 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
+    x += wd;
+  });
+  return { svg: s, height: y - y0 + 24 };
+}
+function axisWidth(ticks) {
+  return Math.max.apply(null, ticks.map(function(t) {
+    return tw(t, 10, true);
+  })) + 10;
+}
 
 // src/core/tile.js
 function dims(o) {
@@ -290,13 +308,11 @@ function line(o, th) {
     if (!n) return emptyState(th, x0, y0, w, h2);
     var s = "", top = y0;
     if (multi) {
-      var lx = x0;
-      S.forEach(function(_, k) {
-        var nm = names[k] || "Series " + (k + 1);
-        s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(top + 6) + '" r="4" fill="' + pal[k % pal.length] + '"/>' + text(lx + 13, top + 10, nm, 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
-        lx += 13 + tw(nm, 12) + 16;
-      });
-      top += 24;
+      var lg = legend(S.map(function(_, k) {
+        return names[k] || "Series " + (k + 1);
+      }), pal, th, x0, top, w);
+      s += lg.svg;
+      top += lg.height;
     }
     var all = [].concat.apply([], S);
     var mn = Math.min.apply(null, all), mx = Math.max.apply(null, all);
@@ -375,21 +391,50 @@ function line(o, th) {
 
 // src/charts/bars.js
 function bars(o, th) {
-  var v = nums(o.values), labels = list(o.labels), pal = palette(o, th);
-  var horiz = bool(o.horizontal), many = list(o.color).filter(Boolean).length > 1;
-  var d0 = dims(o), h = horiz ? Math.max(1, v.length) * 30 - 6 : num(o.height, 140);
-  var st = statOf(v, o, "");
-  var top = v.length ? Math.max.apply(null, v) : 0;
-  var colourOf = function(i) {
-    return many ? pal[i % pal.length] : pal[0];
+  var S = series(o.values), names = list(o.series), labels = list(o.labels), pal = palette(o, th);
+  var k = S.length, n = Math.max.apply(null, [0].concat(S.map(function(s) {
+    return s.length;
+  })));
+  var grouped = k > 1, horiz = bool(o.horizontal);
+  var many = !grouped && list(o.color).filter(Boolean).length > 1;
+  var v0 = S[0] || [], all = [].concat.apply([], S);
+  var top = all.length ? Math.max.apply(null, all) : 0;
+  var nameOf = function(j) {
+    return names[j] || "Series " + (j + 1);
   };
-  var opac = function(n) {
-    return many || o.highlight === "none" || n === top ? 1 : 0.5;
+  var colourOf = function(j, i) {
+    return grouped ? pal[j % pal.length] : many ? pal[i % pal.length] : pal[0];
   };
-  var best = v.indexOf(top);
+  var opac = function(val) {
+    return grouped || many || o.highlight === "none" || val === top ? 1 : 0.5;
+  };
+  var labelOf = function(i) {
+    return labels[i] || "#" + (i + 1);
+  };
+  var tipOf = function(i) {
+    if (!grouped) return labelOf(i) + ": " + fmt(v0[i], o);
+    return labelOf(i) + S.map(function(s, j) {
+      return i < s.length ? "\n" + nameOf(j) + ": " + fmt(s[i], o) : "";
+    }).join("");
+  };
+  var d0 = dims(o);
+  var legendH = grouped || names.length ? legend(S.map(function(_, j) {
+    return nameOf(j);
+  }), pal, th, 0, 0, d0.w).height : 0;
+  var subH = grouped ? 10 : 14, subGap = 3;
+  var rowH = horiz ? k * subH + (k - 1) * subGap + (grouped ? 14 : 16) : 0;
+  var h = horiz ? legendH + Math.max(1, n) * rowH - 6 : num(o.height, 140) + legendH;
+  var best = v0.indexOf(Math.max.apply(null, v0.length ? v0 : [0]));
   return tile(o, th, h, function(x0, y0, w, h2) {
-    if (!v.length) return emptyState(th, x0, y0, w, h2);
-    var s = "", lo = Math.min(0, Math.min.apply(null, v)), hi = Math.max(0, top);
+    if (!n) return emptyState(th, x0, y0, w, h2);
+    var s = "", top0 = y0;
+    if (legendH) {
+      s += legend(S.map(function(_, j) {
+        return nameOf(j);
+      }), pal, th, x0, y0, w).svg;
+      top0 += legendH;
+    }
+    var lo = Math.min(0, Math.min.apply(null, all)), hi = Math.max(0, top);
     if (has(o.goal)) {
       lo = Math.min(lo, +o.goal);
       hi = Math.max(hi, +o.goal);
@@ -399,50 +444,73 @@ function bars(o, th) {
       var labW = labels.length ? Math.min(w * 0.4, Math.max.apply(null, labels.map(function(l) {
         return tw(l, 12);
       })) + 10) : 0;
-      var vals = v.map(function(n) {
-        return fmt(n, o);
+      var vals = S.map(function(s2) {
+        return s2.map(function(x) {
+          return fmt(x, o);
+        });
       });
-      var valW = Math.max.apply(null, vals.map(function(t) {
-        return tw(t, 11, true);
+      var valW = Math.max.apply(null, [].concat.apply([], vals).map(function(t) {
+        return tw(t, grouped ? 10 : 11, true);
       })) + 10;
-      var bx = x0 + labW, bw = w - labW - valW, hiH = Math.max(hi, 0) || 1;
-      v.forEach(function(n, i) {
-        var y = y0 + i * 30, len = Math.max(0, n) / hiH * bw;
-        if (labels[i] != null) s += text(x0, y + 16, trunc(labels[i], Math.floor(labW / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
-        s += '<rect x="' + r2(bx) + '" y="' + (y + 5) + '" width="' + r2(bw) + '" height="14" rx="7" fill="' + th.grid + '" fill-opacity=".6"/>';
-        if (len > 0) s += '<rect x="' + r2(bx) + '" y="' + (y + 5) + '" width="' + r2(Math.max(14, len)) + '" height="14" rx="7" fill="' + colourOf(i) + '" fill-opacity="' + opac(n) + '"' + anim(o, "bzc-gx", i * 0.06) + "/>";
-        s += text(x0 + w, y + 16, vals[i], 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="11" font-weight="600"');
-        s += hit(x0, y, w, 24, (labels[i] || "#" + (i + 1)) + ": " + vals[i]);
-      });
+      var bx = x0 + labW, bw = w - labW - valW, span = Math.max(hi, 0) || 1;
+      for (var i = 0; i < n; i++) {
+        var ry = top0 + i * rowH;
+        if (labels[i] != null) s += text(x0, ry + (rowH - 6) / 2 + 4, trunc(labels[i], Math.floor(labW / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
+        S.forEach(function(ser, j) {
+          if (i >= ser.length) return;
+          var val = ser[i], by = ry + (grouped ? 2 : 5) + j * (subH + subGap), len = Math.max(0, val) / span * bw;
+          if (!grouped) s += '<rect x="' + r2(bx) + '" y="' + r2(by) + '" width="' + r2(bw) + '" height="' + subH + '" rx="' + subH / 2 + '" fill="' + th.grid + '" fill-opacity=".6"/>';
+          if (len > 0) {
+            s += '<rect x="' + r2(bx) + '" y="' + r2(by) + '" width="' + r2(Math.max(subH, len)) + '" height="' + subH + '" rx="' + subH / 2 + '" fill="' + colourOf(j, i) + '" fill-opacity="' + opac(val) + '"' + anim(o, "bzc-gx", i * 0.06 + j * 0.03) + "/>";
+          }
+          s += text(x0 + w, by + subH / 2 + 3.8, vals[j][i], 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="' + (grouped ? 10 : 11) + '" font-weight="600"');
+        });
+        s += hit(x0, ry, w, rowH - 6, tipOf(i));
+      }
       if (has(o.goal) && +o.goal > 0) {
-        var gx = bx + +o.goal / hiH * bw;
-        s += '<line x1="' + r2(gx) + '" x2="' + r2(gx) + '" y1="' + (y0 - 2) + '" y2="' + (y0 + h2 + 2) + '" stroke="' + th.fg + '" stroke-opacity=".55" stroke-dasharray="3 3"/>';
+        var gx = bx + +o.goal / span * bw;
+        s += '<line x1="' + r2(gx) + '" x2="' + r2(gx) + '" y1="' + r2(top0 - 2) + '" y2="' + r2(y0 + h2 + 2) + '" stroke="' + th.fg + '" stroke-opacity=".55" stroke-dasharray="3 3"/>';
       }
       return s;
     }
     var negLab = bool(o.showValues) && lo < 0 ? 14 : 0;
     var bottom = (labels.length ? 20 : 2) + negLab, topPad = bool(o.showValues) ? 16 : 4;
-    var ph = h2 - bottom - topPad, py = y0 + topPad;
-    var Y = function(n) {
-      return py + ph - (n - lo) / (hi - lo) * ph;
+    var ph = h2 - (top0 - y0) - bottom - topPad, py = top0 + topPad;
+    var Y = function(x) {
+      return py + ph - (x - lo) / (hi - lo) * ph;
     };
-    var slot = w / v.length, bwid = Math.min(slot * 0.62, 56), Y0 = Y(0);
-    var every = labels.length ? Math.max(1, Math.ceil(v.length * (Math.max.apply(null, labels.map(function(l) {
+    var slot = w / n, groupW = Math.min(slot * (grouped ? 0.78 : 0.62), grouped ? k * 30 : 56);
+    var gap = grouped ? Math.min(3, groupW / k * 0.15) : 0, bwid = (groupW - gap * (k - 1)) / k, Y0 = Y(0);
+    var every = labels.length ? Math.max(1, Math.ceil(n * (Math.max.apply(null, labels.map(function(l) {
       return tw(l, 10, true);
     })) + 8) / w)) : 1;
     s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(Y0) + '" y2="' + r2(Y0) + '" stroke="' + th.grid + '"/>';
-    v.forEach(function(n, i) {
-      var x = x0 + i * slot + (slot - bwid) / 2, y = Math.min(Y(n), Y0), bh = Math.abs(Y(n) - Y0);
-      if (bh > 0.5) {
-        s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(6, bwid / 2, bh / 2)) + '" fill="' + colourOf(i) + '" fill-opacity="' + opac(n) + '"' + anim(o, n < 0 ? "bzc-gn" : "bzc-g", i * 0.05) + "/>";
-      }
-      if (labels[i] != null && i % every === 0) s += text(x + bwid / 2, py + ph + negLab + 15, labels[i], small(th, 10, 'text-anchor="middle"'));
-      if (bool(o.showValues)) s += text(x + bwid / 2, n < 0 ? Y(n) + 12 : Y(n) - 5, fmt(n, o, true), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + MONO + '" font-size="10" font-weight="600"');
-      s += hit(x0 + i * slot, y0, slot, h2, (labels[i] || "#" + (i + 1)) + ": " + fmt(n, o));
-    });
+    for (var c = 0; c < n; c++) {
+      var gx0 = x0 + c * slot + (slot - groupW) / 2;
+      S.forEach(function(ser, j) {
+        if (c >= ser.length) return;
+        var val = ser[c], x = gx0 + j * (bwid + gap), y = Math.min(Y(val), Y0), bh = Math.abs(Y(val) - Y0);
+        if (bh > 0.5) {
+          s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(6, bwid / 2, bh / 2)) + '" fill="' + colourOf(j, c) + '" fill-opacity="' + opac(val) + '"' + anim(o, val < 0 ? "bzc-gn" : "bzc-g", c * 0.05 + j * 0.03) + "/>";
+        }
+        if (bool(o.showValues)) {
+          s += text(
+            x + bwid / 2,
+            val < 0 ? Y(val) + 12 : Y(val) - 5,
+            fmt(val, o, true),
+            'text-anchor="middle" fill="' + th.fg + '" font-family="' + MONO + '" font-size="' + (grouped ? 9 : 10) + '" font-weight="600"'
+          );
+        }
+      });
+      if (labels[c] != null && c % every === 0) s += text(gx0 + groupW / 2, py + ph + negLab + 15, labels[c], small(th, 10, 'text-anchor="middle"'));
+      s += hit(x0 + c * slot, top0, slot, h2 - (top0 - y0), tipOf(c));
+    }
     if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal));
     return s;
-  }, { stat: st, summary: v.length ? "highest " + (labels[best] || "") + " " + fmt(top, o) : "no data" });
+  }, {
+    stat: statOf(v0, o, ""),
+    summary: !n ? "no data" : grouped ? k + " series across " + n + " groups" : "highest " + (labels[best] || "") + " " + fmt(v0[best], o)
+  });
 }
 
 // src/charts/ring.js
@@ -605,7 +673,7 @@ function progress(o, th) {
     var x = 0;
     rows = 1;
     v.forEach(function(n, i) {
-      var l = labels[i] || "#" + (i + 1), wd = 14 + tw(l, 11.4) + 7 + tw(fmt(n, o), 11, true) + 18;
+      var l = labels[i] || "#" + (i + 1), wd = 14 + tw(l, 12) + 6 + tw(fmt(n, o), 11, true) + 18;
       if (x > 0 && x + wd > w0) {
         x = 0;
         rows++;
@@ -644,7 +712,7 @@ function progress(o, th) {
     });
     layout.forEach(function(it, i) {
       var lx = x0 + it.x, ly = by + 14 + 12 + it.row * 20 + 8;
-      s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(ly) + '" r="4" fill="' + pal[i % pal.length] + '"/>' + text(lx + 14, ly + 4, it.l, 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"') + text(lx + 14 + tw(it.l, 11.4) + 7, ly + 4, fmt(v[i], o), small(th, 11));
+      s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(ly) + '" r="4" fill="' + pal[i % pal.length] + '"/><text x="' + r2(lx + 14) + '" y="' + r2(ly + 4) + '" fill="' + th.fg + '" font-family="' + SANS + '" font-size="12">' + esc(it.l) + '<tspan dx="6" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11">' + esc(fmt(v[i], o)) + "</tspan></text>";
     });
     return s;
   }, { stat: st, summary: single ? show(v[0]) + (auto ? "" : " of " + fmt(max, o)) : fmt(total, o) + " of " + fmt(max, o) });
@@ -660,7 +728,15 @@ function heatmap(o, th) {
     start = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Math.max(0, v.length - 1) * 864e5);
   }
   var offset = (start.getUTCDay() + 6) % 7, cols = Math.max(1, Math.ceil((offset + v.length) / 7));
-  var d0 = dims(o), leftW = 28, pitch = Math.min(18, (d0.w - leftW) / cols), gap = pitch < 8 ? 1 : 3, cell = pitch - gap;
+  var d0 = dims(o), leftW = 28, maxCols = Math.max(1, Math.floor((d0.w - leftW) / 10));
+  if (cols > maxCols) {
+    var drop = (cols - maxCols) * 7 - offset;
+    v = v.slice(drop);
+    start = new Date(start.getTime() + drop * 864e5);
+    offset = 0;
+    cols = maxCols;
+  }
+  var pitch = Math.min(18, (d0.w - leftW) / cols), gap = pitch < 8 ? 1 : 3, cell = pitch - gap;
   var h = 16 + 7 * pitch + 26;
   var max = v.length ? Math.max.apply(null, v) : 0;
   var dfm = function(opt) {
@@ -701,8 +777,141 @@ function heatmap(o, th) {
   }, { stat: st, summary: fmt(sum(v), o) + " across " + v.length + " days" });
 }
 
+// src/charts/scatter.js
+function fit(xs, ys) {
+  var n = Math.min(xs.length, ys.length);
+  if (n < 2) return null;
+  var mx = 0, my = 0, i;
+  for (i = 0; i < n; i++) {
+    mx += xs[i];
+    my += ys[i];
+  }
+  mx /= n;
+  my /= n;
+  var sxx = 0, syy = 0, sxy = 0;
+  for (i = 0; i < n; i++) {
+    sxx += (xs[i] - mx) * (xs[i] - mx);
+    syy += (ys[i] - my) * (ys[i] - my);
+    sxy += (xs[i] - mx) * (ys[i] - my);
+  }
+  if (!sxx) return null;
+  var slope = sxy / sxx;
+  return { slope, intercept: my - slope * mx, r: syy ? sxy / Math.sqrt(sxx * syy) : 0 };
+}
+function scatter(o, th) {
+  var X = series(o.x), Y = series(o.y), names = list(o.series), labels = list(o.labels), pal = palette(o, th);
+  var groups = [];
+  for (var g = 0; g < Math.max(X.length, Y.length); g++) {
+    var xs = X[g] || [], ys = Y[g] || [], m = Math.min(xs.length, ys.length);
+    groups.push({ xs: xs.slice(0, m), ys: ys.slice(0, m) });
+  }
+  groups = groups.filter(function(gr) {
+    return gr.xs.length;
+  });
+  var count = groups.reduce(function(a, gr) {
+    return a + gr.xs.length;
+  }, 0);
+  var h = num(o.height, 210), multi = groups.length > 1 || names.length > 0, trend = bool(o.trend);
+  var nameOf = function(j) {
+    return names[j] || "Group " + (j + 1);
+  };
+  var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang };
+  var notes = parseNotes(o, labels);
+  return tile(o, th, h, function(x0, y0, w, h2) {
+    if (!count) return emptyState(th, x0, y0, w, h2);
+    var s = "", top = y0;
+    if (multi) {
+      var lg = legend(groups.map(function(_, j) {
+        return nameOf(j);
+      }), pal, th, x0, top, w);
+      s += lg.svg;
+      top += lg.height;
+    }
+    var ax = [].concat.apply([], groups.map(function(gr) {
+      return gr.xs;
+    }));
+    var ay = [].concat.apply([], groups.map(function(gr) {
+      return gr.ys;
+    }));
+    var ymin = Math.min.apply(null, ay), ymax = Math.max.apply(null, ay);
+    if (has(o.goal)) {
+      ymin = Math.min(ymin, +o.goal);
+      ymax = Math.max(ymax, +o.goal);
+    }
+    if (bool(o.zero)) {
+      ymin = Math.min(0, ymin);
+      ymax = Math.max(0, ymax);
+    }
+    var sy = niceScale(ymin, ymax, 4), sx = niceScale(Math.min.apply(null, ax), Math.max.apply(null, ax), 5);
+    var tly = sy.ticks.map(function(t) {
+      return fmt(t, o, true);
+    });
+    var axisW = axisWidth(tly) + (has(o.yLabel) ? 14 : 0);
+    var bottom = 20 + (has(o.xLabel) ? 16 : 0);
+    var px = x0 + axisW, pw = w - axisW, ph = h2 - (top - y0) - bottom;
+    var PX = function(v) {
+      return px + 6 + (v - sx.lo) / (sx.hi - sx.lo) * (pw - 12);
+    };
+    var PY = function(v) {
+      return top + 6 + ph - 6 - (v - sy.lo) / (sy.hi - sy.lo) * (ph - 6);
+    };
+    sy.ticks.forEach(function(t, i) {
+      var y = PY(t);
+      s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>' + text(px - 8, y + 3.5, tly[i], small(th, 10, 'text-anchor="end"'));
+    });
+    var every = Math.max(1, Math.ceil(sx.ticks.length * 44 / pw));
+    sx.ticks.forEach(function(t, i) {
+      if (i % every) return;
+      var x = PX(t);
+      s += '<line x1="' + r2(x) + '" x2="' + r2(x) + '" y1="' + r2(top) + '" y2="' + r2(top + ph) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>' + text(x, top + ph + 15, fmt(t, xo, true), small(th, 10, 'text-anchor="middle"'));
+    });
+    if (has(o.xLabel)) s += text(px + pw / 2, top + ph + 32, o.xLabel, small(th, 10, 'text-anchor="middle" font-weight="600"'));
+    if (has(o.yLabel)) {
+      var cy = top + ph / 2;
+      s += '<text x="' + r2(x0 + 4) + '" y="' + r2(cy) + '" transform="rotate(-90 ' + r2(x0 + 4) + " " + r2(cy) + ')" text-anchor="middle" ' + small(th, 10, 'font-weight="600"') + ' dominant-baseline="hanging">' + String(o.yLabel).replace(/[&<>"]/g, function(c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+      }) + "</text>";
+    }
+    if (has(o.goal)) s += goalLine(o, th, px, px + pw, PY(+o.goal));
+    if (trend) {
+      groups.forEach(function(gr, j) {
+        var f = fit(gr.xs, gr.ys);
+        if (!f) return;
+        var xa = Math.min.apply(null, gr.xs), xb = Math.max.apply(null, gr.xs);
+        var ya = f.slope * xa + f.intercept, yb = f.slope * xb + f.intercept;
+        var c = pal[j % pal.length];
+        s += '<line x1="' + r2(PX(xa)) + '" y1="' + r2(clamp(PY(ya), top, top + ph)) + '" x2="' + r2(PX(xb)) + '" y2="' + r2(clamp(PY(yb), top, top + ph)) + '" stroke="' + c + '" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" stroke-opacity=".9"/>';
+        s += text(Math.min(PX(xb), px + pw) - 2, clamp(PY(yb), top + 10, top + ph) - 7, "r = " + f.r.toFixed(2), small(th, 10, 'text-anchor="end" font-weight="600"', c));
+      });
+    }
+    var idx = 0, r = count > 150 ? 3 : 4.5;
+    groups.forEach(function(gr, j) {
+      var c = pal[j % pal.length];
+      gr.xs.forEach(function(xv, i) {
+        var cx = PX(xv), cy2 = PY(gr.ys[i]);
+        var tip = (labels[idx] ? labels[idx] + "\n" : multi ? nameOf(j) + "\n" : "") + (has(o.xLabel) ? o.xLabel : "x") + ": " + fmt(xv, xo) + "\n" + (has(o.yLabel) ? o.yLabel : "y") + ": " + fmt(gr.ys[i], o);
+        s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy2) + '" r="' + r + '" fill="' + c + '" fill-opacity=".85" stroke="' + (o.background || th.tile) + '" stroke-width="1.5"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : "") + "/>";
+        s += hit(cx - 8, cy2 - 8, 16, 16, tip);
+        idx++;
+      });
+    });
+    var flat = [];
+    groups.forEach(function(gr) {
+      gr.xs.forEach(function(xv, i) {
+        flat.push([PX(xv), PY(gr.ys[i])]);
+      });
+    });
+    notes.forEach(function(nt) {
+      var p = flat[nt.i];
+      if (!p) return;
+      s += '<circle cx="' + r2(p[0]) + '" cy="' + r2(p[1]) + '" r="' + (r + 4) + '" fill="none" stroke="' + th.fg + '" stroke-width="1.5"/>' + text(clamp(p[0], px + 30, px + pw - 30), p[1] - r - 9, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
+    });
+    return s;
+  }, { summary: count + " points" + (multi ? " in " + groups.length + " groups" : "") });
+}
+
 // src/render.js
-var TYPES = { spark, line, bars, ring, donut, gauge, progress, heatmap };
+var TYPES = { spark, line, bars, scatter, ring, donut, gauge, progress, heatmap };
 var camel = (k) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 function render(type, options = {}) {
   if (!TYPES[type]) {
@@ -758,6 +967,11 @@ var ATTRIBUTES = [
   "background",
   "center-label",
   "highlight",
+  "x",
+  "y",
+  "x-label",
+  "y-label",
+  "trend",
   "static",
   "no-tooltips"
 ];
@@ -777,7 +991,7 @@ var BezelChart = class extends Base {
   static get observedAttributes() {
     return ATTRIBUTES;
   }
-  /** The chart type this tag draws. Subclasses fix it; <bz-chart> reads its type attribute. */
+  /** The chart type this tag draws. Subclasses fix it; <bezel-chart> reads its type attribute. */
   get chartType() {
     return this.getAttribute("type") || "spark";
   }
@@ -865,7 +1079,7 @@ var BezelChart = class extends Base {
     }
     this.shadowRoot.innerHTML = `<style>${HOST_CSS}</style>${svg}<div class="tip" role="status"></div>`;
     this.#rendered = true;
-    this.dispatchEvent(new CustomEvent("bz-render", { bubbles: true }));
+    this.dispatchEvent(new CustomEvent("bezel-render", { bubbles: true }));
   }
   #tip(e) {
     const tip = this.shadowRoot.querySelector(".tip");
@@ -889,7 +1103,7 @@ var version = "1.0.0";
 var types = Object.keys(TYPES);
 if (typeof customElements !== "undefined" && typeof HTMLElement !== "undefined") {
   for (const type of types) {
-    const tag = `bz-${type}`;
+    const tag = `bezel-${type}`;
     if (!customElements.get(tag)) {
       customElements.define(tag, class extends BezelChart {
         get chartType() {
@@ -898,7 +1112,7 @@ if (typeof customElements !== "undefined" && typeof HTMLElement !== "undefined")
       });
     }
   }
-  if (!customElements.get("bz-chart")) customElements.define("bz-chart", class extends BezelChart {
+  if (!customElements.get("bezel-chart")) customElements.define("bezel-chart", class extends BezelChart {
   });
 }
 export {
