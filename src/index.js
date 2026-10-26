@@ -13,7 +13,7 @@ export { render, toSVG, BezelChart, THEMES as themes };
 
 if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {
   for (const type of types) {
-    const tag = `bz-${type}`;
+    const tag = `bezel-${type}`;
     if (!customElements.get(tag)) {
       customElements.define(tag, class extends BezelChart {
         get chartType() {
@@ -22,5 +22,5 @@ if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined')
       });
     }
   }
-  if (!customElements.get('bz-chart')) customElements.define('bz-chart', class extends BezelChart {});
+  if (!customElements.get('bezel-chart')) customElements.define('bezel-chart', class extends BezelChart {});
 }

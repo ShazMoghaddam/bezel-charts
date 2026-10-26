@@ -25,13 +25,13 @@ function mount(html) {
   return host.firstElementChild;
 }
 
-test('all nine tags are defined', () => {
-  for (const t of [...api.types, 'chart']) assert.ok(customElements.get(`bz-${t}`), `bz-${t}`);
+test('all ten tags are defined', () => {
+  for (const t of [...api.types, 'chart']) assert.ok(customElements.get(`bezel-${t}`), `bezel-${t}`);
 });
 
 test('each tag renders an accessible SVG', async () => {
   for (const t of api.types) {
-    const el = mount(`<bz-${t} values="3,5,2" labels="a,b,c" heading="Test"></bz-${t}>`);
+    const el = mount(`<bezel-${t} values="3,5,2" labels="a,b,c" heading="Test"></bezel-${t}>`);
     await flush();
     const svg = el.shadowRoot.querySelector('svg');
     assert.ok(svg, t);
@@ -41,15 +41,15 @@ test('each tag renders an accessible SVG', async () => {
 });
 
 test('changing an attribute re-renders', async () => {
-  const el = mount('<bz-bars values="1,2"></bz-bars>');
+  const el = mount('<bezel-bars values="1,2"></bezel-bars>');
   await flush();
   el.setAttribute('values', '1,2,3,4');
   await flush();
   assert.equal(el.shadowRoot.querySelectorAll('rect[fill-opacity="1"], rect[fill-opacity="0.5"]').length, 4);
 });
 
-test('bz-chart switches type by attribute', async () => {
-  const el = mount('<bz-chart type="ring" values="40"></bz-chart>');
+test('bezel-chart switches type by attribute', async () => {
+  const el = mount('<bezel-chart type="ring" values="40"></bezel-chart>');
   await flush();
   assert.match(el.shadowRoot.innerHTML, /40%/);
   el.setAttribute('type', 'gauge');
@@ -58,7 +58,7 @@ test('bz-chart switches type by attribute', async () => {
 });
 
 test('toSVG returns a clean static image', async () => {
-  const el = mount('<bz-spark values="1,4,2"></bz-spark>');
+  const el = mount('<bezel-spark values="1,4,2"></bezel-spark>');
   await flush();
   const svg = el.toSVG();
   assert.match(svg, /^<svg/);
@@ -66,7 +66,7 @@ test('toSVG returns a clean static image', async () => {
 });
 
 test('a bad type shows an error message instead of throwing', async () => {
-  const el = mount('<bz-chart type="pie" values="1"></bz-chart>');
+  const el = mount('<bezel-chart type="pie" values="1"></bezel-chart>');
   await flush();
   assert.match(el.shadowRoot.innerHTML, /unknown chart type/);
 });

@@ -121,3 +121,21 @@ export function statOf(v, o, fallback) {
   if (k === 'last' && v.length > 1 && o.delta !== 'none') delta = v[v.length - 1] - v[0];
   return { val: map[k], delta: delta };
 }
+
+/** A wrapping row of coloured dots and series names. Returns the SVG and the height it used. */
+export function legend(names, pal, th, x0, y0, w) {
+  var x = x0, y = y0, s = '';
+  names.forEach(function (nm, k) {
+    var wd = 13 + tw(nm, 12) + 16;
+    if (x > x0 && x + wd - 16 > x0 + w) { x = x0; y += 20; }
+    s += '<circle cx="' + r2(x + 4) + '" cy="' + r2(y + 6) + '" r="4" fill="' + pal[k % pal.length] + '"/>' +
+      text(x + 13, y + 10, nm, 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
+    x += wd;
+  });
+  return { svg: s, height: y - y0 + 24 };
+}
+
+/** Value axis: gridlines plus tick labels on the left. Returns the axis width it reserved. */
+export function axisWidth(ticks) {
+  return Math.max.apply(null, ticks.map(function (t) { return tw(t, 10, true); })) + 10;
+}

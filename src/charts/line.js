@@ -1,4 +1,4 @@
-import { newId, r2, clamp, num, has, list, series, tw, bool, fmt, niceScale, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf, SANS } from '../core/util.js';
+import { newId, r2, clamp, num, has, list, series, tw, bool, fmt, niceScale, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf, legend, SANS } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 export default function line(o, th) {
@@ -10,14 +10,9 @@ export default function line(o, th) {
     if (!n) return emptyState(th, x0, y0, w, h);
     var s = '', top = y0;
     if (multi) {
-      var lx = x0;
-      S.forEach(function (_, k) {
-        var nm = names[k] || 'Series ' + (k + 1);
-        s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(top + 6) + '" r="4" fill="' + pal[k % pal.length] + '"/>' +
-          text(lx + 13, top + 10, nm, 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
-        lx += 13 + tw(nm, 12) + 16;
-      });
-      top += 24;
+      var lg = legend(S.map(function (_, k) { return names[k] || 'Series ' + (k + 1); }), pal, th, x0, top, w);
+      s += lg.svg;
+      top += lg.height;
     }
     var all = [].concat.apply([], S);
     var mn = Math.min.apply(null, all), mx = Math.max.apply(null, all);

@@ -1,4 +1,4 @@
-import { newId, r2, clamp, num, has, nums, list, sum, tw, fmt, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO } from '../core/util.js';
+import { newId, r2, clamp, num, has, nums, list, sum, tw, fmt, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO, esc } from '../core/util.js';
 import { tile, dims } from '../core/tile.js';
 
 export default function progress(o, th) {
@@ -12,7 +12,7 @@ export default function progress(o, th) {
   if (!single && v.length) {
     var x = 0; rows = 1;
     v.forEach(function (n, i) {
-      var l = labels[i] || '#' + (i + 1), wd = 14 + tw(l, 11.4) + 7 + tw(fmt(n, o), 11, true) + 18;
+      var l = labels[i] || '#' + (i + 1), wd = 14 + tw(l, 12) + 6 + tw(fmt(n, o), 11, true) + 18;
       if (x > 0 && x + wd > w0) { x = 0; rows++; }
       layout.push({ x: x, row: rows - 1, l: l }); x += wd;
     });
@@ -48,8 +48,9 @@ export default function progress(o, th) {
     layout.forEach(function (it, i) {
       var lx = x0 + it.x, ly = by + 14 + 12 + it.row * 20 + 8;
       s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(ly) + '" r="4" fill="' + pal[i % pal.length] + '"/>' +
-        text(lx + 14, ly + 4, it.l, 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"') +
-        text(lx + 14 + tw(it.l, 11.4) + 7, ly + 4, fmt(v[i], o), small(th, 11));
+        // One text element, so the browser places the value right after the label at its real width.
+        '<text x="' + r2(lx + 14) + '" y="' + r2(ly + 4) + '" fill="' + th.fg + '" font-family="' + SANS + '" font-size="12">' + esc(it.l) +
+        '<tspan dx="6" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11">' + esc(fmt(v[i], o)) + '</tspan></text>';
     });
     return s;
   }, { stat: st, summary: single ? show(v[0]) + (auto ? '' : ' of ' + fmt(max, o)) : fmt(total, o) + ' of ' + fmt(max, o) });
