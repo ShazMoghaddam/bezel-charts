@@ -7,12 +7,19 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Ten polished chart tiles as zero-dependency web components, with static SVG export for READMEs, Notion and slides.">
 <link rel="canonical" href="https://shazmoghaddam.github.io/bezel-charts/site/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Bezel Charts">
+<meta property="og:title" content="Bezel Charts: charts that look finished the moment you add them">
+<meta property="og:description" content="Ten polished chart tiles as free, open-source web components. Build one in the Studio, copy one line of HTML, or save it as an SVG for your README.">
+<meta property="og:url" content="https://shazmoghaddam.github.io/bezel-charts/site/">
+<meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#E7E9EC" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0D0E10" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke-linecap='round'%3E%3Crect x='1.5' y='1.5' width='29' height='29' rx='9' fill='%23fff' stroke='%23111316' stroke-width='2.4'/%3E%3Cpath d='M9 21.5V17M14 21.5v-9M19 21.5V15M24 21.5V10' stroke='%236E70F0' stroke-width='2.6'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap">
-<script type="module" src="../dist/bezel-charts.min.js"></script>
+<script type="module" src="../src/index.js"></script>
 <link rel="stylesheet" href="site.css">
 <script type="module" src="site.js"></script>
 </head>
@@ -157,7 +164,7 @@
   <section class="install in" id="install" aria-labelledby="install-h">
     <h2 id="install-h">Get the code</h2>
     <p>Add one script, then use any chart tag. Hover a chart for exact values. Every option is an attribute, so the same HTML works in plain pages, React, Vue or a CMS.</p>
-<pre><span class="t">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/bezel-charts.min.js"</span><span class="t">&gt;&lt;/script&gt;</span>
+<pre><span class="t">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@v1.0.0/dist/bezel-charts.min.js"</span><span class="t">&gt;&lt;/script&gt;</span>
 
 <span class="t">&lt;bezel-bars</span> <span class="a">heading</span>=<span class="s">"Commits"</span> <span class="a">values</span>=<span class="s">"4,9,6,3,8"</span> <span class="a">labels</span>=<span class="s">"M,T,W,T,F"</span><span class="t">&gt;&lt;/bezel-bars&gt;</span></pre>
     <p>Need a picture instead of a live chart? Use Save SVG in the Studio, commit the file, then add it to your README with <code>![Chart](chart.svg)</code>. From code, call <code>chart.toSVG()</code>.</p>
@@ -165,9 +172,55 @@
 </main>
 
 <footer class="foot">
-  <div class="in">
-    <p>Designed by <a href="https://shazmoghaddam.github.io">Shaz Moghaddam</a>, London</p>
-    <p>Free to use under the MIT licence · a sibling of <a href="https://shazmoghaddam.github.io/bezel/">Bezel</a></p>
+  <!-- A faint line chart runs across the whole footer, behind the content. -->
+  <svg class="foot__chart" viewBox="0 0 1200 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+    <path class="foot__area" d="M0 250 C60 245 90 232 150 228 S250 236 310 214 S420 170 480 182 S580 205 640 168 S760 96 820 112 S930 150 990 104 S1110 40 1200 30 L1200 300 L0 300 Z"/>
+    <path class="foot__line" d="M0 250 C60 245 90 232 150 228 S250 236 310 214 S420 170 480 182 S580 205 640 168 S760 96 820 112 S930 150 990 104 S1110 40 1200 30"/>
+    <path class="foot__line foot__line--2" d="M0 272 C80 268 140 262 210 258 S330 250 400 244 S520 238 600 226 S740 212 820 204 S960 192 1040 176 S1150 160 1200 156"/>
+  </svg>
+  <!-- One layer of content. site.js copies it once more for the mint half; each copy is clipped to its own triangle. -->
+  <div class="foot__layer">
+    <div class="foot__in">
+      <div class="foot__about">
+        <a class="mark" href="#top" aria-label="Bezel Charts, back to the top">
+          <svg viewBox="0 0 32 32" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="9" stroke="currentColor" stroke-width="2.4"/><path d="M9 21.5V17M14 21.5v-9M19 21.5V15M24 21.5V10" stroke="currentColor" stroke-width="2.6"/></svg>
+          Bezel Charts
+        </a>
+        <p class="foot__eyebrow">Open-source web components · v1.0</p>
+        <p class="foot__lede">Ten chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Add one tag to any page, or save any chart as an image for a README, Notion page or slide.</p>
+      </div>
+
+      <dl class="foot__specs">
+        <div><dt>Chart types</dt><dd>10</dd></div>
+        <div><dt>Dependencies</dt><dd>0</dd></div>
+        <div><dt>Gzipped</dt><dd>12 kB</dd></div>
+      </dl>
+
+      <nav class="foot__links" aria-label="Footer">
+        <h2 class="foot__h">Project</h2>
+        <ul>
+          <li><a href="#charts">Charts</a></li>
+          <li><a href="#studio">Studio</a></li>
+          <li><a href="#install">Get the code</a></li>
+          <li><a href="https://github.com/ShazMoghaddam/bezel-charts">GitHub</a></li>
+          <li><a href="https://github.com/ShazMoghaddam/bezel-charts#readme">Documentation</a></li>
+        </ul>
+      </nav>
+
+      <div class="foot__links">
+        <h2 class="foot__h">Credits</h2>
+        <ul>
+          <li>Font: <a href="https://fonts.google.com/specimen/Geist">Geist</a> (OFL)</li>
+          <li>Sibling of <a href="https://shazmoghaddam.github.io/bezel/">Bezel</a> tiles</li>
+          <li><a href="https://github.com/ShazMoghaddam/bezel-charts/blob/main/LICENSE">MIT licence</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="foot__bar">
+      <p>Designed by <a href="https://shazmoghaddam.github.io">Shaz Moghaddam</a>, London</p>
+      <p class="foot__copy">© 2026 · Free to use under the MIT licence</p>
+    </div>
   </div>
 </footer>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
