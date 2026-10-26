@@ -29,8 +29,6 @@ a{color:inherit}
 h1{font-size:clamp(32px,5.4vw,58px);line-height:1.04;letter-spacing:-.035em;font-weight:700;margin:0;max-width:16ch;text-wrap:balance}
 h1 em{font-style:normal;background:linear-gradient(110deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .lede{margin:0;color:var(--ink-2);font-size:17px;max-width:58ch}
-.facts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.facts span{font:500 12px var(--f-mono);color:var(--ink-2);border:1px solid var(--line);border-radius:999px;padding:5px 11px}
 .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding-block:8px 18px}
 .toolbar h2{font-size:13px;font-family:var(--f-mono);font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:0}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--panel)}
@@ -55,6 +53,7 @@ h1 em{font-style:normal;background:linear-gradient(110deg,var(--accent),var(--ac
 .install h2{font-size:26px;letter-spacing:-.02em;margin:0}
 .install p{margin:0;color:var(--ink-2);max-width:62ch}
 pre{margin:0;background:var(--code-bg);color:var(--code-dim);border-radius:16px;padding:18px 20px;overflow-x:auto;font:13px/1.75 var(--f-mono)}
+pre:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 pre .t{color:var(--code-key)} pre .a{color:var(--code-ink)} pre .s{color:var(--code-str)}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--ground);font:500 13px var(--f-body);padding:10px 16px;border-radius:999px;opacity:0;transition:.2s;pointer-events:none;z-index:9}
 .toast.on{opacity:1;transform:translate(-50%,0)}
@@ -173,14 +172,9 @@ pre .t{color:var(--code-key)} pre .a{color:var(--code-ink)} pre .s{color:var(--c
 /* ---------- Footer ----------
    Split on the diagonal from top right to bottom left: mint above, amber below, the same pair
    the charts use. The content is drawn twice (site.js makes the copy): deep teal clipped to the
-   mint triangle and deep brown clipped to the amber one, so every letter keeps full contrast.
-   A faint line chart runs underneath both. */
+   mint triangle and deep brown clipped to the amber one, so every letter keeps full contrast. */
 .foot{--mint:#5EE6C8;--amber:#FFC857;position:relative;isolation:isolate;overflow:hidden;margin-top:24px;
   background:linear-gradient(to bottom right,var(--mint) 50%,var(--amber) 50%)}
-.foot__chart{position:absolute;inset:auto 0 0 0;width:100%;height:78%;z-index:-1;pointer-events:none}
-.foot__area{fill:#0B2A24;opacity:.06}
-.foot__line{fill:none;stroke:#0B2A24;stroke-width:2.5;opacity:.18;vector-effect:non-scaling-stroke}
-.foot__line--2{stroke-dasharray:6 7;opacity:.14}
 .foot__layer{--f-ink:#3A2500;--f-ink-2:rgba(58,37,0,.9);--f-ink-3:rgba(58,37,0,.86);--f-line:rgba(58,37,0,.22);
   color:var(--f-ink-2);clip-path:polygon(100% 0,100% 100%,0 100%)}
 .foot__layer--mint{--f-ink:#04332B;--f-ink-2:rgba(4,51,43,.9);--f-ink-3:rgba(4,51,43,.86);--f-line:rgba(4,51,43,.22);
