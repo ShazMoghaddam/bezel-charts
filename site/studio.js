@@ -2,8 +2,6 @@
 // State is a flat map of HTML attributes, exactly what the generated code contains.
 import { toast, copyText, saveFile, sampleYear } from './ui.js';
 
-const CDN = 'https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/bezel-charts.min.js';
-
 const CHARTS = [
   { id: 'spark', tag: 'spark', name: 'Sparkline', icon: 'M3 16c3 0 3-5 6-5s3 3 6 3 3-6 6-6' },
   { id: 'line', tag: 'line', name: 'Line', icon: 'M3 17l5-5 4 3 8-8M3 20h18' },

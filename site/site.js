@@ -2,6 +2,23 @@
 import { copyText, sampleYear } from './ui.js';
 import { createStudio } from './studio.js';
 
+/**
+ * The footer is split on its diagonal. The real content shows in deep brown on the amber half;
+ * this copy shows in deep teal on the mint half. Screen readers and keyboards only meet the real
+ * content; the copy's links still work for a mouse or a tap on the mint side.
+ */
+function buildFooterCopy() {
+  const layer = document.querySelector('.foot__layer');
+  if (!layer || document.querySelector('.foot__layer--mint')) return;
+  const copy = layer.cloneNode(true);
+  copy.classList.add('foot__layer--mint');
+  copy.setAttribute('aria-hidden', 'true');
+  for (const el of copy.querySelectorAll('a, button, [tabindex]')) el.setAttribute('tabindex', '-1');
+  for (const el of copy.querySelectorAll('[id]')) el.removeAttribute('id');
+  layer.after(copy);
+}
+buildFooterCopy();
+
 await customElements.whenDefined('bezel-chart');
 
 const heat = document.getElementById('heat');
