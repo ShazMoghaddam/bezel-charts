@@ -44,7 +44,6 @@
   <section class="hero in">
     <h1>Charts that look <em>finished</em> the moment you add them.</h1>
     <p class="lede">Ten polished chart tiles as web components. Write one HTML tag, pass your numbers, done. Every chart also exports as a static SVG for READMEs, Notion and slides, where JavaScript can't run.</p>
-    <div class="facts"><span>0 dependencies</span><span id="kb">12 kB gzipped</span><span>Pure SVG</span><span>MIT licence</span></div>
   </section>
 
   <section class="in" id="charts" aria-labelledby="charts-h">
@@ -164,7 +163,7 @@
   <section class="install in" id="install" aria-labelledby="install-h">
     <h2 id="install-h">Get the code</h2>
     <p>Add one script, then use any chart tag. Hover a chart for exact values. Every option is an attribute, so the same HTML works in plain pages, React, Vue or a CMS.</p>
-<pre><span class="t">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@v1.0.0/dist/bezel-charts.min.js"</span><span class="t">&gt;&lt;/script&gt;</span>
+<pre tabindex="0" aria-label="Install code"><span class="t">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@v1.0.0/dist/bezel-charts.min.js"</span><span class="t">&gt;&lt;/script&gt;</span>
 
 <span class="t">&lt;bezel-bars</span> <span class="a">heading</span>=<span class="s">"Commits"</span> <span class="a">values</span>=<span class="s">"4,9,6,3,8"</span> <span class="a">labels</span>=<span class="s">"M,T,W,T,F"</span><span class="t">&gt;&lt;/bezel-bars&gt;</span></pre>
     <p>Need a picture instead of a live chart? Use Save SVG in the Studio, commit the file, then add it to your README with <code>![Chart](chart.svg)</code>. From code, call <code>chart.toSVG()</code>.</p>
@@ -172,12 +171,6 @@
 </main>
 
 <footer class="foot">
-  <!-- A faint line chart runs across the whole footer, behind the content. -->
-  <svg class="foot__chart" viewBox="0 0 1200 300" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-    <path class="foot__area" d="M0 250 C60 245 90 232 150 228 S250 236 310 214 S420 170 480 182 S580 205 640 168 S760 96 820 112 S930 150 990 104 S1110 40 1200 30 L1200 300 L0 300 Z"/>
-    <path class="foot__line" d="M0 250 C60 245 90 232 150 228 S250 236 310 214 S420 170 480 182 S580 205 640 168 S760 96 820 112 S930 150 990 104 S1110 40 1200 30"/>
-    <path class="foot__line foot__line--2" d="M0 272 C80 268 140 262 210 258 S330 250 400 244 S520 238 600 226 S740 212 820 204 S960 192 1040 176 S1150 160 1200 156"/>
-  </svg>
   <!-- One layer of content. site.js copies it once more for the mint half; each copy is clipped to its own triangle. -->
   <div class="foot__layer">
     <div class="foot__in">
