@@ -55,11 +55,29 @@ import { render, toSVG } from 'bezel-charts'; // draw charts as SVG strings, eve
 
 The [Studio](https://shazmoghaddam.github.io/bezel-charts/site/#studio) is the easiest way to make a chart. Pick a chart type, then work through the tabs while the preview updates beside them:
 
-- **Data:** the title, your numbers, labels and series. Paste a table straight from Excel, Numbers or Google Sheets and it fills the values, series names and labels in one go.
+- **Data:** the title, your numbers, labels and series. **Import a file** (CSV, Excel .xlsx or JSON), drop one onto the Studio, or paste cells straight from Excel, Numbers or Google Sheets, and it fills the values, series names and labels in one go.
 - **Style:** theme, frame, corners, height, colours and how numbers are written.
 - **Extras:** headline number, goal line, notes on key points, and the options that suit that chart, such as a trend line on a scatter plot.
 
-The Studio only offers settings that change the chart you're editing. When you're done, **Copy HTML** gives you the tag, **Save SVG** gives you an image file, and **Copy link** opens your exact chart in the Studio for someone else. The **Customise** button under every example on the site opens that example in the Studio.
+The Studio only offers settings that change the chart you're editing. When you're done, **Copy HTML** gives you the script line and your chart's tag, ready to paste into a page. Untick **Include the script line** when the page already has it. **Save SVG** gives you an image file, and **Copy link** opens your exact chart in the Studio for someone else. The **Customise** button under every example on the site opens that example in the Studio.
+
+### Importing data
+
+The Studio reads the first sheet of an Excel file, CSV (comma or semicolon separated, quoted cells are fine) and JSON. It looks at your columns and fills in the chart for you:
+
+- A text column becomes the labels, and number columns become the values. Line and bar charts take up to six number columns as series; Bars switches to Grouped bars when there's more than one.
+- A scatter plot uses the first two number columns for across and up. A text column with a few repeated values, like a team name, splits the points into groups.
+- A heatmap uses a date column (2026-03-01, 01/03/2026 or Excel dates) and adds up the values for each day.
+- Currency signs and thousands separators are understood, so `£1,200` reads as 1200.
+
+The imported data stays when you switch chart type, so you can try it as a line, then bars, then a donut. **Start over with sample data** clears it. Files stay in your browser: nothing is uploaded.
+
+```json
+[
+  { "month": "Jan", "sales": 1200, "costs": 800 },
+  { "month": "Feb", "sales": 1500, "costs": 900 }
+]
+```
 
 ## The charts
 

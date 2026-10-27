@@ -1,6 +1,10 @@
 // The Studio: pick a chart, edit its data and look, copy the code or save an SVG.
 // State is a flat map of HTML attributes, exactly what the generated code contains.
 import { toast, copyText, saveFile, sampleYear } from './ui.js';
+import { readFile, describe, daily, parseDelimited, toNum } from './table.js';
+
+const CDN = 'https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@v1.0.0/dist/bezel-charts.min.js';
+const SCRIPT = `<script type="module" src="${CDN}"></script>`;
 
 const CHARTS = [
   { id: 'spark', tag: 'spark', name: 'Sparkline', icon: 'M3 16c3 0 3-5 6-5s3 3 6 3 3-6 6-6' },
@@ -44,6 +48,7 @@ const effectiveStat = (ui, a) => a.stat || statDefault(ui);
 
 // Every control in the panel. "only" limits it to the charts it makes sense for; "when" hides it until it applies.
 const FIELDS = [
+  { tab: 'data', kind: 'import', only: all },
   { tab: 'data', key: 'heading', kind: 'text', label: 'Title', placeholder: 'e.g. Monthly sales', only: all },
   { tab: 'data', kind: 'series', only: only('line', 'bars', 'grouped') },
   { tab: 'data', kind: 'groups', only: only('scatter') },
@@ -102,25 +107,20 @@ const listFrom = (text) => String(text ?? '').split(/\n|,/).map((s) => s.trim())
 const listOf = (v) => (v ? String(v).split(',') : []);
 const badTokens = (text) => tokens(text).filter((t) => !isNum(t));
 
-/** Reads rows pasted from Excel, Numbers or Google Sheets (tab separated). Returns null for plain lists. */
-function parseTable(text) {
-  if (!/\t/.test(text)) return null;
-  const rows = text.replace(/\r/g, '').split('\n').filter((l) => l.trim()).map((l) => l.split('\t').map((c) => c.trim()));
-  if (!rows.length) return null;
-  const cols = Math.max(...rows.map((r) => r.length));
-  const numericCol = (c) => rows.slice(1).every((r) => r[c] == null || r[c] === '' || isNum(r[c]));
-  const header = rows[0].some((cell, c) => numericCol(c) && cell && !isNum(cell));
-  const body = header ? rows.slice(1) : rows;
-  const labelCol = body.length && !isNum(body[0][0]) ? 0 : -1;
-  const columns = [];
-  for (let c = 0; c < cols; c++) {
-    if (c === labelCol) continue;
-    if (!body.every((r) => r[c] == null || r[c] === '' || isNum(r[c]))) continue;
-    columns.push({ name: header ? rows[0][c] || '' : '', values: body.map((r) => (r[c] ? String(Number(cleanNum(r[c]))) : '0')).join(',') });
-  }
-  if (!columns.length) return null;
-  return { labels: labelCol === 0 ? body.map((r) => r[0].replace(/,/g, ' ')).join(',') : '', columns };
-}
+/** A tidy title from a file name: "monthly-sales_2026.csv" becomes "Monthly sales 2026". */
+const titleFrom = (name) => {
+  const t = String(name).replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  return t ? t[0].toUpperCase() + t.slice(1) : '';
+};
+const niceCeil = (n) => {
+  if (n <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(n)));
+  return [1, 2, 2.5, 5, 10].map((k) => k * p).find((v) => v >= n);
+};
+const listNames = (names) => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
+
+// Blocks are redrawn as you edit, except while you're typing or picking inside one.
+const isTyping = (box) => box.contains(document.activeElement) && document.activeElement.matches('input, select, textarea');
 
 /* ---------- the Studio ---------- */
 
@@ -133,6 +133,9 @@ export function createStudio(root) {
   let attrs = {};
   let el = null;
   let widthTouched = false;
+  let table = null; // the last file or pasted table, re-used when the chart type changes
+  let importNote = '';
+  let withScript = true;
 
   const tagOf = () => `bezel-${byId[ui].tag}`;
   const pick = (v) => (typeof v === 'object' && v ? v[ui] : v);
@@ -252,8 +255,124 @@ export function createStudio(root) {
         return `<div class="block" data-block="notes"></div>`;
       case 'colours':
         return `<div class="block" data-block="colours"></div>`;
+      case 'import':
+        return `<div class="import">
+          <div class="import__row">
+            <button type="button" class="btn" data-import>Import a file</button>
+            <span class="hint">CSV, Excel or JSON, or drop a file here</span>
+          </div>
+          <input type="file" id="import-file" accept=".csv,.tsv,.txt,.json,.xlsx,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+          ${importNote ? `<p class="import__note${importNote.startsWith('!') ? ' import__note--warn' : ''}" role="status">${esc(importNote.replace(/^!/, ''))}</p>` : ''}
+        </div>`;
     }
     return '';
+  }
+
+  /** Fills the current chart from a table read by table.js. Returns a sentence describing what was used. */
+  function applyTable(t) {
+    for (const k of ['values', 'labels', 'series', 'x', 'y', 'x-label', 'y-label', 'notes', 'start', 'goal', 'goal-label', 'zones', 'max', 'min', 'color'])
+      delete attrs[k];
+    if (t.title && (!attrs.heading || attrs.heading === PRESETS[ui].heading)) attrs.heading = t.title;
+    const B = t.body, N = t.numbers, L = t.label && t.label !== t.group ? t.label : null;
+    const col = (c) => B.map((r) => toNum(t.cell(r, c)));
+    const labels = L ? B.map((r) => t.cell(r, L).replace(/,/g, ' ')) : [];
+    const rows = `${B.length} row${B.length === 1 ? '' : 's'}${t.truncated ? ' (the first 5,000)' : ''}`;
+    const from = L ? ` Labels from ${L.name || 'the first column'};` : '';
+    const name = (c) => c.name || 'the numbers';
+    if (labels.length) attrs.labels = labels.join(',');
+
+    switch (ui) {
+      case 'line': case 'bars': case 'grouped': {
+        const use = N.slice(0, 6);
+        attrs.values = use.map((c) => col(c).join(',')).join('|');
+        if (use.length > 1) attrs.series = use.map((c, i) => (c.name || `Series ${i + 1}`).replace(/,/g, ' ')).join(',');
+        const extra = N.length > 6 ? ` The first 6 of ${N.length} number columns are shown.` : '';
+        return `${rows}.${from} ${use.length > 1 ? 'series' : 'values'} from ${listNames(use.map(name))}.${extra}`;
+      }
+      case 'scatter': {
+        if (N.length < 2) {
+          delete attrs.labels;
+          return '!A scatter plot needs two number columns: one for across (x) and one for up (y).';
+        }
+        const [cx, cy] = N;
+        attrs['x-label'] = cx.name; attrs['y-label'] = cy.name;
+        if (!attrs['x-label']) delete attrs['x-label'];
+        if (!attrs['y-label']) delete attrs['y-label'];
+        if (t.group) {
+          const names = [...new Set(B.map((r) => t.cell(r, t.group)))];
+          const pick = (g, c) => B.filter((r) => t.cell(r, t.group) === g).map((r) => toNum(t.cell(r, c))).join(',');
+          attrs.x = names.map((g) => pick(g, cx)).join('|');
+          attrs.y = names.map((g) => pick(g, cy)).join('|');
+          attrs.series = names.map((g) => g.replace(/,/g, ' ') || 'Other').join(',');
+          if (L) attrs.labels = names.flatMap((g) => B.filter((r) => t.cell(r, t.group) === g).map((r) => t.cell(r, L).replace(/,/g, ' '))).join(',');
+          return `${rows}.${from} across from ${name(cx)}, up from ${name(cy)}, grouped by ${t.group.name || 'the text column'}.`;
+        }
+        attrs.x = col(cx).join(','); attrs.y = col(cy).join(',');
+        return `${rows}.${from} across from ${name(cx)}, up from ${name(cy)}.`;
+      }
+      case 'heatmap': {
+        delete attrs.labels;
+        const c = N[0];
+        if (t.date) {
+          const d = daily(t, c);
+          attrs.start = d.start; attrs.values = d.values.join(',');
+          return `${rows}. ${name(c)} added up per day from ${d.start}${d.clipped ? ', showing the latest two years' : ''}.`;
+        }
+        attrs.values = col(c).join(',');
+        return `${rows}. One square per row from ${name(c)}, ending today. Add a date column to place them on the right days.`;
+      }
+      case 'gauge': {
+        delete attrs.labels;
+        const vals = col(N[0]), last = vals[vals.length - 1];
+        if (N[0].name) attrs.labels = N[0].name.replace(/,/g, ' ');
+        const lo = Math.min(0, ...vals), hi = Math.max(...vals);
+        if (lo < 0) attrs.min = String(-niceCeil(-lo));
+        if (hi > 100 || lo < 0) attrs.max = String(niceCeil(hi));
+        attrs.values = String(last);
+        return `${rows}. Showing the last value of ${name(N[0])}.`;
+      }
+      case 'ring': {
+        const vals = col(N[0]).slice(0, 6);
+        attrs.values = vals.join(',');
+        if (labels.length) attrs.labels = labels.slice(0, 6).join(',');
+        if (Math.max(...vals) > 100) attrs.max = String(niceCeil(Math.max(...vals)));
+        return `${rows}.${from} values from ${name(N[0])}.${B.length > 6 ? ' Rings show the first 6.' : ''}`;
+      }
+      default: {
+        attrs.values = col(N[0]).join(',');
+        return `${rows}.${from} values from ${name(N[0])}.${N.length > 1 ? ` This chart uses one number column; try Line or Grouped bars to see all ${N.length}.` : ''}`;
+      }
+    }
+  }
+
+  /** Reads rows into a table and redraws the chart with them. */
+  function useRows(rows, title, source) {
+    const t = describe(rows);
+    if (!t) {
+      importNote = "!Couldn't find a column of numbers in that data. Check the numbers aren't stored as text.";
+      renderPanes();
+      return false;
+    }
+    t.title = title;
+    t.source = source;
+    table = t;
+    const target = ui === 'bars' && t.numbers.length > 1 ? 'grouped' : ui === 'grouped' && t.numbers.length === 1 ? 'bars' : ui;
+    choose(target);
+    return true;
+  }
+
+  async function importFile(file) {
+    if (!file) return;
+    try {
+      const rows = await readFile(file);
+      if (useRows(rows, titleFrom(file.name), `Loaded ${file.name}: `)) {
+        showTab(tabs[0]);
+        toast(`${file.name} loaded`);
+      }
+    } catch (err) {
+      importNote = '!' + (err.message || "That file couldn't be read.");
+      renderPanes();
+    }
   }
 
   function renderPanes() {
@@ -344,7 +463,7 @@ export function createStudio(root) {
   }
   function renderNotes() {
     const box = root.querySelector('[data-block="notes"]');
-    if (!box || box.contains(document.activeElement)) return;
+    if (!box || isTyping(box)) return;
     const pts = notePoints(), rows = noteRows();
     const options = (key) => pts.map((p) => `<option value="${esc(p.key)}"${p.key === key ? ' selected' : ''}>${esc(p.text)}</option>`).join('');
     box.innerHTML = `<div class="block__head"><span>Notes</span></div>` +
@@ -395,7 +514,7 @@ export function createStudio(root) {
   }
   function renderColours() {
     const box = root.querySelector('[data-block="colours"]');
-    if (!box || box.contains(document.activeElement)) return;
+    if (!box || isTyping(box)) return;
     const th = customElements.get('bezel-chart').themes[themeNow()];
     const slots = colourSlots(), values = colourValues(slots);
     const changed = 'color' in attrs || 'background' in attrs;
@@ -477,6 +596,11 @@ export function createStudio(root) {
 
   panel.addEventListener('change', (e) => {
     const t = e.target;
+    if (t.id === 'import-file') {
+      importFile(t.files?.[0]);
+      t.value = '';
+      return;
+    }
     if (t.matches('select[data-key]')) set(t.dataset.key, t.value);
     else if (t.matches('[data-stat]')) set('stat', t.value === statDefault(ui) ? '' : t.value);
     else if (t.matches('[data-toggle]')) {
@@ -506,6 +630,10 @@ export function createStudio(root) {
   panel.addEventListener('click', (e) => {
     const t = e.target.closest('button');
     if (!t) return;
+    if (t.matches('[data-import]')) {
+      root.querySelector('#import-file').click();
+      return;
+    }
     if (t.dataset.seg) {
       set(t.dataset.seg, t.dataset.val);
       t.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === t)));
@@ -564,43 +692,46 @@ export function createStudio(root) {
     renderPanes();
   });
 
-  /* pasting a table from a spreadsheet */
+  /* pasting a table from a spreadsheet: anything with tabs is cells copied from Excel, Numbers or Sheets */
   panel.addEventListener('paste', (e) => {
-    const t = e.target;
-    if (!t.matches('[data-numbers], [data-svalues], [data-gx], [data-gy]')) return;
-    const table = parseTable(e.clipboardData?.getData('text/plain') || '');
-    if (!table) return;
+    if (!e.target.matches('textarea, input[type="text"]')) return;
+    const text = e.clipboardData?.getData('text/plain') || '';
+    if (!/\t/.test(text)) return;
     e.preventDefault();
-    if (t.matches('[data-svalues]')) {
-      writeSeries(table.columns.slice(0, 6).map((c, i) => ({ name: table.columns.length > 1 ? c.name || `Series ${i + 1}` : c.name, values: c.values })));
-      if (table.labels) set('labels', table.labels);
-    } else if (t.matches('[data-gx], [data-gy]')) {
-      const [cx, cy] = table.columns;
-      if (!cy) { toast('Paste two columns: x first, then y.'); return; }
-      const rows = groupRows(), i = +t.closest('[data-row]').dataset.row;
-      rows[i] = { name: rows[i].name, x: cx.values, y: cy.values };
-      writeGroups(rows);
-      if (table.labels && rows.length === 1) set('labels', table.labels);
-    } else {
-      set('values', table.columns[0].values);
-      if (table.labels) set('labels', table.labels);
+    if (useRows(parseDelimited(text), '', 'Pasted ')) {
+      toast('Filled in from your spreadsheet');
     }
-    toast('Filled in from your spreadsheet');
-    update();
-    renderPanes();
+  });
+
+  /* dropping a file anywhere on the Studio */
+  root.addEventListener('dragover', (e) => {
+    if (![...(e.dataTransfer?.types || [])].includes('Files')) return;
+    e.preventDefault();
+    root.classList.add('is-drop');
+  });
+  root.addEventListener('dragleave', (e) => {
+    if (!root.contains(e.relatedTarget)) root.classList.remove('is-drop');
+  });
+  root.addEventListener('drop', (e) => {
+    const file = e.dataTransfer?.files?.[0];
+    root.classList.remove('is-drop');
+    if (!file) return;
+    e.preventDefault();
+    importFile(file);
   });
 
   /* output */
-  function html() {
+  function chartHtml() {
     const keys = Object.keys(attrs).sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
     const parts = keys.map((k) => (attrs[k] === '' ? k : `${k}="${esc(attrs[k])}"`));
     const tag = tagOf();
     const oneLine = `<${tag}${parts.length ? ' ' + parts.join(' ') : ''}></${tag}>`;
     return oneLine.length <= 90 ? oneLine : `<${tag}\n${parts.map((p) => '  ' + p).join('\n')}\n></${tag}>`;
   }
+  const html = () => (withScript ? `${SCRIPT}\n\n${chartHtml()}` : chartHtml());
   function highlight(source) {
     return esc(source)
-      .replace(/(&lt;\/?)(bezel-[a-z]+)/g, '$1<span class="t">$2</span>')
+      .replace(/(&lt;\/?)(bezel-[a-z]+|script)/g, '$1<span class="t">$2</span>')
       .replace(/([\w-]+)=(&quot;.*?&quot;)/g, '<span class="a">$1</span>=<span class="s">$2</span>');
   }
 
@@ -621,6 +752,11 @@ export function createStudio(root) {
     const kept = Object.fromEntries(KEEP.filter((k) => k in attrs).map((k) => [k, attrs[k]]));
     ui = next;
     attrs = { ...(preset || PRESETS[ui]), ...(preset ? {} : kept) };
+    if (preset) { table = null; importNote = ''; }
+    if (table) {
+      const note = applyTable(table).replace(/\.\s+([a-z])/g, (m, c) => `. ${c.toUpperCase()}`);
+      importNote = note.startsWith('!') ? note : table.source + note;
+    }
     if (ui === 'heatmap' && !attrs.values) Object.assign(attrs, sampleYear());
     picker.querySelectorAll('[data-ui]').forEach((b) => {
       const on = b.dataset.ui === ui;
@@ -638,7 +774,12 @@ export function createStudio(root) {
 
   /* buttons under the preview */
   const slug = () => (attrs.heading || byId[ui].name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'chart';
-  $('#copy-html').addEventListener('click', () => copyText(html(), 'HTML copied. Add the script from Get the code once per page.'));
+  $('#copy-html').addEventListener('click', () =>
+    copyText(html(), withScript ? 'Copied the script and your chart. Paste both into your page.' : 'Chart copied. The page also needs the script line once.'));
+  $('#with-script').addEventListener('change', (e) => {
+    withScript = e.target.checked;
+    code.innerHTML = highlight(html());
+  });
   $('#copy-svg').addEventListener('click', () => copyText(el.toSVG(), 'SVG copied'));
   $('#save-svg').addEventListener('click', () => saveFile(`${slug()}.svg`, el.toSVG()));
   $('#share').addEventListener('click', () => {
@@ -647,6 +788,8 @@ export function createStudio(root) {
   });
   $('#reset').addEventListener('click', () => {
     attrs = {};
+    table = null;
+    importNote = '';
     choose(ui);
     toast('Back to the sample data');
   });
