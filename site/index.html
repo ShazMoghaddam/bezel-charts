@@ -34,7 +34,7 @@
     <nav class="nav" aria-label="Sections">
       <a href="#charts">Charts</a>
       <a href="#studio">Studio</a>
-      <a href="#install">Get the code</a>
+      <a href="#install">Add to your site</a>
       <a href="https://github.com/ShazMoghaddam/bezel-charts">GitHub</a>
     </nav>
   </div>
@@ -132,7 +132,8 @@
         </div>
         <div class="out">
           <div class="out__head">
-            <b>Your code</b>
+            <b>Your chart</b>
+            <label class="toggle toggle--sm" for="with-script"><input id="with-script" type="checkbox" checked><span class="toggle__ui" aria-hidden="true"></span><span>Include the script line</span></label>
             <div class="out__acts">
               <button type="button" class="btn btn--solid" id="copy-html">Copy HTML</button>
               <button type="button" class="btn" id="copy-svg">Copy SVG</button>
@@ -141,6 +142,7 @@
             </div>
           </div>
           <pre id="code" tabindex="0" aria-label="Generated HTML"></pre>
+          <p class="out__note">Paste the script once per page, then add as many charts as you like.</p>
         </div>
       </div>
 
@@ -161,8 +163,8 @@
   </section>
 
   <section class="install in" id="install" aria-labelledby="install-h">
-    <h2 id="install-h">Get the code</h2>
-    <p>Add one script, then use any chart tag. Hover a chart for exact values. Every option is an attribute, so the same HTML works in plain pages, React, Vue or a CMS.</p>
+    <h2 id="install-h">Add to your site</h2>
+    <p>Add the script once per page, then use any chart tag, or copy a finished one from the Studio. Hover a chart for exact values. Every option is an attribute, so the same HTML works in plain pages, React, Vue or a CMS.</p>
 <pre tabindex="0" aria-label="Install code"><span class="t">&lt;script</span> <span class="a">type</span>=<span class="s">"module"</span> <span class="a">src</span>=<span class="s">"https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@v1.0.0/dist/bezel-charts.min.js"</span><span class="t">&gt;&lt;/script&gt;</span>
 
 <span class="t">&lt;bezel-bars</span> <span class="a">heading</span>=<span class="s">"Commits"</span> <span class="a">values</span>=<span class="s">"4,9,6,3,8"</span> <span class="a">labels</span>=<span class="s">"M,T,W,T,F"</span><span class="t">&gt;&lt;/bezel-bars&gt;</span></pre>
@@ -194,7 +196,7 @@
         <ul>
           <li><a href="#charts">Charts</a></li>
           <li><a href="#studio">Studio</a></li>
-          <li><a href="#install">Get the code</a></li>
+          <li><a href="#install">Add to your site</a></li>
           <li><a href="https://github.com/ShazMoghaddam/bezel-charts">GitHub</a></li>
           <li><a href="https://github.com/ShazMoghaddam/bezel-charts#readme">Documentation</a></li>
         </ul>

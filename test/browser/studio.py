@@ -33,7 +33,7 @@ with sync_playwright() as p:
         pg.click(f'[data-ui="{cid}"]'); pg.wait_for_timeout(250)
         check(svg_ok(), f'{cid}: preview renders')
         tag = 'bars' if cid == 'grouped' else cid
-        check(code().startswith(f'<bezel-{tag}'), f'{cid}: code tag')
+        check(f'<bezel-{tag}' in code() and code().startswith('<script'), f'{cid}: code tag with script line')
         # every tab, every toggle on then off, every select through its options
         for tab in ['data','style','extras']:
             pg.click(f'#tab-{tab}'); pg.wait_for_timeout(80)
@@ -108,7 +108,7 @@ with sync_playwright() as p:
     check(pg2.locator('#code').inner_text() == before, 'share link restores the same chart')
     # customise from gallery
     pg.locator('[data-card="donut"] [data-edit]').click(); pg.wait_for_timeout(600)
-    check(code().startswith('<bezel-donut') and 'Monthly budget' in code(), 'customise loads gallery chart')
+    check('<bezel-donut' in code() and 'Monthly budget' in code(), 'customise loads gallery chart')
     pg.locator('[data-card="grouped"] [data-edit]').click(); pg.wait_for_timeout(400)
     check(pg.locator('[data-ui="grouped"]').get_attribute('aria-checked') == 'true', 'grouped detected')
     # SVG copy
@@ -118,6 +118,64 @@ with sync_playwright() as p:
     with pg.expect_download() as dl:
         pg.click('#save-svg')
     check(dl.value.suggested_filename == 'revenue-by-quarter.svg', 'save svg filename ' + dl.value.suggested_filename)
+    # the script line toggle
+    pg.click('label[for="with-script"]'); pg.wait_for_timeout(100)
+    check(code().startswith('<bezel-'), 'script line can be left out')
+    pg.click('label[for="with-script"]'); pg.wait_for_timeout(100)
+    check(code().startswith('<script type="module"'), 'script line comes back')
+
+    # importing files
+    files = os.path.join(os.path.dirname(__file__), 'files')
+    note = lambda: pg.locator('.import__note').inner_text() if pg.locator('.import__note').count() else ''
+    pg.click('[data-ui="bars"]'); pg.wait_for_timeout(200)
+    pg.set_input_files('#import-file', os.path.join(files, 'monthly-sales.csv')); pg.wait_for_timeout(500)
+    c = code()
+    check(pg.locator('[data-ui="grouped"]').get_attribute('aria-checked') == 'true', 'CSV with 3 number columns switches Bars to Grouped bars')
+    check('values="1200,1500,1700,1650|800,900,950,1000|400,600,750,650"' in c and 'series="Sales,Costs,Profit"' in c and 'labels="Jan,Feb,Mar,Apr"' in c, 'CSV fills series and labels: ' + c[:240])
+    check('heading="Monthly sales"' in c, 'title from the file name')
+    check('Loaded monthly-sales.csv' in note() and 'Labels from Month' in note(), 'import note: ' + note())
+    check(svg_ok(), 'CSV chart renders')
+    pg.click('[data-ui="donut"]'); pg.wait_for_timeout(300)
+    c = code()
+    check('values="1200,1500,1700,1650"' in c and 'labels="Jan,Feb,Mar,Apr"' in c, 'imported data carries over to another chart type')
+    check('try Line or Grouped bars' in note(), 'note explains the extra columns: ' + note())
+    pg.click('[data-ui="scatter"]'); pg.wait_for_timeout(300)
+    check('x="1200,1500,1700,1650"' in code() and 'y="800,900,950,1000"' in code() and 'x-label="Sales"' in code(), 'scatter uses the first two number columns')
+    pg.click('[data-ui="gauge"]'); pg.wait_for_timeout(300)
+    check('values="1650"' in code() and 'max="2000"' in code(), 'gauge shows the last value on a fitted scale: ' + code()[:200])
+    pg.click('[data-ui="ring"]'); pg.wait_for_timeout(300)
+    check(svg_ok(), 'ring renders imported data')
+
+    pg.click('[data-ui="scatter"]'); pg.wait_for_timeout(200)
+    pg.set_input_files('#import-file', os.path.join(files, 'study.json')); pg.wait_for_timeout(500)
+    c = code()
+    check('series="A,B"' in c and 'x="2,4,6,8|3,5,7,9"' in c and 'y="48,55,70,75|52,63,72,82"' in c, 'JSON scatter grouped by a text column: ' + c[:300])
+    check(svg_ok(), 'JSON scatter renders')
+
+    pg.click('[data-ui="heatmap"]'); pg.wait_for_timeout(200)
+    pg.set_input_files('#import-file', os.path.join(files, 'commits.xlsx')); pg.wait_for_timeout(800)
+    c = code()
+    check('start="2026-01-02"' in c, 'Excel dates read and placed on the calendar: ' + c[:200])
+    vals = c.split('values="')[1].split('"')[0].split(',') if 'values="' in c else []
+    check(len(vals) == 119, f'one square per day from first to last date ({len(vals)})')
+    check('added up per day' in note(), 'heatmap note: ' + note())
+    check(svg_ok(), 'Excel heatmap renders')
+
+    with open(os.path.join(files, 'bad.csv'), 'w') as f: f.write('name,city\nAna,Leeds\n')
+    pg.set_input_files('#import-file', os.path.join(files, 'bad.csv')); pg.wait_for_timeout(400)
+    check("Couldn't find a column of numbers" in note() and svg_ok(), 'a file with no numbers explains itself and keeps the chart')
+    os.remove(os.path.join(files, 'bad.csv'))
+    pg.click('#reset'); pg.wait_for_timeout(200)
+    check(not note() and 'Contributions' in code(), 'start over clears the imported data')
+
+    # drag and drop
+    pg.click('[data-ui="line"]'); pg.wait_for_timeout(200)
+    csv = open(os.path.join(files, 'monthly-sales.csv')).read()
+    pg.evaluate("""(csv) => { const dt = new DataTransfer(); dt.items.add(new File([csv], 'dropped.csv', { type: 'text/csv' }));
+      document.querySelector('#studio').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true })); }""", csv)
+    pg.wait_for_timeout(500)
+    check('Loaded dropped.csv' in note() and 'series="Sales,Costs,Profit"' in code(), 'drop a file onto the Studio')
+
     check(not errs, 'console errors: ' + json.dumps(errs[:5]))
     b.close()
 server.terminate()
