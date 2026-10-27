@@ -67,3 +67,11 @@ test('dates in ISO, UK order and Excel serial numbers', () => {
   assert.equal(parseDate('12'), null);
   assert.equal(excelDate(46082), '2026-03-01');
 });
+
+test('units come from column names and cells', () => {
+  const t = describe([['Day', 'Distance (km)', 'Spend', 'Share'], ['Mon', '5.2', '£1,200', '40%'], ['Tue', '7', '£900', '60%']]);
+  const [km, spend, share] = t.numbers;
+  assert.deepEqual([km.prefix, km.suffix], ['', ' km']);
+  assert.deepEqual([spend.prefix, spend.suffix], ['£', '']);
+  assert.deepEqual([share.prefix, share.suffix], ['', '%']);
+});

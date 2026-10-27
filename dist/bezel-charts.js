@@ -1086,6 +1086,7 @@ var BezelChart = class extends Base {
     } catch (err) {
       svg = `<p style="font:13px ${SANS};color:#d63f7c">${esc(err.message)}</p>`;
     }
+    svg = svg.replace(/<title>[\s\S]*?<\/title>/, "");
     this.shadowRoot.innerHTML = `<style>${HOST_CSS}</style>${svg}<div class="tip" role="status"></div>`;
     this.#rendered = true;
     this.dispatchEvent(new CustomEvent("bezel-render", { bubbles: true }));

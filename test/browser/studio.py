@@ -168,6 +168,29 @@ with sync_playwright() as p:
     pg.click('#reset'); pg.wait_for_timeout(200)
     check(not note() and 'Contributions' in code(), 'start over clears the imported data')
 
+    # sample files, each in its own chart
+    pg.click('[data-sample="monthly-sales-2026.csv"]'); pg.wait_for_timeout(700)
+    c = code()
+    check(pg.locator('[data-ui="grouped"]').get_attribute('aria-checked') == 'true' and 'series="Sales,Costs,Profit"' in c and 'prefix="£"' in c and 'compact' in c, 'sales sample opens in Grouped bars with £: ' + c[:300])
+    check('Download the file' in note(), 'sample note offers the file')
+    pg.click('[data-sample="study-hours-vs-scores.csv"]'); pg.wait_for_timeout(700)
+    c = code()
+    check(pg.locator('[data-ui="scatter"]').get_attribute('aria-checked') == 'true' and 'series="Class A,Class B"' in c and 'trend' in c, 'study sample opens as a grouped scatter with trend lines')
+    pg.click('[data-sample="daily-running-2026.csv"]'); pg.wait_for_timeout(700)
+    c = code()
+    check(pg.locator('[data-ui="heatmap"]').get_attribute('aria-checked') == 'true' and 'start="2026-01-01"' in c and 'suffix=" km"' in c and 'commits' not in c, 'running sample opens as a heatmap in km: ' + c[:200])
+    # imported data starts clean: no units or wording left from the built-in example
+    pg.click('[data-ui="spark"]'); pg.wait_for_timeout(300)
+    c = code()
+    check('°C' not in c and 'since Monday' not in c and 'suffix=" km"' in c, 'sparkline drops the example units: ' + c[:200])
+    pg.click('[data-ui="ring"]'); pg.wait_for_timeout(300)
+    shadow = pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML")
+    check('max="10"' in code() and '%' not in shadow.split('</style>',1)[1], 'rings show km against a fitted scale, not percentages')
+    check('<title>' not in shadow, 'no second browser tooltip')
+    check('labels="1 Jan,3 Jan,6 Jan' in code(), 'date labels are shortened: ' + code()[:260])
+    pg.click('#reset'); pg.wait_for_timeout(200)
+    check(not note(), 'start over clears the sample')
+
     # drag and drop
     pg.click('[data-ui="line"]'); pg.wait_for_timeout(200)
     csv = open(os.path.join(files, 'monthly-sales.csv')).read()

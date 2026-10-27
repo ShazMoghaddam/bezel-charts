@@ -143,6 +143,9 @@ export class BezelChart extends Base {
     } catch (err) {
       svg = `<p style="font:13px ${SANS};color:#d63f7c">${esc(err.message)}</p>`;
     }
+    // The live chart has its own tooltips, so drop the <title> browsers would show as a second one.
+    // aria-label still names it for screen readers, and toSVG() keeps the <title> for static images.
+    svg = svg.replace(/<title>[\s\S]*?<\/title>/, '');
     this.shadowRoot.innerHTML = `<style>${HOST_CSS}</style>${svg}<div class="tip" role="status"></div>`;
     this.#rendered = true;
     this.dispatchEvent(new CustomEvent('bezel-render', { bubbles: true }));

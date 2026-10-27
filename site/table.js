@@ -229,13 +229,23 @@ export function describe(rows) {
   const group = texts.find((c) => body.length >= 4 && distinct(c) >= 2 && distinct(c) <= 6 && distinct(c) < body.length / 2) || null;
   const label = texts.find((c) => c !== group) || dates[0] || group || null;
   const unnamed = (c, i) => c.name || (numbers.length > 1 ? `Series ${i + 1}` : '');
+  // Units come from the column name, like "Distance (km)", or from the cells, like "£1,200" or "45%".
+  const unitOf = (c) => {
+    const cells = body.map((r) => String(r[c.index] ?? '').trim()).filter(Boolean);
+    const most = (re) => cells.length && cells.filter((v) => re.test(v)).length >= cells.length / 2;
+    const m = /\(([^()]{1,12})\)\s*$/.exec(c.name);
+    const u = m ? m[1].trim() : '';
+    if (/^[£$€¥]$/.test(u) || most(/^-?[£$€¥]/)) return { prefix: /^[£$€¥]$/.test(u) ? u : cells.find((v) => /^-?[£$€¥]/.test(v)).replace(/^-/, '')[0], suffix: '' };
+    if (u === '%' || most(/%$/)) return { prefix: '', suffix: '%' };
+    return { prefix: '', suffix: u ? ` ${u}` : '' };
+  };
   return {
     body,
     truncated,
     label,
     date: dates[0] || null,
     group,
-    numbers: numbers.map((c, i) => ({ ...c, name: unnamed(c, i) })),
+    numbers: numbers.map((c, i) => ({ ...c, name: unnamed(c, i), ...unitOf(c) })),
     cell: (r, c) => String(r[c.index] ?? '').trim(),
   };
 }

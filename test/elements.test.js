@@ -70,3 +70,11 @@ test('a bad type shows an error message instead of throwing', async () => {
   await flush();
   assert.match(el.shadowRoot.innerHTML, /unknown chart type/);
 });
+
+test('live charts leave out the SVG title so browsers do not show a second tooltip', async () => {
+  const el = mount('<bezel-bars heading="Sales" values="1,2"></bezel-bars>');
+  await flush();
+  assert.doesNotMatch(el.shadowRoot.innerHTML, /<title>/);
+  assert.match(el.shadowRoot.querySelector('svg').getAttribute('aria-label'), /^Sales: /);
+  assert.match(el.toSVG(), /<title>Sales: /);
+});
