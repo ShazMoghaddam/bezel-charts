@@ -70,7 +70,11 @@ The Studio reads the first sheet of an Excel file, CSV (comma or semicolon separ
 - A heatmap uses a date column (2026-03-01, 01/03/2026 or Excel dates) and adds up the values for each day.
 - Currency signs and thousands separators are understood, so `£1,200` reads as 1200.
 
+Units are picked up too: a column called `Distance (km)` gets " km" after its numbers, and cells like `£1,200` or `45%` set the £ or %. Dates used as labels are shortened to "1 Jan".
+
 The imported data stays when you switch chart type, so you can try it as a line, then bars, then a donut. **Start over with sample data** clears it. Files stay in your browser: nothing is uploaded.
+
+No file to hand? The Studio has three to try, which you can also download from [`site/samples`](site/samples): monthly sales (grouped bars), study hours against exam scores (a scatter plot with trend lines) and a year of daily runs (a heatmap).
 
 ```json
 [

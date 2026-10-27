@@ -9,5 +9,5 @@ First release.
 - Scatter plots with axis titles and an optional least-squares trend line showing Pearson's r.
 - Static SVG export from every chart (`toSVG()` and `download()`), and `render()` / `toSVG()` functions that run without a DOM, including in Node.
 - Charts fill their container and redraw on resize; heatmaps keep the most recent weeks on narrow screens.
-- The Studio: build any chart without code, import a CSV, Excel or JSON file (or paste cells from a spreadsheet), pick colours, then copy the HTML with the script line, save an SVG or share a link.
+- The Studio: build any chart without code, import a CSV, Excel or JSON file (or paste cells from a spreadsheet, or try one of three sample files), pick colours, then copy the HTML with the script line, save an SVG or share a link.
 - About 12 kB gzipped with no dependencies, a 14 kB size budget checked in CI, unit tests and a Playwright browser test.

@@ -1,10 +1,17 @@
 // The Studio: pick a chart, edit its data and look, copy the code or save an SVG.
 // State is a flat map of HTML attributes, exactly what the generated code contains.
 import { toast, copyText, saveFile, sampleYear } from './ui.js';
-import { readFile, describe, daily, parseDelimited, toNum } from './table.js';
+import { readFile, describe, daily, parseDelimited, parseDate, toNum } from './table.js';
 
 const CDN = 'https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@v1.0.0/dist/bezel-charts.min.js';
 const SCRIPT = `<script type="module" src="${CDN}"></script>`;
+
+// Ready-made files in site/samples, each opened in the chart that suits it.
+const SAMPLES = [
+  { file: 'monthly-sales-2026.csv', name: 'Monthly sales', ui: 'grouped', extra: { compact: '' } },
+  { file: 'study-hours-vs-scores.csv', name: 'Study hours', ui: 'scatter', extra: { trend: '' } },
+  { file: 'daily-running-2026.csv', name: 'Daily running', ui: 'heatmap' },
+];
 
 const CHARTS = [
   { id: 'spark', tag: 'spark', name: 'Sparkline', icon: 'M3 16c3 0 3-5 6-5s3 3 6 3 3-6 6-6' },
@@ -135,6 +142,7 @@ export function createStudio(root) {
   let widthTouched = false;
   let table = null; // the last file or pasted table, re-used when the chart type changes
   let importNote = '';
+  let sampleFile = ''; // set while a sample file is loaded, so the note can offer it as a download
   let withScript = true;
 
   const tagOf = () => `bezel-${byId[ui].tag}`;
@@ -261,8 +269,13 @@ export function createStudio(root) {
             <button type="button" class="btn" data-import>Import a file</button>
             <span class="hint">CSV, Excel or JSON, or drop a file here</span>
           </div>
+          <div class="import__row import__samples">
+            <span class="hint">No file to hand? Try one:</span>
+            ${SAMPLES.map((s) => `<button type="button" class="chip" data-sample="${esc(s.file)}">${esc(s.name)}</button>`).join('')}
+          </div>
           <input type="file" id="import-file" accept=".csv,.tsv,.txt,.json,.xlsx,text/csv,application/json,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
-          ${importNote ? `<p class="import__note${importNote.startsWith('!') ? ' import__note--warn' : ''}" role="status">${esc(importNote.replace(/^!/, ''))}</p>` : ''}
+          ${importNote ? `<p class="import__note${importNote.startsWith('!') ? ' import__note--warn' : ''}" role="status">${esc(importNote.replace(/^!/, ''))}${
+            sampleFile && !importNote.startsWith('!') ? ` <a href="samples/${esc(sampleFile)}" download>Download the file</a> to see how it's laid out.` : ''}</p>` : ''}
         </div>`;
     }
     return '';
@@ -270,12 +283,27 @@ export function createStudio(root) {
 
   /** Fills the current chart from a table read by table.js. Returns a sentence describing what was used. */
   function applyTable(t) {
-    for (const k of ['values', 'labels', 'series', 'x', 'y', 'x-label', 'y-label', 'notes', 'start', 'goal', 'goal-label', 'zones', 'max', 'min', 'color'])
+    // Start from a clean sheet: words and units from the sample data don't belong to the user's file.
+    for (const k of ['values', 'labels', 'series', 'x', 'y', 'x-label', 'y-label', 'notes', 'start', 'goal', 'goal-label', 'zones', 'max', 'min',
+      'color', 'prefix', 'suffix', 'delta-label', 'center-label'])
       delete attrs[k];
+    const unitFrom = (c) => {
+      if (c?.prefix) attrs.prefix = c.prefix;
+      if (c?.suffix) attrs.suffix = c.suffix;
+    };
+    unitFrom(ui === 'scatter' ? t.numbers[1] : t.numbers[0]);
     if (t.title && (!attrs.heading || attrs.heading === PRESETS[ui].heading)) attrs.heading = t.title;
     const B = t.body, N = t.numbers, L = t.label && t.label !== t.group ? t.label : null;
     const col = (c) => B.map((r) => toNum(t.cell(r, c)));
-    const labels = L ? B.map((r) => t.cell(r, L).replace(/,/g, ' ')) : [];
+    // Dates as labels read better short: "1 Jan", or "1 Jan 25" when the data spans years.
+    const shortDate = (() => {
+      if (L?.kind !== 'date') return null;
+      const days = B.map((r) => parseDate(t.cell(r, L))).filter(Boolean);
+      const oneYear = new Set(days.map((d) => d.slice(0, 4))).size === 1;
+      const f = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC', ...(oneYear ? {} : { year: '2-digit' }) });
+      return (v) => { const d = parseDate(v); return d ? f.format(new Date(d + 'T00:00:00Z')) : v; };
+    })();
+    const labels = L ? B.map((r) => (shortDate ? shortDate(t.cell(r, L)) : t.cell(r, L)).replace(/,/g, ' ')) : [];
     const rows = `${B.length} row${B.length === 1 ? '' : 's'}${t.truncated ? ' (the first 5,000)' : ''}`;
     const from = L ? ` Labels from ${L.name || 'the first column'};` : '';
     const name = (c) => c.name || 'the numbers';
@@ -326,16 +354,19 @@ export function createStudio(root) {
         const vals = col(N[0]), last = vals[vals.length - 1];
         if (N[0].name) attrs.labels = N[0].name.replace(/,/g, ' ');
         const lo = Math.min(0, ...vals), hi = Math.max(...vals);
+        const percent = N[0].suffix === '%' || /percent|%/i.test(N[0].name);
         if (lo < 0) attrs.min = String(-niceCeil(-lo));
-        if (hi > 100 || lo < 0) attrs.max = String(niceCeil(hi));
+        if (!percent || hi > 100 || lo < 0) attrs.max = String(niceCeil(hi));
         attrs.values = String(last);
         return `${rows}. Showing the last value of ${name(N[0])}.`;
       }
       case 'ring': {
-        const vals = col(N[0]).slice(0, 6);
+        const vals = col(N[0]).slice(0, 6), top = Math.max(...vals);
         attrs.values = vals.join(',');
         if (labels.length) attrs.labels = labels.slice(0, 6).join(',');
-        if (Math.max(...vals) > 100) attrs.max = String(niceCeil(Math.max(...vals)));
+        // Percentages fill against 100. Anything else fills against a round number just above the largest value.
+        const percent = N[0].suffix === '%' || /percent|%/i.test(N[0].name);
+        if (!percent || top > 100) attrs.max = String(niceCeil(top));
         return `${rows}.${from} values from ${name(N[0])}.${B.length > 6 ? ' Rings show the first 6.' : ''}`;
       }
       default: {
@@ -361,11 +392,17 @@ export function createStudio(root) {
     return true;
   }
 
-  async function importFile(file) {
+  async function importFile(file, sample) {
     if (!file) return;
     try {
       const rows = await readFile(file);
+      sampleFile = sample ? sample.file : '';
+      if (sample) ui = sample.ui;
       if (useRows(rows, titleFrom(file.name), `Loaded ${file.name}: `)) {
+        if (sample?.extra) {
+          Object.assign(attrs, sample.extra);
+          update();
+        }
         showTab(tabs[0]);
         toast(`${file.name} loaded`);
       }
@@ -634,6 +671,14 @@ export function createStudio(root) {
       root.querySelector('#import-file').click();
       return;
     }
+    if (t.dataset.sample) {
+      const sample = SAMPLES.find((s) => s.file === t.dataset.sample);
+      fetch(`samples/${sample.file}`)
+        .then((r) => (r.ok ? r.text() : Promise.reject(new Error())))
+        .then((text) => importFile(new File([text], sample.file, { type: 'text/csv' }), sample))
+        .catch(() => toast("Couldn't load the sample. Check your connection and try again."));
+      return;
+    }
     if (t.dataset.seg) {
       set(t.dataset.seg, t.dataset.val);
       t.parentElement.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === t)));
@@ -752,7 +797,7 @@ export function createStudio(root) {
     const kept = Object.fromEntries(KEEP.filter((k) => k in attrs).map((k) => [k, attrs[k]]));
     ui = next;
     attrs = { ...(preset || PRESETS[ui]), ...(preset ? {} : kept) };
-    if (preset) { table = null; importNote = ''; }
+    if (preset) { table = null; importNote = ''; sampleFile = ''; }
     if (table) {
       const note = applyTable(table).replace(/\.\s+([a-z])/g, (m, c) => `. ${c.toUpperCase()}`);
       importNote = note.startsWith('!') ? note : table.source + note;
@@ -790,6 +835,7 @@ export function createStudio(root) {
     attrs = {};
     table = null;
     importNote = '';
+    sampleFile = '';
     choose(ui);
     toast('Back to the sample data');
   });
