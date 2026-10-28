@@ -57,7 +57,7 @@ import { render, toSVG } from 'bezel-charts'; // draw charts as SVG strings, eve
 
 ## The Studio
 
-The [Studio](https://shazmoghaddam.github.io/bezel-charts/site/#studio) is the easiest way to make a chart. Pick a chart type, then work through the tabs while the preview updates beside them:
+The [Studio](https://shazmoghaddam.github.io/bezel-charts/site/#studio) is the easiest way to make a chart. No data to hand? Press one of the three sample files under **Import a file** to see a finished chart straight away, or download them from [`site/samples`](site/samples). Then pick a chart type then work through the tabs while the preview updates beside them:
 
 - **Data:** the title, your numbers, labels and series. **Import a file** (CSV, Excel .xlsx or JSON), drop one onto the Studio, or paste cells straight from Excel, Numbers or Google Sheets, and it fills the values, series names and labels in one go.
 - **Style:** theme, frame, corners, height, colours and how numbers are written.
