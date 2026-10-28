@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Bezel Charts social preview</title>
+<!-- Renders docs/social-preview.png (1280 x 640), the image shown when the site or repository is shared:
+     npm run serve, then: python3 scripts/shot.py http://localhost:4173/docs/social.html docs/social-preview.png 1280 640 -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap">
+<style>
+  html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    position: relative; font-family: "Geist", sans-serif; color: #111316;
+    background: radial-gradient(120% 120% at 20% 0%, #F4F5F7 0%, #E2E5E9 100%);
+  }
+  /* The footer's mint and amber, as a diagonal panel behind the charts. */
+  .split { position: absolute; inset: 0 0 0 auto; width: 640px; background: linear-gradient(to bottom right, #5EE6C8 50%, #FFC857 50%); clip-path: polygon(16% 0, 100% 0, 100% 100%, 0 100%); }
+  .copy { position: absolute; left: 72px; top: 0; bottom: 0; width: 560px; display: grid; align-content: center; gap: 26px; }
+  .mark { display: flex; align-items: center; gap: 14px; font-size: 32px; font-weight: 650; letter-spacing: -0.02em; }
+  .mark svg { width: 46px; height: 46px; }
+  h1 { margin: 0; font-size: 56px; line-height: 1.04; font-weight: 700; letter-spacing: -0.045em; }
+  h1 em { font-style: normal; background: linear-gradient(110deg, #6E70F0, #E2508C); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .sub { font: 500 20px/1.4 "Geist Mono", monospace; color: #4A5059; letter-spacing: .01em; }
+  .charts { position: absolute; right: 56px; top: 50%; translate: 0 -50%; display: grid; grid-template-columns: 270px 270px; gap: 20px; align-items: start; }
+  .charts > .wide { grid-column: 1 / -1; }
+</style>
+<script type="module" src="../src/index.js"></script>
+
+<div class="split"></div>
+<div class="copy">
+  <div class="mark"><svg viewBox="0 0 32 32" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="9" fill="#fff" stroke="#111316" stroke-width="2.4"/><path d="M9 21.5V17M14 21.5v-9M19 21.5V15M24 21.5V10" stroke="#6E70F0" stroke-width="2.6"/></svg>Bezel Charts</div>
+  <h1>Charts that look<br><em>finished</em> the moment<br>you add them.</h1>
+  <div class="sub">Free, open-source web components</div>
+</div>
+<div class="charts">
+  <bezel-line static theme="dark" class="wide" heading="Site visitors" values="420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640" series="2026,2025" labels="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec" compact height="150"></bezel-line>
+  <bezel-bars static theme="light" heading="Commits" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total" height="110"></bezel-bars>
+  <bezel-gauge static theme="dark" heading="Server load" values="63" labels="CPU" zones="60,85" height="110"></bezel-gauge>
+</div>
