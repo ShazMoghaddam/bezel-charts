@@ -4,6 +4,8 @@
 
 Bezel Charts is a set of free, open-source web components: ten chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
+![Bezel Charts: a sparkline, rings, a gauge, a line chart with a launch day note, a donut, a bar chart with a target, a scatter plot with a trend line and a year-long activity heatmap, in light and dark tiles](docs/bezel-charts.png)
+
 **[Open the Studio](https://shazmoghaddam.github.io/bezel-charts/site/#studio)** to build a chart and copy its code.
 
 - **One tag per chart.** `<bezel-bars values="4,9,6">` is a finished, labelled, animated chart.
@@ -360,7 +362,8 @@ src/
   charts/      one file per chart type: options in, SVG string out
   render.js    picks the chart and returns its SVG
   element.js   the custom element: sizing, theme, tooltips and export
-site/          the website and Studio
+site/          the website and Studio, with sample files in site/samples
+docs/          the README image and social preview, with the pages that render them
 test/          node:test suites, plus a Playwright browser test
 ```
 
