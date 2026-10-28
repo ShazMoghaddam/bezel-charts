@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1 (2026-10-28)
+
+- Live charts no longer show the browser's own tooltip on top of the chart's tooltip. Screen readers still get the chart's name, and exported SVGs keep their title.
+- The script line in the README, the site and the Studio now loads `@1`, the latest 1.x release, so fixes reach every page automatically.
+- Studio: three sample files to try, units read from imported files (km, £, %), cleaner imports, and the header shows every link on phones.
+
 ## 1.0.0 (2026-10-26)
 
 First release.

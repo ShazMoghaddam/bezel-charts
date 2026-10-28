@@ -3,7 +3,7 @@
 import { toast, copyText, saveFile, sampleYear } from './ui.js';
 import { readFile, describe, daily, parseDelimited, parseDate, toNum } from './table.js';
 
-const CDN = 'https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@v1.0.0/dist/bezel-charts.min.js';
+const CDN = 'https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/bezel-charts.min.js';
 const SCRIPT = `<script type="module" src="${CDN}"></script>`;
 
 // Ready-made files in site/samples, each opened in the chart that suits it.
