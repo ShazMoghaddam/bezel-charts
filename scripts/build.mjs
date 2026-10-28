@@ -2,7 +2,7 @@
 import { build } from 'esbuild';
 import { mkdir, stat } from 'node:fs/promises';
 
-const banner = { js: `/*! Bezel Charts v${process.env.npm_package_version ?? '1.0.0'} | MIT | github.com/ShazMoghaddam/bezel-charts */` };
+const banner = { js: `/*! Bezel Charts v${process.env.npm_package_version ?? '1.0.1'} | MIT | github.com/ShazMoghaddam/bezel-charts */` };
 const common = { entryPoints: ['src/index.js'], bundle: true, target: ['es2022', 'safari16.4'], banner, legalComments: 'none' };
 
 await mkdir('dist', { recursive: true });
