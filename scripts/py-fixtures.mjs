@@ -17,6 +17,7 @@ const stable = (svg) => {
   });
 };
 
+const year = Array.from({ length: 365 }, (_, i) => ((i * 7) % 11 > 6 ? i % 9 : 0)).join(',');
 const long = Array.from({ length: 120 }, (_, i) => Math.round(50 + 40 * Math.sin(i / 7) + (i % 5) * 3.3) / 10);
 
 export const CASES = {
@@ -74,6 +75,34 @@ export const CASES = {
     { values: '0.25,0.5,0.75', decimals: 1, suffix: '%', height: 200, stat: 'max', 'delta-label': 'top' },
     { values: [[1, 2, 3, 4], [4, 3, 2, 1], [2, 2, 2, 2], [3, 1, 4, 1]], series: 'A,B,C,D', labels: 'Q1,Q2,Q3,Q4', theme: 'light' },
     { values: '7,3,5', labels: 'a,b', notes: '1:ignored', straight: '' },
+  ],
+  scatter: [
+    {},
+    { x: '1,2,3,4,5', y: '2,4,5,4,6', trend: '', 'x-label': 'Hours', 'y-label': 'Score', notes: '4:Best' },
+    { x: '1,2,3|2,4,6', y: '5,7,6|3,8,9', series: 'Team A,Team B', trend: '', goal: 6 },
+    { x: '5', y: '5' },
+    { x: '1,1,1', y: '1,2,3', trend: '' },
+    { x: '1,2,3', y: '4' },
+    { x: Array.from({ length: 300 }, (_, i) => i).join(','), y: Array.from({ length: 300 }, (_, i) => (i * 37) % 101).join(','), prefix: '£' },
+    { x: '2,4,6,8', y: '9,7,5,3', trend: '', theme: 'light', 'y-label': 'Errors <&> "x"', zero: '' },
+    { x: '0.1,0.2,0.35', y: '1200,25000,98000', compact: '', decimals: 1, trend: '', labels: 'a,b,c', notes: 'b:Middle' },
+    { x: '1,2,3,4', y: '5,5,5,5', trend: '', width: 520, height: 260, heading: 'Flat', animate: true },
+    { x: '1,2,3|4,5,6|7,8,9', y: '1,4,9|16,25,36|49,64,81', trend: '', frame: 'none', background: '#111', color: '#f00,#0f0,#00f' },
+    { x: '-5,-1,3,7', y: '-2,0,1,-4', 'x-label': 'Change', labels: 'w,x,y,z', notes: '0:First;z:Last' },
+    { x: '10000,20000,30000', y: '1,2,3', lang: 'en-US', trend: '' },
+    { x: '1,2,3,4,5,6', y: '6,5,4,3,2,1|1,2', series: 'Down', trend: '' },
+  ],
+  heatmap: [
+    {},
+    { values: year, start: '2025-10-27', suffix: ' commits' },
+    { values: '1,2,3', start: '2026-03-01' },
+    { values: '0,1,2,3,4', start: '2026-07-01', lang: 'en-GB' },
+    { values: Array.from({ length: 120 }, (_, i) => (i * 13) % 7), start: '2026-07-15', heading: 'Runs', stat: 'total', theme: 'light' },
+    { values: year, start: '2025-11-03', width: 240 },
+    { values: year, start: '2025-11-03', width: 900, lang: 'en-US', color: '#16A884' },
+    { values: '0,0,0,0', start: '2026-02-27' },
+    { values: '-3,2,5,-1,8', start: '2026-02-30', prefix: '£', animate: true },
+    { values: Array.from({ length: 60 }, (_, i) => i % 10 === 0 ? 1000000 : i), start: '2026-08-20', compact: '', frame: 'none' },
   ],
 };
 

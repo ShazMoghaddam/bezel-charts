@@ -1,5 +1,12 @@
 # Changelog (Python package)
 
+## 0.3.0 (2026-10-30)
+
+- `bc.scatter()`: scatter plots from two DataFrame columns or two lists, with `by=` for coloured groups, `label=` for naming points, and `trend=True` for a least-squares line labelled with Pearson's r. Column names become the axis titles. Points with a missing x or y are left out, with a warning.
+- `bc.heatmap()`: calendar heatmaps from a Series with a date index, a DataFrame date column, a list of dates (each day counts its rows) or plain daily numbers. Missing days are filled with 0.
+- Dates in heatmap tooltips follow `en-GB` or `en-US`, matching the browser exactly (including "Sept").
+- 24 more parity cases against the JavaScript, plus a check of the trend line against NumPy.
+
 ## 0.2.0 (2026-10-30)
 
 - `bc.bars()`: vertical and horizontal bar charts, single or grouped. Several DataFrame columns, a dict or a list of lists become grouped bars with a legend, and a Series such as `value_counts()` uses its index as labels.

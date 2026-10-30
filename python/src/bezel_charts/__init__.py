@@ -26,8 +26,8 @@ from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
 from .charts import TYPES
 
-__version__ = "0.2.0"
-__all__ = ["Chart", "bars", "line", "render", "spark", "themes", "to_svg", "types", "__version__"]
+__version__ = "0.3.0"
+__all__ = ["Chart", "bars", "heatmap", "line", "render", "scatter", "spark", "themes", "to_svg", "types", "__version__"]
 
 #: Chart types available in this release. The rest of the ten follow in later releases.
 types = list(TYPES)
@@ -125,6 +125,53 @@ def bars(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None
         return Chart("bars", _options(options, None, None, None))
     values, names, lbls = _data.prepare(data, x, y, x_format)
     return Chart("bars", _options(options, values, names, lbls))
+
+
+def scatter(
+    data: Any = None, *, x: Any = None, y: Any = None, by: Any = None, label: Any = None, **options: Any
+) -> Chart:
+    """A scatter plot, with an optional least-squares trend line and Pearson's r (``trend=True``).
+
+    With a DataFrame, ``x=`` and ``y=`` name the columns, ``by=`` splits the points into coloured groups
+    and ``label=`` names each point (for ``notes``). The column names become the axis titles unless you
+    set ``x_label`` and ``y_label``. Without a DataFrame, pass the values as ``x=`` and ``y=``.
+    Points with a missing x or y are left out, with a warning.
+    """
+    if data is None and x is None and y is None:
+        return Chart("scatter", _options(options, None, None, None))
+    xs, ys, names, lbls = _data.scatter_groups(data, x, y, by, label)
+    out = _options(options, None, names, lbls)
+    out["x"], out["y"] = xs, ys
+    if _data._is_frame(data):
+        out.setdefault("x_label", _data.label(x))
+        out.setdefault("y_label", _data.label(y))
+    return Chart("scatter", out)
+
+
+def heatmap(data: Any = None, *, x: Any = None, y: Any = None, start: Any = None, **options: Any) -> Chart:
+    """A calendar heatmap with one square per day, like a GitHub contributions chart.
+
+    Pass daily numbers with ``start=`` (a date or "YYYY-MM-DD"; by default the last value is today),
+    a Series with a date index, a DataFrame with ``x=`` naming the date column and ``y=`` the values,
+    or just a list or column of dates, where each day counts how many times it appears.
+    Missing days are filled with 0. On narrow tiles the most recent weeks are kept.
+    """
+    if data is None:
+        out = _options(options, None, None, None)
+    else:
+        found = _data.daily(data, x, y)
+        if found is None:
+            if x is not None or y is not None:
+                raise TypeError("bezel_charts: x= and y= pick DataFrame columns.")
+            out = _options(options, _data.numbers(data), None, None)
+        else:
+            values, first = found
+            out = _options(options, values, None, None)
+            if start is None and first is not None:
+                start = first
+    if start is not None:
+        out["start"] = _data.to_date(start).isoformat()
+    return Chart("heatmap", out)
 
 
 def __getattr__(name: str):

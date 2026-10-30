@@ -24,4 +24,15 @@ bc.bars(sales, x="quarter", heading="Orders by quarter", suffix="k", show_values
 languages = pd.Series(["Python"] * 46 + ["SQL"] * 31 + ["JavaScript"] * 22 + ["R"] * 9 + ["Go"] * 5)
 bc.bars(languages.value_counts(), horizontal=True, heading="Languages in our team", suffix=" people").save(
     here / "bars-horizontal.svg")
+
+study = pd.DataFrame({
+    "Hours studied": [2, 3, 4, 5, 6, 7, 8, 9, 10, 4.5, 6.5, 8.5, 3.5, 7.5],
+    "Exam score": [48, 55, 52, 63, 66, 71, 74, 82, 86, 58, 69, 79, 51, 70],
+})
+bc.scatter(study, x="Hours studied", y="Exam score", trend=True, heading="Study time vs results", suffix="%",
+           width=560, theme="light").save(here / "scatter.svg")
+
+runs = pd.Series([(i * 7) % 11 if (i * 5) % 4 else 0 for i in range(182)],
+                 index=pd.date_range("2026-04-27", periods=182, freq="D"))
+bc.heatmap(runs, heading="Running", suffix=" km", stat="total", width=560).save(here / "heatmap.svg")
 print("Saved the example charts to", here)
