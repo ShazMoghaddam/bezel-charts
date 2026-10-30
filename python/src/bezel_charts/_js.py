@@ -283,3 +283,42 @@ def intl_format(a: float, lang, max_fd: int, min_fd: int, compact: bool) -> str:
             scaled = d.scaleb(-3 * bucket).quantize(Decimal("0.1"), rounding=ROUND_HALF_UP)
     # Compact numbers only get a thousands separator from five digits up (1000tn, 10,000tn).
     return _decimal_string(scaled, 1, 0, min_grouping=2) + units[bucket]
+
+
+def to_fixed(x: float, digits: int) -> str:
+    """x.toFixed(digits) as a string: halves round away from zero on the exact binary value."""
+    if not math.isfinite(x) or abs(x) >= 1e21:
+        return js_str(x)
+    if x == 0:
+        x = 0.0  # -0 prints without a sign in JavaScript
+    with localcontext() as ctx:
+        ctx.prec = 400
+        q = Decimal(x).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP)
+    return format(q, "f")
+
+
+# Dates, Intl.DateTimeFormat --------------------------------------------------------------
+
+_MONTHS = {
+    "en-GB": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sept", "Oct", "Nov", "Dec"),
+    "en-US": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
+}
+_WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+
+def month_short(d, lang) -> str:
+    return _MONTHS[_locale(lang)][d.month - 1]
+
+
+def weekday_short(d, lang) -> str:
+    _locale(lang)
+    return _WEEKDAYS[d.weekday()]
+
+
+def full_date(d, lang) -> str:
+    """{weekday: short, day: numeric, month: short, year: numeric}, e.g. Mon, 7 Sept 2026."""
+    loc = _locale(lang)
+    month = _MONTHS[loc][d.month - 1]
+    if loc == "en-US":
+        return f"{_WEEKDAYS[d.weekday()]}, {month} {d.day}, {d.year}"
+    return f"{_WEEKDAYS[d.weekday()]}, {d.day} {month} {d.year}"

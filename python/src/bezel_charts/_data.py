@@ -161,3 +161,136 @@ def prepare(data, x=None, y=None, x_format=None, single=False):
             raise ValueError("bezel_charts: a sparkline draws one series. Pass a single list.")
         return [numbers(r) for r in rows], None, None
     return [numbers(rows)], None, None
+
+
+# Scatter and heatmap take their data differently from the other charts --------------------
+
+def _column(data, name):
+    if name not in data.columns:
+        raise KeyError(f"bezel_charts: column {name!r} not found. Columns: {list(data.columns)}")
+    return _to_list(data[name])
+
+
+def scatter_groups(data, x, y, by=None, label_col=None):
+    """Returns (xs per group, ys per group, group names or None, point labels or None).
+
+    Rows with a missing x or y are dropped, since a point needs both to have a place.
+    """
+    if _is_frame(data):
+        if x is None or y is None:
+            raise TypeError("bezel_charts: pass the column names, for example scatter(df, x='hours', y='score').")
+        xs_all, ys_all = _column(data, x), _column(data, y)
+        keys = _column(data, by) if by is not None else [None] * len(xs_all)
+        lbls_all = _column(data, label_col) if label_col is not None else None
+    else:
+        if data is not None:
+            raise TypeError("bezel_charts: pass a DataFrame with x= and y= columns, or the values as x= and y=.")
+        if x is None or y is None:
+            raise TypeError("bezel_charts: a scatter plot needs both x= and y=.")
+        if by is not None or label_col is not None:
+            raise TypeError("bezel_charts: by= and label= pick DataFrame columns.")
+        xl, yl = _to_list(x), _to_list(y)
+        if xl and all(hasattr(r, "__iter__") and not isinstance(r, str) for r in xl):
+            groups_x = [_to_list(r) for r in xl]
+            groups_y = [_to_list(r) for r in yl]
+            out_x, out_y = [], []
+            for gx, gy in zip(groups_x, groups_y):
+                px, py = _paired(gx, gy)
+                out_x.append(px)
+                out_y.append(py)
+            return out_x, out_y, None, None
+        px, py = _paired(xl, yl)
+        return [px], [py], None, None
+
+    order, gx, gy, glab, dropped = [], {}, {}, {}, 0
+    for i, (xv, yv) in enumerate(zip(xs_all, ys_all)):
+        xn, yn = _number(xv), _number(yv)
+        if not (math.isfinite(xn) and math.isfinite(yn)):
+            dropped += 1
+            continue
+        key = keys[i]
+        if key not in gx:
+            order.append(key)
+            gx[key], gy[key], glab[key] = [], [], []
+        gx[key].append(xn)
+        gy[key].append(yn)
+        glab[key].append(label(lbls_all[i]) if lbls_all is not None else "")
+    _warn_dropped(dropped)
+    names = [label(k) for k in order] if by is not None else None
+    lbls = [t for k in order for t in glab[k]] if lbls_all is not None else None
+    return [gx[k] for k in order], [gy[k] for k in order], names, lbls
+
+
+def _paired(xs, ys):
+    out_x, out_y, dropped = [], [], 0
+    for xv, yv in zip(xs, ys):
+        xn, yn = _number(xv), _number(yv)
+        if math.isfinite(xn) and math.isfinite(yn):
+            out_x.append(xn)
+            out_y.append(yn)
+        else:
+            dropped += 1
+    _warn_dropped(dropped)
+    return out_x, out_y
+
+
+def _warn_dropped(dropped: int) -> None:
+    if dropped:
+        warnings.warn(
+            f"bezel_charts: {dropped} point{'s' if dropped != 1 else ''} with a missing x or y "
+            f"{'were' if dropped != 1 else 'was'} left out.",
+            stacklevel=5,
+        )
+
+
+def to_date(v):
+    """A datetime.date from a date, datetime, pandas Timestamp or 'YYYY-MM-DD' string."""
+    import datetime as dt
+
+    if isinstance(v, str):
+        return dt.date.fromisoformat(v[:10])
+    if isinstance(v, dt.datetime) or (hasattr(v, "date") and callable(v.date) and not isinstance(v, dt.date)):
+        return v.date()
+    if isinstance(v, dt.date):
+        return v
+    raise TypeError(f"bezel_charts: {v!r} is not a date.")
+
+
+def _is_datelike(v) -> bool:
+    return hasattr(v, "strftime") or (isinstance(v, str) and len(v) >= 10 and v[4:5] == "-" and v[7:8] == "-")
+
+
+def daily(data, x=None, y=None):
+    """Values per day from dated data. Returns (values, start date) or None for plain numbers.
+
+    Totals come from a value column or a Series with a date index; with dates alone, each day counts its rows.
+    Days with nothing get 0, so the calendar has no gaps.
+    """
+    import datetime as dt
+
+    if _is_frame(data):
+        dates = _column(data, x) if x is not None else (
+            _to_list(data.index) if not _is_default_index(data.index) else None
+        )
+        if dates is None:
+            raise TypeError("bezel_charts: name the date column with x=, for example heatmap(df, x='date', y='commits').")
+        amounts = numbers(_column(data, y), f"values in {y!r}") if y is not None else [1.0] * len(dates)
+    elif _is_series(data) and not _is_default_index(data.index) and all(_is_datelike(i) for i in _to_list(data.index)[:5]):
+        dates, amounts = _to_list(data.index), numbers(data)
+    else:
+        items = _to_list(data)
+        if not items or not all(_is_datelike(i) for i in items if i is not None):
+            return None
+        dates, amounts = items, [1.0] * len(items)
+
+    per_day: dict = {}
+    for d, a in zip(dates, amounts):
+        if d is None or type(d).__name__ == "NaTType":
+            continue
+        day = to_date(d)
+        per_day[day] = per_day.get(day, 0.0) + a
+    if not per_day:
+        return [], None
+    first, last = min(per_day), max(per_day)
+    span = (last - first).days + 1
+    return [per_day.get(first + dt.timedelta(days=i), 0.0) for i in range(span)], first

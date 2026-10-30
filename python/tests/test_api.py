@@ -92,7 +92,7 @@ def test_unknown_columns_and_types():
     with pytest.raises(NotImplementedError, match="later release"):
         bc.to_svg("donut", values="1,2")
     with pytest.raises(NotImplementedError, match="later release"):
-        bc.to_svg("scatter", x="1,2", y="3,4")
+        bc.to_svg("ring", values="50")
     with pytest.raises(ValueError, match="unknown chart type"):
         bc.to_svg("pie")
     with pytest.raises(AttributeError, match="later release"):
@@ -145,3 +145,68 @@ def test_bars_highlight_and_colours():
     assert single.count('fill-opacity="0.5"') == 2 and single.count('fill-opacity="1"') == 1
     assert 'fill-opacity="0.5"' not in bc.bars([2, 5, 3], highlight="none").svg
     assert "#ff0000" in bc.bars([1, 2], color=["#ff0000", "#00ff00"]).svg
+
+
+def test_scatter_from_a_dataframe_with_groups_labels_and_trend():
+    df = pd.DataFrame({
+        "hours": [1, 2, 3, 4, 5, 2.5], "score": [52, 61, 70, 68, 85, None],
+        "team": ["A", "A", "B", "B", "B", "A"], "name": list("pqrstu"),
+    })
+    with pytest.warns(UserWarning, match="1 point with a missing x or y was left out"):
+        chart = bc.scatter(df, x="hours", y="score", by="team", label="name", trend=True, notes={"t": "Best"})
+    assert "5 points in 2 groups" in chart.svg
+    assert {"A", "B", "hours", "score", "Best", "r = 1.00", "r = 0.81"} <= set(texts(chart.svg))
+    titled = bc.scatter(df.dropna(), x="hours", y="score", x_label="Study hours")
+    assert "Study hours" in texts(titled.svg)
+
+
+def test_scatter_from_lists_matches_render():
+    chart = bc.scatter(x=[1, 2, 3, 4, 5], y=[2, 4, 5, 4, 6], trend=True)
+    assert ids(chart.svg) == ids(bc.to_svg("scatter", x="1,2,3,4,5", y="2,4,5,4,6", trend=""))
+    grouped = bc.scatter(x=[[1, 2], [3, 4]], y=[[5, 6], [7, 8]], series=["Red", "Blue"])
+    assert "4 points in 2 groups" in grouped.svg
+
+
+def test_scatter_needs_both_axes():
+    with pytest.raises(TypeError):
+        bc.scatter(x=[1, 2])
+    with pytest.raises(TypeError):
+        bc.scatter(pd.DataFrame({"a": [1]}), x="a")
+
+
+def test_fit_matches_numpy():
+    from bezel_charts.charts.scatter import fit
+
+    xs, ys = [1.0, 2.0, 4.0, 7.0], [2.0, 3.5, 4.0, 9.0]
+    f = fit(xs, ys)
+    slope, intercept = np.polyfit(xs, ys, 1)
+    assert f["slope"] == pytest.approx(slope) and f["intercept"] == pytest.approx(intercept)
+    assert f["r"] == pytest.approx(np.corrcoef(xs, ys)[0, 1])
+    assert fit([1, 1], [2, 3]) is None and fit([1], [1]) is None
+
+
+def test_heatmap_counts_dates_and_fills_gaps():
+    dates = pd.Series(pd.to_datetime(["2026-10-01", "2026-10-01", "2026-10-03"]))
+    chart = bc.heatmap(dates)
+    assert "3 across 3 days" in chart.svg
+    assert ids(chart.svg) == ids(bc.to_svg("heatmap", values=[2, 0, 1], start="2026-10-01"))
+
+
+def test_heatmap_from_dataframe_series_and_list():
+    df = pd.DataFrame({"day": ["2026-03-01", "2026-03-04"], "km": [5.0, 8.0]})
+    by_column = bc.heatmap(df, x="day", y="km", suffix=" km")
+    assert "13 km across 4 days" in by_column.svg
+    indexed = bc.heatmap(pd.Series([5.0, 8.0], index=pd.to_datetime(["2026-03-01", "2026-03-04"])), suffix=" km")
+    assert ids(indexed.svg) == ids(by_column.svg)
+    plain = bc.heatmap([1, 2, 3], start=dt.date(2026, 1, 5))
+    assert ids(plain.svg) == ids(bc.to_svg("heatmap", values="1,2,3", start="2026-01-05"))
+    rows = bc.heatmap(pd.DataFrame({"when": pd.to_datetime(["2026-05-01 09:00", "2026-05-01 17:30"])}), x="when")
+    assert "2 across 1 days" in rows.svg
+
+
+def test_heatmap_dates_follow_the_locale():
+    gb = bc.render("heatmap", values="1", start="2026-09-07")
+    us = bc.render("heatmap", values="1", start="2026-09-07", lang="en-US")
+    assert "Mon, 7 Sept 2026: 1" in gb and "Mon, Sep 7, 2026: 1" in us
+    with pytest.raises(ValueError, match="real date"):
+        bc.to_svg("heatmap", values="1", start="2026-13-01")

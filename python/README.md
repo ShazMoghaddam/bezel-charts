@@ -60,8 +60,10 @@ Then in your README:
 | `bc.spark(data)` | A sparkline with the latest value and the change since the start. |
 | `bc.line(data)` | A line chart with one or more series, a value axis, labels and a legend. |
 | `bc.bars(data)` | Bars, vertical or horizontal. Several columns or series become grouped bars side by side. |
+| `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
+| `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
 
-Scatter with a trend line, rings, donut, gauge, progress and heatmap are coming in the next releases. `bc.types` lists what's available.
+Rings, donut, gauge and progress are coming in the next releases. `bc.types` lists what's available.
 
 ### Bars
 
@@ -77,6 +79,34 @@ bc.bars(df["language"].value_counts(), horizontal=True, heading="Languages", suf
 ![Horizontal bars counting the languages used in a team, with Python highest](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/bars-horizontal.svg)
 
 With one series the highest bar is highlighted. Turn that off with `highlight="none"`, or pass several colours to give each bar its own.
+
+### Scatter
+
+```python
+bc.scatter(study, x="Hours studied", y="Exam score", trend=True, heading="Study time vs results", suffix="%")
+```
+
+![A scatter plot of exam score against hours studied, with a dashed trend line and r = 0.98](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/scatter.svg)
+
+`trend=True` draws the least-squares line and labels it with Pearson's r. `by="team"` splits the points into coloured groups, each with its own trend line, and `label="name"` names each point so `notes={"Ada": "Top scorer"}` can point at it. The column names become the axis titles unless you set `x_label` and `y_label`. Rows with a missing x or y are left out, with a warning. Without a DataFrame, pass the values: `bc.scatter(x=[1, 2, 3], y=[4, 6, 5])`.
+
+### Heatmap
+
+```python
+# Daily totals: a Series with a date index, or a DataFrame with a date column and a value column
+bc.heatmap(runs, heading="Running", suffix=" km", stat="total")
+bc.heatmap(df, x="date", y="km")
+
+# Just dates: each day counts how many times it appears, such as commits or sign-ups
+bc.heatmap(commits["timestamp"])
+
+# Plain daily numbers, ending today unless you give a start date
+bc.heatmap([0, 2, 5, 1], start="2026-10-01")
+```
+
+![A calendar heatmap of six months of running, with darker squares on longer days](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/heatmap.svg)
+
+Days with nothing get 0, so the calendar has no gaps. On a narrow tile the most recent weeks are kept.
 
 ## Your data
 
@@ -109,6 +139,9 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `zero` | `zero=True` | Start the axis at zero (line). |
 | `horizontal` | `horizontal=True` | Bars run sideways, good for long labels (bars). |
 | `highlight` | `highlight="none"` | Stop the highest bar standing out (bars). |
+| `trend` | `trend=True` | Least-squares trend line with Pearson's r (scatter). |
+| `x_label`, `y_label` | `x_label="Hours"` | Axis titles (scatter). |
+| `start` | `start="2026-01-01"` | The first day (heatmap). |
 | `labels`, `series` | `labels=["Q1", "Q2"]` | Set labels and series names by hand. |
 | `color` | `color=["#ff6600", "#0066ff"]` | Series colours. |
 | `theme` | `theme="light"` | `dark` (the default) or `light`. |
