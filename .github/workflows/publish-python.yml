@@ -1,0 +1,46 @@
+name: Publish Python package
+
+# Runs when a release tag like py-v0.1.0 is pushed. PyPI trusts this workflow
+# directly (trusted publishing), so there is no API token to store or leak.
+on:
+  push:
+    tags: ["py-v*"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Tag matches the package version
+        run: |
+          version=$(python -c "import re; print(re.search(r'__version__ = \"(.+?)\"', open('src/bezel_charts/__init__.py').read()).group(1))")
+          test "py-v$version" = "$GITHUB_REF_NAME" || (echo "Tag $GITHUB_REF_NAME does not match version $version" && exit 1)
+      - run: pip install build twine -e ".[test]"
+      - run: pytest
+      - run: python -m build
+      - run: twine check --strict dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: python/dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/bezel-charts/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

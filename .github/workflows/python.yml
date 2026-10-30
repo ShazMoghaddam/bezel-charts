@@ -1,0 +1,56 @@
+name: Python
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  parity:
+    name: Fixtures match the JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npm run fixtures
+      - name: Check fixtures are up to date
+        run: git diff --exit-code -- python/tests/fixtures || (echo "Run npm run fixtures and commit python/tests/fixtures" && exit 1)
+
+  test:
+    name: Tests on Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.12", "3.14"]
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e ".[test]"
+      - run: pytest
+      - name: Works without pandas or NumPy
+        run: |
+          pip uninstall -y pandas numpy
+          python -c "import bezel_charts as bc; assert bc.spark([1, 2, 3]).svg.startswith('<svg')"
+
+  build:
+    name: Package builds cleanly
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - run: pip install build twine
+      - run: python -m build
+      - run: twine check --strict dist/*

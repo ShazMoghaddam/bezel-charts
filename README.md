@@ -15,6 +15,7 @@ Bezel Charts is a set of free, open-source web components: ten chart tiles drawn
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
 - **Light.** About 12 kB gzipped with no dependencies and no build step.
 - **Accessible.** Every chart describes itself to screen readers, shows exact values on hover or tap, and respects reduced-motion settings.
+- **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
 A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calendar and weather tiles.
 
@@ -27,6 +28,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 - [Colours and dark mode](#colours-and-dark-mode)
 - [Charts in a README](#charts-in-a-readme)
 - [JavaScript API](#javascript-api)
+- [Python](#python)
 - [Frameworks](#frameworks)
 - [Development](#development)
 
@@ -327,6 +329,23 @@ import { writeFileSync } from 'node:fs';
 writeFileSync('downloads.svg', toSVG('bars', { heading: 'Downloads', values: [120, 340, 410], labels: 'Jan,Feb,Mar', width: 480 }));
 ```
 
+## Python
+
+The [Python package](python/) draws the same charts from a pandas DataFrame, a NumPy array or a plain list, with no dependencies. Charts show up in Jupyter and save as static SVGs:
+
+```sh
+pip install bezel-charts
+```
+
+```python
+import bezel_charts as bc
+
+bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
+bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
+```
+
+Sparklines and line charts are available now, and the other eight follow. The Python output matches the JavaScript byte for byte, checked in CI. See the [Python README](python/README.md).
+
 ## Frameworks
 
 Bezel Charts are standard custom elements, so they work anywhere HTML does. Set attributes as strings.
@@ -363,6 +382,7 @@ src/
   render.js    picks the chart and returns its SVG
   element.js   the custom element: sizing, theme, tooltips and export
 site/          the website and Studio, with sample files in site/samples
+python/        the Python package, with parity tests against the JavaScript
 docs/          the README image and social preview, with the pages that render them
 test/          node:test suites, plus a Playwright browser test
 ```
