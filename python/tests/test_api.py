@@ -90,13 +90,13 @@ def test_unknown_columns_and_types():
     with pytest.raises(KeyError):
         bc.line(df, y="nope")
     with pytest.raises(NotImplementedError, match="later release"):
-        bc.to_svg("donut", values="1,2")
+        bc.to_svg("gauge", values="50")
     with pytest.raises(NotImplementedError, match="later release"):
-        bc.to_svg("ring", values="50")
+        bc.to_svg("progress", values="50")
     with pytest.raises(ValueError, match="unknown chart type"):
         bc.to_svg("pie")
     with pytest.raises(AttributeError, match="later release"):
-        bc.donut  # noqa: B018
+        bc.gauge  # noqa: B018
 
 
 def test_chart_object(tmp_path):
@@ -210,3 +210,25 @@ def test_heatmap_dates_follow_the_locale():
     assert "Mon, 7 Sept 2026: 1" in gb and "Mon, Sep 7, 2026: 1" in us
     with pytest.raises(ValueError, match="real date"):
         bc.to_svg("heatmap", values="1", start="2026-13-01")
+
+
+def test_ring_from_a_dict_and_a_single_value():
+    chart = bc.ring({"Move": 72, "Focus": 45, "Sleep": 90})
+    assert ids(chart.svg) == ids(bc.to_svg("ring", values="72,45,90", labels="Move,Focus,Sleep"))
+    assert "64%" in texts(bc.ring([64], labels=["Battery"]).svg)
+    assert "3 h" in texts(bc.ring([3, 5], max=8, suffix=" h").svg)
+
+
+def test_donut_from_value_counts_groups_the_tail():
+    s = pd.Series(list("aaaaabbbbccccdddeefgh")).value_counts()
+    chart = bc.donut(s, center_label="Letters")
+    assert "Other" in texts(chart.svg) and "LETTERS" in texts(chart.svg)
+    assert "total 21 across 6 parts" in chart.svg
+
+
+def test_donut_from_a_dataframe():
+    df = pd.DataFrame({"category": ["Rent", "Food", "Travel"], "spend": [900, 300, 150], "count": [1, 30, 6]})
+    chart = bc.donut(df, x="category", y="spend", prefix="£")
+    assert {"Rent", "Food", "Travel", "67%"} <= set(texts(chart.svg))
+    with pytest.raises(ValueError, match="one column"):
+        bc.donut(df)

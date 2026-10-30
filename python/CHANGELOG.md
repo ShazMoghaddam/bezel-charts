@@ -1,5 +1,12 @@
 # Changelog (Python package)
 
+## 0.4.0 (2026-10-30)
+
+- `bc.ring()`: progress rings, a single large ring or several nested ones with a legend, out of 100 unless you set `max`.
+- `bc.donut()`: parts of a whole with the total in the middle. More than six parts keep the five largest and group the rest as "Other".
+- Both take a list, a dict of name to value, a Series such as `value_counts()`, or a DataFrame with `x=` and `y=`.
+- 23 more parity cases against the JavaScript.
+
 ## 0.3.0 (2026-10-30)
 
 - `bc.scatter()`: scatter plots from two DataFrame columns or two lists, with `by=` for coloured groups, `label=` for naming points, and `trend=True` for a least-squares line labelled with Pearson's r. Column names become the axis titles. Points with a missing x or y are left out, with a warning.

@@ -35,4 +35,9 @@ bc.scatter(study, x="Hours studied", y="Exam score", trend=True, heading="Study 
 runs = pd.Series([(i * 7) % 11 if (i * 5) % 4 else 0 for i in range(182)],
                  index=pd.date_range("2026-04-27", periods=182, freq="D"))
 bc.heatmap(runs, heading="Running", suffix=" km", stat="total", width=560).save(here / "heatmap.svg")
+
+bc.ring({"Move": 72, "Exercise": 45, "Stand": 90}, heading="Today", width=360, theme="light").save(here / "ring.svg")
+budget = pd.DataFrame({"category": ["Rent", "Food", "Travel", "Bills", "Fun"], "spend": [1250, 420, 180, 260, 140]})
+bc.donut(budget, x="category", y="spend", heading="Monthly spending", prefix="£", center_label="Spent",
+         width=360).save(here / "donut.svg")
 print("Saved the example charts to", here)

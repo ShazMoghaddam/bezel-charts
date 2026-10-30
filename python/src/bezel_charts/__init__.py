@@ -26,8 +26,11 @@ from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
 from .charts import TYPES
 
-__version__ = "0.3.0"
-__all__ = ["Chart", "bars", "heatmap", "line", "render", "scatter", "spark", "themes", "to_svg", "types", "__version__"]
+__version__ = "0.4.0"
+__all__ = [
+    "Chart", "bars", "donut", "heatmap", "line", "render", "ring", "scatter", "spark", "themes", "to_svg", "types",
+    "__version__",
+]
 
 #: Chart types available in this release. The rest of the ten follow in later releases.
 types = list(TYPES)
@@ -172,6 +175,33 @@ def heatmap(data: Any = None, *, x: Any = None, y: Any = None, start: Any = None
     if start is not None:
         out["start"] = _data.to_date(start).isoformat()
     return Chart("heatmap", out)
+
+
+def _parts_chart(type_: str, data, x, y, x_format, options) -> Chart:
+    if data is None:
+        return Chart(type_, _options(options, None, None, None))
+    values, lbls = _data.parts(data, x, y, x_format)
+    return Chart(type_, _options(options, values, None, lbls))
+
+
+def ring(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+    """Progress rings, one per value, like activity rings. Values are out of 100 unless you set ``max``.
+
+    One value draws a single large ring with the number in the middle; several draw nested rings
+    with a legend. Pass a list, a dict of name to value, a Series (its index names the rings) or a
+    DataFrame with ``y=`` for the values and ``x=`` for the names.
+    """
+    return _parts_chart("ring", data, x, y, x_format, options)
+
+
+def donut(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+    """A donut chart of parts of a whole, with the total in the middle and percentages in the legend.
+
+    Beyond six parts, the five largest are kept and the rest are added up as "Other". Negative values
+    count as 0. Pass a list, a dict of name to value, a Series such as ``value_counts()``, or a
+    DataFrame with ``y=`` for the values and ``x=`` for the names.
+    """
+    return _parts_chart("donut", data, x, y, x_format, options)
 
 
 def __getattr__(name: str):
