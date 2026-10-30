@@ -344,7 +344,7 @@ bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
 bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
 ```
 
-Sparklines and line charts are available now, and the other eight follow. The Python output matches the JavaScript byte for byte, checked in CI. See the [Python README](python/README.md).
+Sparklines, line charts and bars (including grouped bars) are available now, and the other six follow. The Python output matches the JavaScript byte for byte, checked in CI. See the [Python README](python/README.md).
 
 ## Frameworks
 

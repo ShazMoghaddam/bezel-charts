@@ -8,6 +8,8 @@ The Python companion to [Bezel Charts](https://github.com/ShazMoghaddam/bezel-ch
 
 ![A dark sparkline tile showing monthly revenue of £79k, up £37k since the start](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/spark.svg)
 
+![Grouped bars comparing orders by quarter in 2026 and 2025](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/bars.svg)
+
 - **Identical to the web components.** The renderers are a line-by-line port of the JavaScript ones, and the test suite checks they draw the same SVG, byte for byte.
 - **pandas friendly.** Pick columns with `x=` and `y=`. Dates, indexes and column names become labels and legends.
 - **Made for READMEs.** Every chart is a self-contained SVG with no scripts and no fonts to load, so GitHub shows it.
@@ -57,8 +59,24 @@ Then in your README:
 | --- | --- |
 | `bc.spark(data)` | A sparkline with the latest value and the change since the start. |
 | `bc.line(data)` | A line chart with one or more series, a value axis, labels and a legend. |
+| `bc.bars(data)` | Bars, vertical or horizontal. Several columns or series become grouped bars side by side. |
 
-The other eight (bars and grouped bars, scatter with a trend line, rings, donut, gauge, progress and heatmap) are coming in the next releases. `bc.types` lists what's available.
+Scatter with a trend line, rings, donut, gauge, progress and heatmap are coming in the next releases. `bc.types` lists what's available.
+
+### Bars
+
+```python
+# Grouped bars: one group per quarter, one bar per year
+sales = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3", "Q4"], "2026": [42, 51, 47, 63], "2025": [38, 44, 49, 52]})
+bc.bars(sales, x="quarter", heading="Orders by quarter", suffix="k", show_values=True)
+
+# Counts straight from value_counts(), as horizontal bars for long labels
+bc.bars(df["language"].value_counts(), horizontal=True, heading="Languages", suffix=" people")
+```
+
+![Horizontal bars counting the languages used in a team, with Python highest](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/bars-horizontal.svg)
+
+With one series the highest bar is highlighted. Turn that off with `highlight="none"`, or pass several colours to give each bar its own.
 
 ## Your data
 
@@ -89,6 +107,8 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `show_values` | `show_values=True` | A label on every point. |
 | `straight` | `straight=True` | Straight segments instead of curves. |
 | `zero` | `zero=True` | Start the axis at zero (line). |
+| `horizontal` | `horizontal=True` | Bars run sideways, good for long labels (bars). |
+| `highlight` | `highlight="none"` | Stop the highest bar standing out (bars). |
 | `labels`, `series` | `labels=["Q1", "Q2"]` | Set labels and series names by hand. |
 | `color` | `color=["#ff6600", "#0066ff"]` | Series colours. |
 | `theme` | `theme="light"` | `dark` (the default) or `light`. |

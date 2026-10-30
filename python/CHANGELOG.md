@@ -1,6 +1,12 @@
 # Changelog (Python package)
 
-## 0.1.0 (unreleased)
+## 0.2.0 (2026-10-30)
+
+- `bc.bars()`: vertical and horizontal bar charts, single or grouped. Several DataFrame columns, a dict or a list of lists become grouped bars with a legend, and a Series such as `value_counts()` uses its index as labels.
+- The highest bar is highlighted unless you pass `highlight="none"`, and several colours give each bar its own.
+- 19 more parity cases against the JavaScript, covering negatives, goals, long labels, emoji, compact numbers and wrapping legends.
+
+## 0.1.0 (2026-10-30)
 
 First release of the Python companion to Bezel Charts.
 

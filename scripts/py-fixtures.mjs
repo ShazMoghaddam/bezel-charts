@@ -54,6 +54,27 @@ export const CASES = {
     { values: '1e-7,2e-7,3e-7' },
     { values: '1000000,2000000,1500000', labels: 'Jan 2026,Feb 2026,Mar 2026', compact: '', lang: 'en-GB' },
   ],
+  bars: [
+    {},
+    { values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '', goal: 7 },
+    { values: '-3,5,-8,2', labels: 'a,b,c,d', 'show-values': '' },
+    { values: '0,0,0' },
+    { values: '820,640,410,300', labels: 'Python,JavaScript,A very long language name,Go', horizontal: '', goal: 500 },
+    { values: '1,2,3', color: '#ff0000,#00ff00,#0000ff' },
+    { values: '4,9,6|3,7,8', series: '2026,2025', labels: 'Q1,Q2,Q3', 'show-values': '', goal: 5 },
+    { values: '4,9,6|3,7|1,2,3', horizontal: '', labels: 'North,South,East' },
+    { values: '-2,4|3,-5', series: 'A very long series name,Another long series name,Third', 'show-values': '', width: 200 },
+    { values: '5' },
+    { values: '12,12,7', highlight: 'none', theme: 'light', heading: 'Ties' },
+    { values: long.slice(0, 40), labels: long.slice(0, 40).map((_, i) => `Week ${i + 1}`), width: 640 },
+    { values: '1500000,2300000,900000', labels: 'UK,US,DE', compact: '', 'show-values': '', prefix: '£' },
+    { values: '3,1,2', horizontal: '', 'show-values': '', frame: 'none', background: '#fff8e7', series: 'Only one' },
+    { values: '-4,-2,-9', horizontal: '', labels: 'x,y,z', goal: -3 },
+    { values: '40,25,20,15', labels: '😀 Happy,Neutral,Sad,🙃', horizontal: '', width: 240 },
+    { values: '0.25,0.5,0.75', decimals: 1, suffix: '%', height: 200, stat: 'max', 'delta-label': 'top' },
+    { values: [[1, 2, 3, 4], [4, 3, 2, 1], [2, 2, 2, 2], [3, 1, 4, 1]], series: 'A,B,C,D', labels: 'Q1,Q2,Q3,Q4', theme: 'light' },
+    { values: '7,3,5', labels: 'a,b', notes: '1:ignored', straight: '' },
+  ],
 };
 
 for (const [type, cases] of Object.entries(CASES)) {
