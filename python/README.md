@@ -53,7 +53,7 @@ Then in your README:
 ![Monthly revenue](docs/revenue.svg)
 ```
 
-## Charts in this release
+## The ten charts
 
 | Function | What it draws |
 | --- | --- |
@@ -64,8 +64,10 @@ Then in your README:
 | `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
 | `bc.ring(data)` | Progress rings, one per value, out of 100 unless you set `max`. |
 | `bc.donut(data)` | Parts of a whole, with the total in the middle and percentages alongside. |
+| `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
+| `bc.progress(data)` | A progress bar, single or stacked with a legend. |
 
-Gauge and progress bars are coming in the next release. `bc.types` lists what's available.
+Grouped bars are `bc.bars()` with several series, which makes ten. They are the same ten as the web components, and `bc.types` lists them.
 
 ### Bars
 
@@ -126,6 +128,22 @@ bc.donut(df["browser"].value_counts())
 
 Both take a list, a dict of name to value, a Series (its index gives the names) or a DataFrame with `x=` and `y=`. Rings are percentages unless you set `max`, `prefix` or `suffix`. A donut with more than six parts keeps the five largest and adds the rest up as "Other".
 
+### Gauge and progress
+
+```python
+bc.gauge(63, label="CPU", zones=[60, 85], goal=80, heading="Server load")
+bc.gauge(18.5, min=10, max=30, suffix="°C", label="Office")
+
+bc.progress(72, labels=["Upload"])
+bc.progress({"Done": 46, "In review": 18, "Blocked": 6}, max=100, goal=75, heading="Sprint")
+```
+
+![A half-circle gauge reading 63% for CPU, in the amber zone, with a goal marker at 80](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/gauge.svg)
+
+![A stacked progress bar for a sprint: done, in review and blocked, with a goal marker at 75](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/progress.svg)
+
+`zones=[60, 85]` turns the gauge green below 60, amber up to 85 and red above; pass three colours with `color=` to use your own. One progress value is a percentage unless you set `max`; several stack up and fill to their total unless you set `max`.
+
 ## Your data
 
 | You pass | You get |
@@ -162,6 +180,7 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `start` | `start="2026-01-01"` | The first day (heatmap). |
 | `max` | `max=8` | What a full ring means (ring). |
 | `center_label` | `center_label="Spent"` | The word under the total (donut). |
+| `min`, `zones` | `min=10, zones=[60, 85]` | The scale and coloured bands (gauge). |
 | `labels`, `series` | `labels=["Q1", "Q2"]` | Set labels and series names by hand. |
 | `color` | `color=["#ff6600", "#0066ff"]` | Series colours. |
 | `theme` | `theme="light"` | `dark` (the default) or `light`. |

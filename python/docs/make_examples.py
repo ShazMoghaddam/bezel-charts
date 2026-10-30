@@ -40,4 +40,9 @@ bc.ring({"Move": 72, "Exercise": 45, "Stand": 90}, heading="Today", width=360, t
 budget = pd.DataFrame({"category": ["Rent", "Food", "Travel", "Bills", "Fun"], "spend": [1250, 420, 180, 260, 140]})
 bc.donut(budget, x="category", y="spend", heading="Monthly spending", prefix="£", center_label="Spent",
          width=360).save(here / "donut.svg")
+
+bc.gauge(63, label="CPU", zones=[60, 85], goal=80, heading="Server load", width=300, theme="light").save(
+    here / "gauge.svg")
+bc.progress({"Done": 46, "In review": 18, "Blocked": 6}, max=100, goal=75, heading="Sprint", width=420).save(
+    here / "progress.svg")
 print("Saved the example charts to", here)

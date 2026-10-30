@@ -1,7 +1,7 @@
 """The Python charts must draw exactly the same SVG as the JavaScript ones.
 
 The fixtures come from scripts/py-fixtures.mjs, which runs the real JavaScript
-renderers. Gradient ids are random in both languages, so they are swapped for
+renderers. Gradient and clip path ids are random in both languages, so they are swapped for
 stable ones before comparing.
 """
 
@@ -18,7 +18,7 @@ from bezel_charts._js import js_str
 from bezel_charts._util import Opts, fmt, nice_scale
 
 FIXTURES = Path(__file__).parent / "fixtures"
-CHART_TYPES = ["spark", "line", "bars", "scatter", "heatmap", "ring", "donut"]
+CHART_TYPES = ["spark", "line", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
 
 
 def stable(svg: str) -> str:
@@ -27,7 +27,7 @@ def stable(svg: str) -> str:
     def swap(m: re.Match) -> str:
         return ids.setdefault(m.group(0), f"bzcg-{len(ids) + 1}")
 
-    return re.sub(r"bzcg[0-9a-z]+", swap, svg)
+    return re.sub(r"bzc[gc][0-9a-z]+", swap, svg)
 
 
 def load(name: str):

@@ -17,22 +17,22 @@ from __future__ import annotations
 import re
 from os import PathLike
 from pathlib import Path
+from collections.abc import Mapping
 from typing import Any
 
 from . import _data
-from ._render import ALL_TYPES
 from ._render import render as _render
 from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
 from .charts import TYPES
 
-__version__ = "0.4.0"
+__version__ = "1.0.0"
 __all__ = [
-    "Chart", "bars", "donut", "heatmap", "line", "render", "ring", "scatter", "spark", "themes", "to_svg", "types",
-    "__version__",
+    "Chart", "bars", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
+    "to_svg", "types", "__version__",
 ]
 
-#: Chart types available in this release. The rest of the ten follow in later releases.
+#: Every chart type, the same as in the JavaScript package.
 types = list(TYPES)
 
 
@@ -204,9 +204,28 @@ def donut(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | Non
     return _parts_chart("donut", data, x, y, x_format, options)
 
 
-def __getattr__(name: str):
-    if name in ALL_TYPES:
-        raise AttributeError(
-            f"bezel_charts.{name}() is coming in a later release. Available now: {', '.join(types)}."
-        )
-    raise AttributeError(f"module 'bezel_charts' has no attribute {name!r}")
+def gauge(value: Any = None, *, label: Any = None, **options: Any) -> Chart:
+    """A half-circle gauge for one value, from ``min`` (default 0) to ``max`` (default 100).
+
+    ``zones=[60, 85]`` colours the arc green, amber or red depending on which band the value is in,
+    ``goal=`` adds a marker, and ``label=`` writes a word under the number. ``value`` can be a number,
+    or a list or Series, whose first value is used.
+    """
+    out = dict(options)
+    if label is not None:
+        out.setdefault("labels", [_data.label(label)])
+    if value is not None:
+        vals = _data.numbers(value if hasattr(value, "__iter__") and not isinstance(value, str) else [value])
+        out["values"] = vals[:1]
+    return Chart("gauge", out)
+
+
+def progress(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+    """A progress bar. One number is a percentage (or out of ``max``); several stack up with a legend.
+
+    Stacked parts fill up to their total unless you set ``max``. Pass a number, a list, a dict of
+    name to value, a Series, or a DataFrame with ``y=`` for the values and ``x=`` for the names.
+    """
+    if data is not None and not hasattr(data, "__iter__") and not isinstance(data, Mapping):
+        data = [data]
+    return _parts_chart("progress", data, x, y, x_format, options)
