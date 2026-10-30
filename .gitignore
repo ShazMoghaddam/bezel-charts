@@ -1,2 +1,7 @@
 node_modules/
 .DS_Store
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+python/dist/

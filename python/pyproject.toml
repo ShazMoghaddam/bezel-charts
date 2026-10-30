@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bezel-charts"
+dynamic = ["version"]
+description = "Polished SVG charts from pandas DataFrames and Python lists, drawn exactly like the Bezel Charts web components. Zero dependencies."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Shaz Moghaddam" }]
+keywords = ["charts", "svg", "sparkline", "pandas", "jupyter", "data-visualization", "readme", "line-chart"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Framework :: Jupyter",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Visualization",
+  "Typing :: Typed",
+]
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pandas>=2", "numpy>=1.26"]
+
+[project.urls]
+Homepage = "https://shazmoghaddam.github.io/bezel-charts/site/"
+Documentation = "https://github.com/ShazMoghaddam/bezel-charts/tree/main/python#readme"
+Repository = "https://github.com/ShazMoghaddam/bezel-charts"
+Issues = "https://github.com/ShazMoghaddam/bezel-charts/issues"
+Changelog = "https://github.com/ShazMoghaddam/bezel-charts/blob/main/python/CHANGELOG.md"
+
+[tool.hatch.version]
+path = "src/bezel_charts/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "tests", "README.md", "CHANGELOG.md", "LICENSE"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/bezel_charts"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

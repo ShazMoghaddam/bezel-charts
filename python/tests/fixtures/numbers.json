@@ -1,0 +1,5420 @@
+{
+ "fmt": [
+  {
+   "v": 0,
+   "o": {},
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {},
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "0.00"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "0.00"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "0.000"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "0.000"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "0.000000"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "0.000000"
+  },
+  {
+   "v": 0,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£0 kWh"
+  },
+  {
+   "v": 0,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£0 kWh"
+  },
+  {
+   "v": 0,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 1,
+   "o": {},
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {},
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1.00"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1.00"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1.000"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1.000"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1.000000"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1.000000"
+  },
+  {
+   "v": 1,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1 kWh"
+  },
+  {
+   "v": 1,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1 kWh"
+  },
+  {
+   "v": 1,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 1,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": -1,
+   "o": {},
+   "short": false,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {},
+   "short": true,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "−1.00"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "−1.00"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "−1.000"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "−1.000"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "−1.000000"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "−1.000000"
+  },
+  {
+   "v": -1,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "−£1 kWh"
+  },
+  {
+   "v": -1,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "−£1 kWh"
+  },
+  {
+   "v": -1,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "−1"
+  },
+  {
+   "v": -1,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "−1"
+  },
+  {
+   "v": 0.5,
+   "o": {},
+   "short": false,
+   "out": "0.5"
+  },
+  {
+   "v": 0.5,
+   "o": {},
+   "short": true,
+   "out": "0.5"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "0.50"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "0.50"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "0.500"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "0.500"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "0.500000"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "0.500000"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "0.5"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "0.5"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£0.5 kWh"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£0.5 kWh"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "0.5"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "0.5"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 0.5,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 1.005,
+   "o": {},
+   "short": false,
+   "out": "1.01"
+  },
+  {
+   "v": 1.005,
+   "o": {},
+   "short": true,
+   "out": "1.01"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1.01"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1.01"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1.005"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1.005"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1.005000"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1.005000"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1.01"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1.01"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1.01 kWh"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1.01 kWh"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1.01"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1.01"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 1.005,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 2.675,
+   "o": {},
+   "short": false,
+   "out": "2.68"
+  },
+  {
+   "v": 2.675,
+   "o": {},
+   "short": true,
+   "out": "2.68"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "3"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "3"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "2.68"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "2.68"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "2.675"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "2.675"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "2.675000"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "2.675000"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "2.68"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "2.68"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£2.68 kWh"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£2.68 kWh"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "2.68"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "2.68"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "3"
+  },
+  {
+   "v": 2.675,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "3"
+  },
+  {
+   "v": 0.125,
+   "o": {},
+   "short": false,
+   "out": "0.13"
+  },
+  {
+   "v": 0.125,
+   "o": {},
+   "short": true,
+   "out": "0.13"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "0.13"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "0.13"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "0.125"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "0.125"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "0.125000"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "0.125000"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "0.13"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "0.13"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£0.13 kWh"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£0.13 kWh"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "0.13"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "0.13"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.125,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 9.995,
+   "o": {},
+   "short": false,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {},
+   "short": true,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "10.00"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "10.00"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "9.995"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "9.995"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "9.995000"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "9.995000"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£10 kWh"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£10 kWh"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "10"
+  },
+  {
+   "v": 9.995,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "10"
+  },
+  {
+   "v": 12.345,
+   "o": {},
+   "short": false,
+   "out": "12.3"
+  },
+  {
+   "v": 12.345,
+   "o": {},
+   "short": true,
+   "out": "12.3"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "12"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "12"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "12.35"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "12.35"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "12.345"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "12.345"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "12.345000"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "12.345000"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "12.3"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "12.3"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£12.3 kWh"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£12.3 kWh"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "12.3"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "12.3"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "12"
+  },
+  {
+   "v": 12.345,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "12"
+  },
+  {
+   "v": 99.95,
+   "o": {},
+   "short": false,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {},
+   "short": true,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "99.95"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "99.95"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "99.950"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "99.950"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "99.950000"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "99.950000"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£100 kWh"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£100 kWh"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "100"
+  },
+  {
+   "v": 99.95,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "100"
+  },
+  {
+   "v": 100.5,
+   "o": {},
+   "short": false,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {},
+   "short": true,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "100.50"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "100.50"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "100.500"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "100.500"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "100.500000"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "100.500000"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£101 kWh"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£101 kWh"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "101"
+  },
+  {
+   "v": 100.5,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "101"
+  },
+  {
+   "v": 1234.5,
+   "o": {},
+   "short": false,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {},
+   "short": true,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1,234.50"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1,234.50"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1,234.500"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1,234.500"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1,234.500000"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1,234.500000"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1,235 kWh"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1,235 kWh"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1,235"
+  },
+  {
+   "v": 1234.5,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1,235"
+  },
+  {
+   "v": 9999,
+   "o": {},
+   "short": false,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {},
+   "short": true,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "9,999.00"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "9,999.00"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "9,999.000"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "9,999.000"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "9,999.000000"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "9,999.000000"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£9,999 kWh"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£9,999 kWh"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "9,999"
+  },
+  {
+   "v": 9999,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "9,999"
+  },
+  {
+   "v": 10000,
+   "o": {},
+   "short": false,
+   "out": "10,000"
+  },
+  {
+   "v": 10000,
+   "o": {},
+   "short": true,
+   "out": "10k"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "10,000"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "10k"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "10,000.00"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "10k"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "10,000.000"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "10k"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "10,000.000000"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "10k"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "10k"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "10k"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£10,000 kWh"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£10k kWh"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "10K"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "10K"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "10,000"
+  },
+  {
+   "v": 10000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "10k"
+  },
+  {
+   "v": 15500,
+   "o": {},
+   "short": false,
+   "out": "15,500"
+  },
+  {
+   "v": 15500,
+   "o": {},
+   "short": true,
+   "out": "15.5k"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "15,500"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "15.5k"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "15,500.00"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "15.5k"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "15,500.000"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "15.5k"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "15,500.000000"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "15.5k"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "15.5k"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "15.5k"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£15,500 kWh"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£15.5k kWh"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "15.5K"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "15.5K"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "15,500"
+  },
+  {
+   "v": 15500,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "15.5k"
+  },
+  {
+   "v": 99999,
+   "o": {},
+   "short": false,
+   "out": "99,999"
+  },
+  {
+   "v": 99999,
+   "o": {},
+   "short": true,
+   "out": "100k"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "99,999"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "100k"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "99,999.00"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "100k"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "99,999.000"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "100k"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "99,999.000000"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "100k"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "100k"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "100k"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£99,999 kWh"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£100k kWh"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "100K"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "100K"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "99,999"
+  },
+  {
+   "v": 99999,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "100k"
+  },
+  {
+   "v": 123456,
+   "o": {},
+   "short": false,
+   "out": "123,456"
+  },
+  {
+   "v": 123456,
+   "o": {},
+   "short": true,
+   "out": "123.5k"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "123,456"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "123.5k"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "123,456.00"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "123.5k"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "123,456.000"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "123.5k"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "123,456.000000"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "123.5k"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "123.5k"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "123.5k"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£123,456 kWh"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£123.5k kWh"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "123.5K"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "123.5K"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "123,456"
+  },
+  {
+   "v": 123456,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "123.5k"
+  },
+  {
+   "v": 999949,
+   "o": {},
+   "short": false,
+   "out": "999,949"
+  },
+  {
+   "v": 999949,
+   "o": {},
+   "short": true,
+   "out": "999.9k"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "999,949"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "999.9k"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "999,949.00"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "999.9k"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "999,949.000"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "999.9k"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "999,949.000000"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "999.9k"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "999.9k"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "999.9k"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£999,949 kWh"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£999.9k kWh"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "999.9K"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "999.9K"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "999,949"
+  },
+  {
+   "v": 999949,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "999.9k"
+  },
+  {
+   "v": 999950,
+   "o": {},
+   "short": false,
+   "out": "999,950"
+  },
+  {
+   "v": 999950,
+   "o": {},
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "999,950"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "999,950.00"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "999,950.000"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "999,950.000000"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1m"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£999,950 kWh"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1m kWh"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1M"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1M"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "999,950"
+  },
+  {
+   "v": 999950,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 1000000,
+   "o": {},
+   "short": false,
+   "out": "1,000,000"
+  },
+  {
+   "v": 1000000,
+   "o": {},
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1,000,000"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1,000,000.00"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1,000,000.000"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1,000,000.000000"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1m"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1,000,000 kWh"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1m kWh"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1M"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1M"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1,000,000"
+  },
+  {
+   "v": 1000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1m"
+  },
+  {
+   "v": 1250000,
+   "o": {},
+   "short": false,
+   "out": "1,250,000"
+  },
+  {
+   "v": 1250000,
+   "o": {},
+   "short": true,
+   "out": "1.3m"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1,250,000"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1.3m"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1,250,000.00"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1.3m"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1,250,000.000"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1.3m"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1,250,000.000000"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1.3m"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1.3m"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1.3m"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1,250,000 kWh"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1.3m kWh"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1.3M"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1.3M"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1,250,000"
+  },
+  {
+   "v": 1250000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1.3m"
+  },
+  {
+   "v": 1000000000,
+   "o": {},
+   "short": false,
+   "out": "1,000,000,000"
+  },
+  {
+   "v": 1000000000,
+   "o": {},
+   "short": true,
+   "out": "1bn"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1,000,000,000"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1bn"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1,000,000,000.00"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1bn"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1,000,000,000.000"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1bn"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1,000,000,000.000000"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1bn"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1bn"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1bn"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1,000,000,000 kWh"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1bn kWh"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1B"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1B"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1,000,000,000"
+  },
+  {
+   "v": 1000000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1bn"
+  },
+  {
+   "v": 1550000000000,
+   "o": {},
+   "short": false,
+   "out": "1,550,000,000,000"
+  },
+  {
+   "v": 1550000000000,
+   "o": {},
+   "short": true,
+   "out": "1.6tn"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1,550,000,000,000"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1.6tn"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1,550,000,000,000.00"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1.6tn"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1,550,000,000,000.000"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1.6tn"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1,550,000,000,000.000000"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1.6tn"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1.6tn"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1.6tn"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1,550,000,000,000 kWh"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1.6tn kWh"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1.6T"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1.6T"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1,550,000,000,000"
+  },
+  {
+   "v": 1550000000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1.6tn"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {},
+   "short": false,
+   "out": "1,000,000,000,000,000"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {},
+   "short": true,
+   "out": "1000tn"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1000tn"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000.00"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1000tn"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000.000"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1000tn"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000.000000"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1000tn"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1000tn"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1000tn"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1,000,000,000,000,000 kWh"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1000tn kWh"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1000T"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1000T"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000"
+  },
+  {
+   "v": 1000000000000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1000tn"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {},
+   "short": false,
+   "out": "1,000,000,000,000,000,000"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {},
+   "short": true,
+   "out": "1,000,000tn"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000,000"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1,000,000tn"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000,000.00"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "1,000,000tn"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000,000.000"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "1,000,000tn"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000,000.000000"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "1,000,000tn"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "1,000,000tn"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "1,000,000tn"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£1,000,000,000,000,000,000 kWh"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£1,000,000tn kWh"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "1,000,000T"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "1,000,000T"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1,000,000,000,000,000,000"
+  },
+  {
+   "v": 1000000000000000000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1,000,000tn"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {},
+   "short": false,
+   "out": "12,345,678,901,234,567,000"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {},
+   "short": true,
+   "out": "12,345,678.9tn"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "12,345,678,901,234,567,000"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "12,345,678.9tn"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "12,345,678,901,234,567,000.00"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "12,345,678.9tn"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "12,345,678,901,234,567,000.000"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "12,345,678.9tn"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "12,345,678,901,234,567,000.000000"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "12,345,678.9tn"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "12,345,678.9tn"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "12,345,678.9tn"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£12,345,678,901,234,567,000 kWh"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£12,345,678.9tn kWh"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "12,345,678.9T"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "12,345,678.9T"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "12,345,678,901,234,567,000"
+  },
+  {
+   "v": 12345678901234567000,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "12,345,678.9tn"
+  },
+  {
+   "v": 0.000001,
+   "o": {},
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {},
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "0.00"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "0.00"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "0.000"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "0.000"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "0.000001"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "0.000001"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£0 kWh"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£0 kWh"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.000001,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {},
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {},
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "0.00"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "0.00"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "0.000"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "0.000"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "0.000000"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "0.000000"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£0 kWh"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£0 kWh"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 1e-7,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": -2.5,
+   "o": {},
+   "short": false,
+   "out": "−2.5"
+  },
+  {
+   "v": -2.5,
+   "o": {},
+   "short": true,
+   "out": "−2.5"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "−3"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "−3"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "−2.50"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "−2.50"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "−2.500"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "−2.500"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "−2.500000"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "−2.500000"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "−2.5"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "−2.5"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "−£2.5 kWh"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "−£2.5 kWh"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "−2.5"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "−2.5"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "−3"
+  },
+  {
+   "v": -2.5,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "−3"
+  },
+  {
+   "v": -1234567.891,
+   "o": {},
+   "short": false,
+   "out": "−1,234,568"
+  },
+  {
+   "v": -1234567.891,
+   "o": {},
+   "short": true,
+   "out": "−1.2m"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "−1,234,568"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "−1.2m"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "−1,234,567.89"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "−1.2m"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "−1,234,567.891"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "−1.2m"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "−1,234,567.891000"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "−1.2m"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "−1.2m"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "−1.2m"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "−£1,234,568 kWh"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "−£1.2m kWh"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "−1.2M"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "−1.2M"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "−1,234,568"
+  },
+  {
+   "v": -1234567.891,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "−1.2m"
+  },
+  {
+   "v": 123456789.125,
+   "o": {},
+   "short": false,
+   "out": "123,456,789"
+  },
+  {
+   "v": 123456789.125,
+   "o": {},
+   "short": true,
+   "out": "123.5m"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "123,456,789"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "123.5m"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "123,456,789.13"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "123.5m"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "123,456,789.125"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "123.5m"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "123,456,789.125000"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "123.5m"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "123.5m"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "123.5m"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£123,456,789 kWh"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£123.5m kWh"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "123.5M"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "123.5M"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "123,456,789"
+  },
+  {
+   "v": 123456789.125,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "123.5m"
+  },
+  {
+   "v": 42,
+   "o": {},
+   "short": false,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {},
+   "short": true,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "42.00"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "42.00"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "42.000"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "42.000"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "42.000000"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "42.000000"
+  },
+  {
+   "v": 42,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£42 kWh"
+  },
+  {
+   "v": 42,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£42 kWh"
+  },
+  {
+   "v": 42,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "42"
+  },
+  {
+   "v": 42,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "42"
+  },
+  {
+   "v": 3.14159,
+   "o": {},
+   "short": false,
+   "out": "3.14"
+  },
+  {
+   "v": 3.14159,
+   "o": {},
+   "short": true,
+   "out": "3.14"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "3"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "3"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "3.14"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "3.14"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "3.142"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "3.142"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "3.141590"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "3.141590"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "3.14"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "3.14"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£3.14 kWh"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£3.14 kWh"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "3.14"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "3.14"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "3"
+  },
+  {
+   "v": 3.14159,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "3"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {},
+   "short": false,
+   "out": "0.33"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {},
+   "short": true,
+   "out": "0.33"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "0.33"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "0.33"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "0.333"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "0.333"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "0.333333"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "0.333333"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "0.33"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "0.33"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£0.33 kWh"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£0.33 kWh"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "0.33"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "0.33"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "0"
+  },
+  {
+   "v": 0.3333333333333333,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "0"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {},
+   "short": false,
+   "out": "0.67"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {},
+   "short": true,
+   "out": "0.67"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": 0
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": 0
+   },
+   "short": true,
+   "out": "1"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": 2
+   },
+   "short": false,
+   "out": "0.67"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": 2
+   },
+   "short": true,
+   "out": "0.67"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": "3"
+   },
+   "short": false,
+   "out": "0.667"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": "3"
+   },
+   "short": true,
+   "out": "0.667"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": 9
+   },
+   "short": false,
+   "out": "0.666667"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": 9
+   },
+   "short": true,
+   "out": "0.666667"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "compact": ""
+   },
+   "short": false,
+   "out": "0.67"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "compact": ""
+   },
+   "short": true,
+   "out": "0.67"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": false,
+   "out": "£0.67 kWh"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "prefix": "£",
+    "suffix": " kWh"
+   },
+   "short": true,
+   "out": "£0.67 kWh"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": false,
+   "out": "0.67"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "lang": "en-US",
+    "compact": ""
+   },
+   "short": true,
+   "out": "0.67"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": "x"
+   },
+   "short": false,
+   "out": "1"
+  },
+  {
+   "v": 0.6666666666666666,
+   "o": {
+    "decimals": "x"
+   },
+   "short": true,
+   "out": "1"
+  }
+ ],
+ "scales": [
+  {
+   "min": 0,
+   "max": 0,
+   "out": {
+    "lo": 0,
+    "hi": 1,
+    "ticks": [
+     0,
+     0.5,
+     1
+    ]
+   }
+  },
+  {
+   "min": 0,
+   "max": 1,
+   "out": {
+    "lo": 0,
+    "hi": 1,
+    "ticks": [
+     0,
+     0.5,
+     1
+    ]
+   }
+  },
+  {
+   "min": 5,
+   "max": 5,
+   "out": {
+    "lo": 4.5,
+    "hi": 5.5,
+    "ticks": [
+     4.5,
+     5,
+     5.5
+    ]
+   }
+  },
+  {
+   "min": -5,
+   "max": -5,
+   "out": {
+    "lo": -5.5,
+    "hi": -4.5,
+    "ticks": [
+     -5.5,
+     -5,
+     -4.5
+    ]
+   }
+  },
+  {
+   "min": 1,
+   "max": 2,
+   "out": {
+    "lo": 1,
+    "hi": 2,
+    "ticks": [
+     1,
+     1.5,
+     2
+    ]
+   }
+  },
+  {
+   "min": 0.1,
+   "max": 0.35,
+   "out": {
+    "lo": 0.1,
+    "hi": 0.4,
+    "ticks": [
+     0.1,
+     0.2,
+     0.3,
+     0.4
+    ]
+   }
+  },
+  {
+   "min": -10,
+   "max": 8,
+   "out": {
+    "lo": -10,
+    "hi": 10,
+    "ticks": [
+     -10,
+     -5,
+     0,
+     5,
+     10
+    ]
+   }
+  },
+  {
+   "min": 1200,
+   "max": 250000,
+   "out": {
+    "lo": 0,
+    "hi": 300000,
+    "ticks": [
+     0,
+     100000,
+     200000,
+     300000
+    ]
+   }
+  },
+  {
+   "min": 0,
+   "max": 98000,
+   "out": {
+    "lo": 0,
+    "hi": 100000,
+    "ticks": [
+     0,
+     50000,
+     100000
+    ]
+   }
+  },
+  {
+   "min": 1e-7,
+   "max": 3e-7,
+   "out": {
+    "lo": 1e-7,
+    "hi": 3e-7,
+    "ticks": [
+     1e-7,
+     1.5e-7,
+     2e-7,
+     2.5e-7,
+     3e-7
+    ]
+   }
+  },
+  {
+   "min": -0.75,
+   "max": -0.25,
+   "out": {
+    "lo": -0.8,
+    "hi": -0.2,
+    "ticks": [
+     -0.8,
+     -0.6,
+     -0.4,
+     -0.2
+    ]
+   }
+  },
+  {
+   "min": 0.12,
+   "max": 0.18,
+   "out": {
+    "lo": 0.12,
+    "hi": 0.18,
+    "ticks": [
+     0.12,
+     0.14,
+     0.16,
+     0.18
+    ]
+   }
+  },
+  {
+   "min": 3,
+   "max": 3.0001,
+   "out": {
+    "lo": 2.9999999999999996,
+    "hi": 3.0001499999999997,
+    "ticks": [
+     3,
+     3.00005,
+     3.0001,
+     3.00015
+    ]
+   }
+  },
+  {
+   "min": -1000000,
+   "max": 1000000000,
+   "out": {
+    "lo": -500000000,
+    "hi": 1000000000,
+    "ticks": [
+     -500000000,
+     0,
+     500000000,
+     1000000000
+    ]
+   }
+  }
+ ],
+ "strings": [
+  [
+   0,
+   "0"
+  ],
+  [
+   1,
+   "1"
+  ],
+  [
+   -1,
+   "-1"
+  ],
+  [
+   0.5,
+   "0.5"
+  ],
+  [
+   1.005,
+   "1.005"
+  ],
+  [
+   2.675,
+   "2.675"
+  ],
+  [
+   0.125,
+   "0.125"
+  ],
+  [
+   9.995,
+   "9.995"
+  ],
+  [
+   12.345,
+   "12.345"
+  ],
+  [
+   99.95,
+   "99.95"
+  ],
+  [
+   100.5,
+   "100.5"
+  ],
+  [
+   1234.5,
+   "1234.5"
+  ],
+  [
+   9999,
+   "9999"
+  ],
+  [
+   10000,
+   "10000"
+  ],
+  [
+   15500,
+   "15500"
+  ],
+  [
+   99999,
+   "99999"
+  ],
+  [
+   123456,
+   "123456"
+  ],
+  [
+   999949,
+   "999949"
+  ],
+  [
+   999950,
+   "999950"
+  ],
+  [
+   1000000,
+   "1000000"
+  ],
+  [
+   1250000,
+   "1250000"
+  ],
+  [
+   1000000000,
+   "1000000000"
+  ],
+  [
+   1550000000000,
+   "1550000000000"
+  ],
+  [
+   1000000000000000,
+   "1000000000000000"
+  ],
+  [
+   1000000000000000000,
+   "1000000000000000000"
+  ],
+  [
+   12345678901234567000,
+   "12345678901234567000"
+  ],
+  [
+   0.000001,
+   "0.000001"
+  ],
+  [
+   1e-7,
+   "1e-7"
+  ],
+  [
+   -2.5,
+   "-2.5"
+  ],
+  [
+   -1234567.891,
+   "-1234567.891"
+  ],
+  [
+   123456789.125,
+   "123456789.125"
+  ],
+  [
+   42,
+   "42"
+  ],
+  [
+   3.14159,
+   "3.14159"
+  ],
+  [
+   0.3333333333333333,
+   "0.3333333333333333"
+  ],
+  [
+   0.6666666666666666,
+   "0.6666666666666666"
+  ],
+  [
+   1e+21,
+   "1e+21"
+  ],
+  [
+   1.5e-7,
+   "1.5e-7"
+  ],
+  [
+   1.23e-18,
+   "1.23e-18"
+  ],
+  [
+   0.30000000000000004,
+   "0.30000000000000004"
+  ],
+  [
+   1e+300,
+   "1e+300"
+  ],
+  [
+   -1e-300,
+   "-1e-300"
+  ],
+  [
+   5e-324,
+   "5e-324"
+  ],
+  [
+   100,
+   "100"
+  ],
+  [
+   100000000000000000000,
+   "100000000000000000000"
+  ],
+  [
+   1.7976931348623157e+308,
+   "1.7976931348623157e+308"
+  ]
+ ]
+}

@@ -1,0 +1,121 @@
+"""The friendly layer: DataFrames, Series, arrays, dicts and lists in, Chart objects out."""
+
+from __future__ import annotations
+
+import datetime as dt
+import re
+
+import pytest
+
+import bezel_charts as bc
+
+pd = pytest.importorskip("pandas")
+np = pytest.importorskip("numpy")
+
+
+def ids(svg: str) -> str:
+    """Gradient ids are random so charts can share a page; ignore them when comparing."""
+    return re.sub(r"bzcg[0-9a-z]+", "id", svg)
+
+
+def texts(svg: str) -> list[str]:
+    return re.findall(r"<text[^>]*>([^<]*)</text>", svg)
+
+
+def test_list_and_kwargs_match_render():
+    chart = bc.spark([4, 6, 5, 8], heading="Signups", show_values=True)
+    assert ids(chart.svg) == ids(bc.to_svg("spark", values=[4, 6, 5, 8], heading="Signups", show_values=True))
+
+
+def test_option_spellings_are_equivalent():
+    a = bc.to_svg("line", values="1,2,3", show_values=True, goal_label="Aim", goal=2)
+    b = bc.to_svg("line", {"values": "1,2,3", "show-values": True, "goal-label": "Aim", "goal": 2})
+    c = bc.to_svg("line", values="1,2,3", showValues=True, goalLabel="Aim", goal=2)
+    assert ids(a) == ids(b) == ids(c)
+
+
+def test_dataframe_with_x_and_several_y_columns():
+    df = pd.DataFrame({"month": ["Jan", "Feb", "Mar"], "sales": [10, 14, 12], "costs": [8, 9, 11]})
+    svg = bc.line(df, x="month", y=["sales", "costs"]).svg
+    assert {"sales", "costs", "Jan", "Mar"} <= set(texts(svg))
+
+
+def test_dataframe_defaults_to_numeric_columns():
+    df = pd.DataFrame({"name": ["a", "b"], "x": [1, 2], "y": [3.5, 4.5]})
+    chart = bc.line(df)
+    assert "2 series" in chart.svg
+
+
+def test_datetime_index_becomes_dates_and_x_format():
+    idx = pd.date_range("2026-01-01", periods=3, freq="MS")
+    s = pd.Series([1, 2, 3], index=idx)
+    assert "2026-01-01" in texts(bc.line(s).svg)
+    assert "Jan 2026" in texts(bc.line(s, x_format="%b %Y").svg)
+
+
+def test_series_numpy_and_list_draw_the_same():
+    a = bc.spark([1.5, 2.5, 2.0]).svg
+    b = bc.spark(np.array([1.5, 2.5, 2.0])).svg
+    c = bc.spark(pd.Series([1.5, 2.5, 2.0])).svg
+    assert ids(a) == ids(b) == ids(c)
+
+
+def test_dict_and_list_of_lists_make_series():
+    assert "Team A" in texts(bc.line({"Team A": [1, 2], "Team B": [2, 1]}).svg)
+    assert "2 series" in bc.line([[1, 2, 3], [3, 2, 1]]).svg
+
+
+def test_missing_values_warn_and_draw_as_zero():
+    with pytest.warns(UserWarning, match="1 missing"):
+        chart = bc.spark(pd.Series([1.0, None, 3.0]))
+    assert "latest 3" in chart.svg
+
+
+def test_notes_from_a_dict():
+    chart = bc.line([1, 3, 2], labels=["Jan", "Feb", "Mar"], notes={"Feb": "Launch", 2: "Calm"})
+    assert {"Launch", "Calm"} <= set(texts(chart.svg))
+    with pytest.raises(ValueError):
+        bc.line([1, 2], notes={"a": "b;c"})
+
+
+def test_sparkline_needs_one_column():
+    df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
+    with pytest.raises(ValueError, match="one column"):
+        bc.spark(df)
+    assert "latest 4" in bc.spark(df, y="b").svg
+
+
+def test_unknown_columns_and_types():
+    df = pd.DataFrame({"a": [1, 2]})
+    with pytest.raises(KeyError):
+        bc.line(df, y="nope")
+    with pytest.raises(NotImplementedError, match="later release"):
+        bc.to_svg("donut", values="1,2")
+    with pytest.raises(ValueError, match="unknown chart type"):
+        bc.to_svg("pie")
+    with pytest.raises(AttributeError, match="later release"):
+        bc.donut  # noqa: B018
+
+
+def test_chart_object(tmp_path):
+    chart = bc.line([1, 2, 3], heading="Demo", theme="light")
+    assert chart._repr_svg_() == str(chart) == chart.svg
+    assert repr(chart) == f"<bezel_charts.Chart line {chart.width}x{chart.height}>"
+    out = chart.save(tmp_path / "demo")
+    assert out.name == "demo.svg" and out.read_text(encoding="utf-8") == chart.svg
+    assert 'class="bzc-hit"' not in chart.svg and "data-tip" not in chart.svg
+
+
+def test_dates_as_python_objects():
+    chart = bc.line(pd.DataFrame({"d": [dt.date(2026, 3, 1), dt.date(2026, 3, 2)], "v": [1, 2]}), x="d")
+    assert "2026-03-01" in texts(chart.svg)
+
+
+def test_unique_gradient_ids_for_notebooks():
+    a, b = bc.spark([1, 2]).svg, bc.spark([1, 2]).svg
+    assert re.search(r'id="(bzcg[^"]+)"', a).group(1) != re.search(r'id="(bzcg[^"]+)"', b).group(1)
+
+
+def test_unsupported_lang_warns_once_and_falls_back():
+    with pytest.warns(UserWarning, match="fr-FR"):
+        bc.to_svg("spark", values="1,2", lang="fr-FR")
