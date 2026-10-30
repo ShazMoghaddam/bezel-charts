@@ -131,7 +131,7 @@ def prepare(data, x=None, y=None, x_format=None, single=False):
             if col not in data.columns:
                 raise KeyError(f"bezel_charts: column {col!r} not found. Columns: {list(data.columns)}")
         if single and len(ys) > 1:
-            raise ValueError(f"bezel_charts: a sparkline draws one column. Choose one with y=, from {ys}.")
+            raise ValueError(f"bezel_charts: this chart draws one column. Choose one with y=, from {ys}.")
         values = [numbers(data[col], f"values in {col!r}") for col in ys]
         if x is not None:
             lbls = labels(data[x], x_format)
@@ -151,14 +151,14 @@ def prepare(data, x=None, y=None, x_format=None, single=False):
 
     if isinstance(data, Mapping):
         if single and len(data) > 1:
-            raise ValueError("bezel_charts: a sparkline draws one series. Pass a single list.")
+            raise ValueError("bezel_charts: this chart draws one series. Pass a single list.")
         names = [label(k) for k in data]
         return [numbers(v, f"values in {k!r}") for k, v in data.items()], names, None
 
     rows = _to_list(data)
     if rows and all(hasattr(r, "__iter__") and not isinstance(r, str) for r in rows):
         if single and len(rows) > 1:
-            raise ValueError("bezel_charts: a sparkline draws one series. Pass a single list.")
+            raise ValueError("bezel_charts: this chart draws one series. Pass a single list.")
         return [numbers(r) for r in rows], None, None
     return [numbers(rows)], None, None
 
@@ -294,3 +294,13 @@ def daily(data, x=None, y=None):
     first, last = min(per_day), max(per_day)
     span = (last - first).days + 1
     return [per_day.get(first + dt.timedelta(days=i), 0.0) for i in range(span)], first
+
+
+def parts(data, x=None, y=None, x_format=None):
+    """Values and their names for rings and donuts. A dict maps each name to its value."""
+    if isinstance(data, Mapping):
+        if x is not None or y is not None:
+            raise TypeError("bezel_charts: x= and y= pick DataFrame columns.")
+        return numbers(list(data.values())), [label(k) for k in data]
+    values, _, lbls = prepare(data, x, y, x_format, single=True)
+    return values[0], lbls

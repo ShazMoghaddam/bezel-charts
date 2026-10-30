@@ -62,8 +62,10 @@ Then in your README:
 | `bc.bars(data)` | Bars, vertical or horizontal. Several columns or series become grouped bars side by side. |
 | `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
 | `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
+| `bc.ring(data)` | Progress rings, one per value, out of 100 unless you set `max`. |
+| `bc.donut(data)` | Parts of a whole, with the total in the middle and percentages alongside. |
 
-Rings, donut, gauge and progress are coming in the next releases. `bc.types` lists what's available.
+Gauge and progress bars are coming in the next release. `bc.types` lists what's available.
 
 ### Bars
 
@@ -108,6 +110,22 @@ bc.heatmap([0, 2, 5, 1], start="2026-10-01")
 
 Days with nothing get 0, so the calendar has no gaps. On a narrow tile the most recent weeks are kept.
 
+### Rings and donut
+
+```python
+bc.ring({"Move": 72, "Exercise": 45, "Stand": 90}, heading="Today")
+bc.ring([3, 5], labels=["Read", "Write"], max=8, suffix=" h")
+
+bc.donut(budget, x="category", y="spend", heading="Monthly spending", prefix="£", center_label="Spent")
+bc.donut(df["browser"].value_counts())
+```
+
+![Three nested progress rings for move, exercise and stand](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/ring.svg)
+
+![A donut chart of monthly spending split into rent, food, travel, bills and fun](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/donut.svg)
+
+Both take a list, a dict of name to value, a Series (its index gives the names) or a DataFrame with `x=` and `y=`. Rings are percentages unless you set `max`, `prefix` or `suffix`. A donut with more than six parts keeps the five largest and adds the rest up as "Other".
+
 ## Your data
 
 | You pass | You get |
@@ -142,6 +160,8 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `trend` | `trend=True` | Least-squares trend line with Pearson's r (scatter). |
 | `x_label`, `y_label` | `x_label="Hours"` | Axis titles (scatter). |
 | `start` | `start="2026-01-01"` | The first day (heatmap). |
+| `max` | `max=8` | What a full ring means (ring). |
+| `center_label` | `center_label="Spent"` | The word under the total (donut). |
 | `labels`, `series` | `labels=["Q1", "Q2"]` | Set labels and series names by hand. |
 | `color` | `color=["#ff6600", "#0066ff"]` | Series colours. |
 | `theme` | `theme="light"` | `dark` (the default) or `light`. |
