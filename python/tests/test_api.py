@@ -91,6 +91,8 @@ def test_unknown_columns_and_types():
         bc.line(df, y="nope")
     with pytest.raises(NotImplementedError, match="later release"):
         bc.to_svg("donut", values="1,2")
+    with pytest.raises(NotImplementedError, match="later release"):
+        bc.to_svg("scatter", x="1,2", y="3,4")
     with pytest.raises(ValueError, match="unknown chart type"):
         bc.to_svg("pie")
     with pytest.raises(AttributeError, match="later release"):
@@ -119,3 +121,27 @@ def test_unique_gradient_ids_for_notebooks():
 def test_unsupported_lang_warns_once_and_falls_back():
     with pytest.warns(UserWarning, match="fr-FR"):
         bc.to_svg("spark", values="1,2", lang="fr-FR")
+
+
+def test_bars_from_value_counts():
+    s = pd.Series(["Python", "Go", "Python", "Rust", "Python", "Go"]).value_counts()
+    svg = bc.bars(s, horizontal=True).svg
+    assert {"Python", "Go", "Rust"} <= set(texts(svg))
+    assert "highest Python 3" in svg
+
+
+def test_grouped_bars_from_a_dataframe():
+    df = pd.DataFrame({"quarter": ["Q1", "Q2", "Q3"], "2026": [4, 9, 6], "2025": [3, 7, 8]})
+    chart = bc.bars(df, x="quarter", show_values=True)
+    assert "2 series across 3 groups" in chart.svg
+    assert {"2026", "2025", "Q1", "Q3"} <= set(texts(chart.svg))
+    assert ids(chart.svg) == ids(
+        bc.to_svg("bars", values="4,9,6|3,7,8", series="2026,2025", labels="Q1,Q2,Q3", show_values=True)
+    )
+
+
+def test_bars_highlight_and_colours():
+    single = bc.bars([2, 5, 3]).svg
+    assert single.count('fill-opacity="0.5"') == 2 and single.count('fill-opacity="1"') == 1
+    assert 'fill-opacity="0.5"' not in bc.bars([2, 5, 3], highlight="none").svg
+    assert "#ff0000" in bc.bars([1, 2], color=["#ff0000", "#00ff00"]).svg

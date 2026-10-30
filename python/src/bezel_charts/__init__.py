@@ -7,6 +7,7 @@ exactly like the Bezel Charts web components. Zero dependencies.
 
     bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
     bc.spark([4, 6, 5, 8, 9], heading="Signups").save("signups.svg")
+    bc.bars(df["language"].value_counts(), horizontal=True, heading="Languages")
 
 Created by Shaz Moghaddam, London. https://shazmoghaddam.github.io
 """
@@ -25,8 +26,8 @@ from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
 from .charts import TYPES
 
-__version__ = "0.1.0"
-__all__ = ["Chart", "line", "render", "spark", "themes", "to_svg", "types", "__version__"]
+__version__ = "0.2.0"
+__all__ = ["Chart", "bars", "line", "render", "spark", "themes", "to_svg", "types", "__version__"]
 
 #: Chart types available in this release. The rest of the ten follow in later releases.
 types = list(TYPES)
@@ -110,6 +111,20 @@ def line(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None
         return Chart("line", _options(options, None, None, None))
     values, names, lbls = _data.prepare(data, x, y, x_format)
     return Chart("line", _options(options, values, names, lbls))
+
+
+def bars(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+    """Bar charts: vertical or horizontal, one series or grouped side by side.
+
+    One column or list gives single bars, with the highest one highlighted. Several columns, a dict
+    or a list of lists give grouped bars with a legend, like this year next to last year.
+    A Series with labels in its index, such as ``df["city"].value_counts()``, works directly.
+    Use ``horizontal=True`` for long labels and ``show_values=True`` to print every value.
+    """
+    if data is None:
+        return Chart("bars", _options(options, None, None, None))
+    values, names, lbls = _data.prepare(data, x, y, x_format)
+    return Chart("bars", _options(options, values, names, lbls))
 
 
 def __getattr__(name: str):
