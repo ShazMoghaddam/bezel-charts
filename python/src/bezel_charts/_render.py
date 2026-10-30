@@ -8,9 +8,6 @@ from ._tile import THEMES
 from ._util import Opts, bool_
 from .charts import TYPES
 
-# Every chart type in the JavaScript package. The ones not ported yet raise a clear error.
-ALL_TYPES = ("spark", "line", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap")
-
 
 def _camel(key: str) -> str:
     """show-values and show_values both become showValues, matching the HTML attribute names."""
@@ -20,12 +17,7 @@ def _camel(key: str) -> str:
 def render(type: str, options: dict | None = None) -> str:
     """Renders a chart to an SVG string, hover targets included, exactly like render() in JavaScript."""
     if type not in TYPES:
-        if type in ALL_TYPES:
-            raise NotImplementedError(
-                f'bezel_charts: "{type}" charts are coming in a later release. '
-                f"Available now: {', '.join(TYPES)}."
-            )
-        raise ValueError(f'Bezel Charts: unknown chart type "{type}". Choose one of: {", ".join(ALL_TYPES)}.')
+        raise ValueError(f'Bezel Charts: unknown chart type "{type}". Choose one of: {", ".join(TYPES)}.')
     o = Opts()
     for k, v in (options or {}).items():
         o[_camel(k)] = v

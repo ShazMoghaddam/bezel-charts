@@ -344,7 +344,7 @@ bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
 bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
 ```
 
-Eight of the ten charts are available now: sparklines, line charts, bars (including grouped bars), scatter plots with trend lines, calendar heatmaps, rings and donuts. Gauge and progress bars follow. The Python output matches the JavaScript byte for byte, checked in CI. See the [Python README](python/README.md).
+All ten charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. See the [Python README](python/README.md).
 
 ## Frameworks
 

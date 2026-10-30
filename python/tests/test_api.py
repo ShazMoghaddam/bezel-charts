@@ -14,8 +14,8 @@ np = pytest.importorskip("numpy")
 
 
 def ids(svg: str) -> str:
-    """Gradient ids are random so charts can share a page; ignore them when comparing."""
-    return re.sub(r"bzcg[0-9a-z]+", "id", svg)
+    """Gradient and clip path ids are random so charts can share a page; ignore them when comparing."""
+    return re.sub(r"bzc[gc][0-9a-z]+", "id", svg)
 
 
 def texts(svg: str) -> list[str]:
@@ -89,14 +89,10 @@ def test_unknown_columns_and_types():
     df = pd.DataFrame({"a": [1, 2]})
     with pytest.raises(KeyError):
         bc.line(df, y="nope")
-    with pytest.raises(NotImplementedError, match="later release"):
-        bc.to_svg("gauge", values="50")
-    with pytest.raises(NotImplementedError, match="later release"):
-        bc.to_svg("progress", values="50")
     with pytest.raises(ValueError, match="unknown chart type"):
         bc.to_svg("pie")
-    with pytest.raises(AttributeError, match="later release"):
-        bc.gauge  # noqa: B018
+    with pytest.raises(AttributeError):
+        bc.pie  # noqa: B018
 
 
 def test_chart_object(tmp_path):
@@ -232,3 +228,27 @@ def test_donut_from_a_dataframe():
     assert {"Rent", "Food", "Travel", "67%"} <= set(texts(chart.svg))
     with pytest.raises(ValueError, match="one column"):
         bc.donut(df)
+
+
+def test_all_ten_types_match_the_javascript_list():
+    assert bc.types == ["spark", "line", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
+    for t in bc.types:
+        assert bc.to_svg(t).startswith("<svg")
+
+
+def test_gauge_from_a_number_with_zones_and_label():
+    chart = bc.gauge(63, label="CPU", zones=[60, 85], goal=80)
+    assert ids(chart.svg) == ids(bc.to_svg("gauge", values="63", labels="CPU", zones="60,85", goal=80))
+    assert {"63%", "CPU"} <= set(texts(chart.svg))
+    assert 'stroke="#FFC857"' in chart.svg  # 63 sits in the middle zone, drawn amber
+    assert "no data" in bc.gauge().svg
+    assert "42%" in texts(bc.gauge(pd.Series([42, 99])).svg)
+
+
+def test_progress_single_and_stacked():
+    assert "72%" in texts(bc.progress(72, labels=["Upload"]).svg)
+    stacked = bc.progress({"Done": 30, "Review": 20, "Blocked": 10}, max=100, goal=75)
+    assert ids(stacked.svg) == ids(
+        bc.to_svg("progress", values="30,20,10", labels="Done,Review,Blocked", max=100, goal=75)
+    )
+    assert "60 of 100" in texts(stacked.svg)

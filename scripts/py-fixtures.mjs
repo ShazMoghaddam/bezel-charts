@@ -8,10 +8,10 @@ import { fmt, niceScale } from '../src/core/util.js';
 const out = new URL('../python/tests/fixtures/', import.meta.url);
 mkdirSync(out, { recursive: true });
 
-// Gradient ids are random, so they are replaced with stable ones in both languages before comparing.
+// Gradient and clip path ids are random, so they are replaced with stable ones in both languages before comparing.
 const stable = (svg) => {
   const ids = new Map();
-  return svg.replace(/bzcg[0-9a-z]+/g, (id) => {
+  return svg.replace(/bzc[gc][0-9a-z]+/g, (id) => {
     if (!ids.has(id)) ids.set(id, `bzcg-${ids.size + 1}`);
     return ids.get(id);
   });
@@ -118,6 +118,33 @@ export const CASES = {
     { values: '1,1,1', width: 520, height: 200, animate: true, stat: 'total' },
     { values: '7,7,7,7,7,7,7', labels: 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', frame: 'none', color: '#111,#222,#333,#444,#555,#666' },
     { values: '0.1,0.2,0.3', decimals: 2, suffix: ' kg', width: 200 },
+  ],
+  gauge: [
+    {},
+    { values: '63', labels: 'CPU', zones: '60,85', goal: 80 },
+    { values: '120' },
+    { values: '-5', min: -10, max: 10, suffix: '°C' },
+    { values: '0' },
+    { value: 42, heading: 'Score', theme: 'light' },
+    { values: '90', zones: '50,75', color: '#16a884,#d99a0e,#d63f7c', labels: 'Load' },
+    { values: '1500', min: 0, max: 2000, prefix: '£', goal: 1800, compact: '', width: 260 },
+    { values: '30', zones: '40,70', animate: true, background: '#0b0b10' },
+    { values: '7.25', min: 5, max: 5, decimals: 2, height: 180, frame: 'none' },
+    { values: '75', width: 600, height: 90 },
+  ],
+  progress: [
+    {},
+    { values: '72', labels: 'Upload' },
+    { values: '30,20,10', labels: 'Done,Review,Blocked', max: 100, goal: 75 },
+    { values: '500,300', prefix: '£' },
+    { values: '200', max: 100 },
+    { values: '1,1,1,1,1,1,1,1' },
+    { values: '45', heading: 'Course', theme: 'light', stat: 'last' },
+    { values: '1200,800,400,250,100', labels: 'Housing and utilities,Groceries,Transport,Subscriptions,Other', prefix: '£', width: 300 },
+    { values: '60,50', max: 100, animate: true, background: '#141414' },
+    { values: '0,0' },
+    { values: '3.5', max: 10, suffix: ' km', goal: 8, frame: 'none' },
+    { values: '-5,15', labels: 'Neg,Pos', color: '#f00,#0f0' },
   ],
   heatmap: [
     {},

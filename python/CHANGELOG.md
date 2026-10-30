@@ -1,5 +1,14 @@
 # Changelog (Python package)
 
+## 1.0.0 (2026-10-30)
+
+All ten charts, matching the web components.
+
+- `bc.gauge()`: a half-circle gauge for one value, with `zones=` for green, amber and red bands, a `goal=` marker and a `label=` under the number.
+- `bc.progress()`: a progress bar from one number, or stacked parts with a legend from a list, dict, Series or DataFrame.
+- 23 more parity cases against the JavaScript: 119 chart cases across the ten charts, each checked static, interactive and animated, plus 689 number formatting and scale cases.
+- The "coming in a later release" errors are gone, since every chart type is now here.
+
 ## 0.4.0 (2026-10-30)
 
 - `bc.ring()`: progress rings, a single large ring or several nested ones with a legend, out of 100 unless you set `max`.
