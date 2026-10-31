@@ -2,6 +2,12 @@
 
 **Charts that look finished the moment you add them.**
 
+[![Web components release](https://img.shields.io/github/v/release/ShazMoghaddam/bezel-charts?filter=v*&label=web%20components&color=6E70F0)](https://github.com/ShazMoghaddam/bezel-charts/releases)
+[![PyPI](https://img.shields.io/pypi/v/bezel-charts?label=PyPI&color=16A884)](https://pypi.org/project/bezel-charts/)
+[![CI](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/ci.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/ci.yml)
+[![Python](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml)
+[![MIT licence](https://img.shields.io/badge/licence-MIT-D99A0E)](LICENSE)
+
 Bezel Charts is a set of free, open-source web components: ten chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
 ![Bezel Charts: a sparkline, rings, a gauge, a line chart with a launch day note, a donut, a bar chart with a target, a scatter plot with a trend line and a year-long activity heatmap, in light and dark tiles](docs/bezel-charts.png)
