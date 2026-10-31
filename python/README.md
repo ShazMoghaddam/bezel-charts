@@ -2,6 +2,11 @@
 
 **Polished SVG charts straight from a pandas DataFrame.**
 
+[![PyPI](https://img.shields.io/pypi/v/bezel-charts?label=PyPI&color=16A884)](https://pypi.org/project/bezel-charts/)
+[![Python versions](https://img.shields.io/pypi/pyversions/bezel-charts?color=6E70F0)](https://pypi.org/project/bezel-charts/)
+[![Tests](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml)
+[![MIT licence](https://img.shields.io/badge/licence-MIT-D99A0E)](https://github.com/ShazMoghaddam/bezel-charts/blob/main/LICENSE)
+
 The Python companion to [Bezel Charts](https://github.com/ShazMoghaddam/bezel-charts). Pass in a DataFrame, a Series, a NumPy array or a plain list and get back a finished chart tile that shows up in Jupyter, saves as an `.svg` for a README, and drops into reports and slides. Zero dependencies.
 
 ![A line chart of revenue against costs from January to September, with a launch note in May](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/line.svg)
