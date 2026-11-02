@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2 (2026-11-02)
+
+- Notes now work on charts whose labels are numbers, such as years. `notes="1980:Boycott"` used to be read as position 1980, so the note silently disappeared. A label now wins, and a whole number that matches no label is still a position. If your labels are numbers and you used a note like `1:Text` to mean a position, it now points at the label `1`.
+
 ## 1.0.1 (2026-10-28)
 
 - Live charts no longer show the browser's own tooltip on top of the chart's tooltip. Screen readers still get the chart's name, and exported SVGs keep their title.

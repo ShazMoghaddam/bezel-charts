@@ -71,6 +71,15 @@ def test_missing_values_warn_and_draw_as_zero():
     assert "latest 3" in chart.svg
 
 
+def test_notes_on_year_labels():
+    years = ["1976", "1980", "1984"]
+    assert "Boycott" in str(bc.line([1, 2, 3], labels=years, notes={"1980": "Boycott"}))
+    assert "Boycott" in str(bc.line([1, 2, 3], labels=[1976, 1980, 1984], notes={1980: "Boycott"}))
+    assert "Third" in str(bc.line([1, 2, 3], labels=years, notes={2: "Third"}))
+    df = pd.DataFrame({"year": years, "n": [1, 2, 3]})
+    assert "Boycott" in str(bc.line(df, x="year", y="n", notes={"1980": "Boycott"}))
+
+
 def test_notes_from_a_dict():
     chart = bc.line([1, 3, 2], labels=["Jan", "Feb", "Mar"], notes={"Feb": "Launch", 2: "Calm"})
     assert {"Launch", "Calm"} <= set(texts(chart.svg))

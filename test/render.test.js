@@ -81,6 +81,21 @@ test('number formatting uses prefix, suffix, decimals and a real minus sign', ()
   assert.match(svg, /−£2\.25/);
 });
 
+test('a note on a number-like label finds the label, not a position', () => {
+  const years = { values: '1,2,3', labels: '1976,1980,1984', notes: '1980:Boycott' };
+  assert.match(render('line', years), /Boycott/);
+  assert.match(render('line', { values: '1,2,3', labels: [1976, 1980, 1984], notes: '1980:Boycott' }), /Boycott/);
+  assert.match(render('scatter', { x: '1,2,3', y: '4,5,6', labels: '1976,1980,1984', notes: '1984:Last' }), /Last/);
+  assert.match(render('spark', { values: '1,2,3', labels: '1976,1980,1984', notes: '1976:First' }), /First/);
+  // With no matching label a whole number is still a position
+  assert.match(render('line', { values: '1,2,3', labels: '1976,1980,1984', notes: '2:Third' }), /Third/);
+  // A label beats a position when both could match: "1" is the first point here, not the second
+  const first = render('line', { values: '1,2,3', labels: '1,2,3', notes: '1:Note' });
+  const atFirst = render('line', { values: '1,2,3', labels: 'a,b,c', notes: '0:Note' });
+  const lineX = (svg) => svg.match(/<line x1="([\d.]+)"[^>]*stroke-dasharray="3 3"/)[1];
+  assert.equal(lineX(first), lineX(atFirst));
+});
+
 test('notes can point at a label or an index', () => {
   assert.match(render('line', { values: '1,2,3', labels: 'Jan,Feb,Mar', notes: 'Feb:Launch' }), /Launch/);
   assert.match(render('line', { values: '1,2,3', notes: '2:Peak' }), /Peak/);

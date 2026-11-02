@@ -280,9 +280,11 @@ def parse_notes(o, labels) -> list:
         if k < 0:
             continue
         key, t = part[:k].strip(), part[k + 1:].strip()
-        i = parse_int(key)
-        if js_str(i) != key:
-            i = labels.index(key) if key in labels else -1
+        # A label wins, so a note on "1976" finds the year. Otherwise a whole number is a position.
+        names = [to_string(label) for label in labels]
+        i = names.index(key) if key in names else -1
+        if i < 0 and js_str(parse_int(key)) == key:
+            i = parse_int(key)
         if i >= 0 and t:
             out.append({"i": int(i), "text": t})
     return out
