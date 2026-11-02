@@ -1,4 +1,4 @@
-/*! Bezel Charts v1.0.1 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.0.2 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/themes.js
 var THEMES = {
@@ -161,8 +161,8 @@ function parseNotes(o, labels) {
   return String(o.notes).split(";").map(function(part) {
     var k = part.indexOf(":");
     if (k < 0) return null;
-    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = parseInt(key, 10);
-    if (String(i) !== key) i = labels.indexOf(key);
+    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = labels.map(String).indexOf(key);
+    if (i < 0 && String(parseInt(key, 10)) === key) i = parseInt(key, 10);
     return i >= 0 && t ? { i, text: t } : null;
   }).filter(Boolean);
 }
@@ -1109,7 +1109,7 @@ var BezelChart = class extends Base {
 };
 
 // src/index.js
-var version = "1.0.1";
+var version = "1.0.2";
 var types = Object.keys(TYPES);
 if (typeof customElements !== "undefined" && typeof HTMLElement !== "undefined") {
   for (const type of types) {

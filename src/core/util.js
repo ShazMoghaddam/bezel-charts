@@ -100,8 +100,9 @@ export function parseNotes(o, labels) {
   return String(o.notes).split(';').map(function (part) {
     var k = part.indexOf(':');
     if (k < 0) return null;
-    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = parseInt(key, 10);
-    if (String(i) !== key) i = labels.indexOf(key);
+    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = labels.map(String).indexOf(key);
+    // A label wins, so a note on "1976" finds the year. Otherwise a whole number is a position.
+    if (i < 0 && String(parseInt(key, 10)) === key) i = parseInt(key, 10);
     return i >= 0 && t ? { i: i, text: t } : null;
   }).filter(Boolean);
 }

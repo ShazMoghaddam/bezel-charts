@@ -1,5 +1,10 @@
 # Changelog (Python package)
 
+## 1.0.1 (2026-11-02)
+
+- Notes now work on charts whose labels are numbers, such as years. `notes={"1980": "Boycott"}` used to be read as position 1980, so the note silently disappeared. A label now wins, and a whole number that matches no label is still a position. If your labels are numbers and you used a note like `{1: "Text"}` to mean a position, it now points at the label `1`.
+- 3 more parity cases against the JavaScript.
+
 ## 1.0.0 (2026-10-30)
 
 All ten charts, matching the web components.

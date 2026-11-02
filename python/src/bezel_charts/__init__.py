@@ -26,7 +26,7 @@ from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
 from .charts import TYPES
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 __all__ = [
     "Chart", "bars", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
     "to_svg", "types", "__version__",

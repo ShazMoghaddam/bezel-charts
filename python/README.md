@@ -174,7 +174,7 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `stat` | `stat="average"` | Headline number: `last`, `total`, `average`, `max`, `min` or `none`. |
 | `delta`, `delta_label` | `delta="inverse"` | Change since the start. `inverse` makes a fall the good direction. |
 | `goal`, `goal_label` | `goal=50, goal_label="Target"` | A dashed target line. |
-| `notes` | `notes={"May": "Launch"}` | Notes on points, keyed by label or position. |
+| `notes` | `notes={"May": "Launch"}` | Notes on points, keyed by label or, if no label matches, position. |
 | `show_values` | `show_values=True` | A label on every point. |
 | `straight` | `straight=True` | Straight segments instead of curves. |
 | `zero` | `zero=True` | Start the axis at zero (line). |
