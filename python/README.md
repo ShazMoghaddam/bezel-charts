@@ -179,6 +179,8 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `straight` | `straight=True` | Straight segments instead of curves. |
 | `zero` | `zero=True` | Start the axis at zero (line). |
 | `horizontal` | `horizontal=True` | Bars run sideways, good for long labels (bars). |
+| `stacked` | `stacked=True` | Pile several series into one bar per group, with the total in the tooltip (bars). |
+| `angle_labels` | `angle_labels=True` | Slant labels under vertical bars when they don't fit, so every one shows (bars). |
 | `highlight` | `highlight="none"` | Stop the highest bar standing out (bars). |
 | `trend` | `trend=True` | Least-squares trend line with Pearson's r (scatter). |
 | `x_label`, `y_label` | `x_label="Hours"` | Axis titles (scatter). |

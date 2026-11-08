@@ -46,7 +46,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.0.2` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.1.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -137,7 +137,7 @@ One or more lines over time, with an axis, a legend and notes on key moments. Se
 
 ### `<bezel-bars>`
 
-Bars, vertical or horizontal. Give it more than one series and you get **grouped bars**, side by side with a legend.
+Bars, vertical or horizontal. Give it more than one series and you get **grouped bars**, side by side with a legend, or add `stacked` to pile each group's series into one bar.
 
 ```html
 <bezel-bars heading="Revenue by quarter" values="182000,214000,236000,268000|151000,170000,198000,205000"
@@ -150,10 +150,22 @@ Bars, vertical or horizontal. Give it more than one series and you get **grouped
 | `series`      | series names for the legend                              |         |
 | `labels`      | one per bar or group                                     |         |
 | `horizontal`  | boolean, bars run left to right with labels beside them  | off     |
+| `stacked`     | boolean, with several series, piles them into one bar per group | off |
+| `angle-labels` | boolean, slants labels under vertical bars when they don't fit side by side, so every one shows | off |
 | `highlight`   | `none` to stop the highest bar standing out              | on      |
 | `height`      | chart height in px (vertical bars)                       | `140`   |
 
 With a single series and several colours in `color`, each bar takes its own colour.
+
+Stacked bars put positive parts above zero and negative parts below it. The tooltip lists every part and the total, and `show-values` writes the total at the end of each bar. Horizontal stacked bars always show the total.
+
+```html
+<bezel-bars heading="Land in a flood zone" values="18.4,16.6,0.1|6.6,24.8,33"
+  series="Low or higher,Very Low" labels="Barking and Dagenham,Newham,Southwark"
+  suffix="%" decimals="1" stacked angle-labels></bezel-bars>
+```
+
+Without `angle-labels`, labels that don't fit take turns, so only every few are shown. With it, they lean at 40 degrees and every one shows, shortened after 24 characters. The tooltip always has the full label.
 
 ### `<bezel-scatter>`
 
