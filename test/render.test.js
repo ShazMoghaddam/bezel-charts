@@ -134,3 +134,51 @@ test('a long heatmap on a narrow tile keeps the most recent weeks', () => {
   assert.doesNotMatch(svg, /in 365 days/);
   assert.match(svg, /fill-opacity="1"/);
 });
+
+test('stacked bars draw one column per group, with parts that add up', () => {
+  const svg = render('bars', { values: '4,9,6|3,7,8', series: 'A,B', labels: 'Q1,Q2,Q3', stacked: '', static: '' });
+  // The tile's own background rectangles have rounder corners, so only the bars match rx="3".
+  const rects = [...svg.matchAll(/<rect x="([\d.]+)" y="[\d.]+" width="([\d.]+)" height="[\d.]+" rx="3" fill/g)];
+  assert.equal(rects.length, 6);
+  // The two parts of each column share an x position and width.
+  for (let i = 0; i < 6; i += 2) assert.equal(rects[i][1], rects[i + 1][1]);
+  assert.match(svg, /Q2\nA: 9\nB: 7\nTotal: 16/);
+  assert.match(svg, /2 series stacked across 3 groups/);
+});
+
+test('stacked negative parts go below zero', () => {
+  const svg = render('bars', { values: '4,-2|-3,6', series: 'A,B', stacked: '', static: '', 'show-values': '' });
+  assert.match(svg, /Total: 1/);
+  assert.match(svg, />4<\/text>|>1<\/text>/);
+});
+
+test('stacked horizontal bars show the total at the end of each row', () => {
+  const svg = render('bars', { values: '18.4,0.1|6.6,33', series: 'Low,Very Low', labels: 'Barking,Southwark', stacked: '', horizontal: '', suffix: '%', decimals: 1 });
+  assert.match(svg, />25.0%<\/text>/);
+  assert.match(svg, />33.1%<\/text>/);
+});
+
+test('stacked is ignored with a single series', () => {
+  const plain = render('bars', { values: '4,9,6', static: '' });
+  assert.equal(render('bars', { values: '4,9,6', stacked: '', static: '' }), plain);
+});
+
+test('angled labels show every label when they would otherwise take turns', () => {
+  const labels = Array.from({ length: 33 }, (_, i) => `Borough number ${i + 1}`);
+  const o = { values: labels.map((_, i) => i + 1).join(','), labels: labels.join(','), width: 640 };
+  const count = (svg) => (svg.match(/Borough number \d+</g) || []).length;
+  assert.ok(count(render('bars', o)) < 33);
+  const angled = render('bars', { ...o, 'angle-labels': '' });
+  assert.equal(count(angled), 33);
+  assert.match(angled, /transform="rotate\(-40 /);
+});
+
+test('angled labels change nothing when the labels already fit', () => {
+  const o = { values: '1,2,3', labels: 'a,b,c' };
+  assert.equal(render('bars', { ...o, 'angle-labels': '' }), render('bars', o));
+});
+
+test('angled labels shorten very long names', () => {
+  const svg = render('bars', { values: Array(20).fill(1).join(','), labels: Array(20).fill('An extremely long label that goes on and on').join(','), 'angle-labels': '', width: 400 });
+  assert.match(svg, />An extremely long label…</);
+});

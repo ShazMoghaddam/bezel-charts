@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0 (2026-11-07)
+
+- Stacked bars: add `stacked` to bars with several series to pile them into one bar per group, vertical or horizontal. Negative parts stack below zero. The tooltip lists every part and the total, and `show-values` writes the total on each bar.
+- Angled labels: add `angle-labels` to vertical bars and labels that don't fit side by side lean at 40 degrees, so every one shows instead of every few. Long labels are shortened after 24 characters, and the tooltip keeps the full text. Charts whose labels already fit don't change.
+- Both options are in the Studio, the Python package and the README. Charts that don't use them draw exactly as before.
+
 ## 1.0.2 (2026-11-02)
 
 - Notes now work on charts whose labels are numbers, such as years. `notes="1980:Boycott"` used to be read as position 1980, so the note silently disappeared. A label now wins, and a whole number that matches no label is still a position. If your labels are numbers and you used a note like `1:Text` to mean a position, it now points at the label `1`.
