@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.1.1 (2026-11-09)
+
+No changes to the charts. This release puts the package on npm properly.
 
 - Bezel Charts is on npm: `npm install bezel-charts`. New releases publish there automatically from GitHub, with a provenance statement showing each package was built from this repository.
 - A security policy in [SECURITY.md](SECURITY.md), with private reporting through GitHub.
