@@ -225,6 +225,18 @@ with sync_playwright() as p:
     pg.locator('[data-toggle="percent"]').locator('xpath=..').click(); pg.wait_for_timeout(300)
     check('percent' in code() and '%</text>' in inner_h(), 'shares put percentages on the axis')
 
+    # box plot: whiskers, the mean diamond and lying on its side
+    pg.goto(URL); pg.wait_for_timeout(600)
+    pg.click('[data-ui="boxplot"]'); pg.wait_for_timeout(300)
+    check('mark="mean"' in code() and svg_ok(), 'the box plot sample draws with its mean')
+    pg.click('#tab-extras'); pg.wait_for_timeout(200)
+    pg.locator('[data-toggle="mark"]').locator('xpath=..').click(); pg.wait_for_timeout(300)
+    check('mark=' not in code(), 'turning the mean off removes mark')
+    pg.click('[data-seg="whiskers"][data-val="range"]'); pg.wait_for_timeout(300)
+    check('whiskers="range"' in code() and 'fill="none"' not in pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML"), 'full-range whiskers leave no outlier dots')
+    pg.locator('[data-toggle="horizontal"]').locator('xpath=..').click(); pg.wait_for_timeout(400)
+    check('horizontal' in code() and svg_ok(), 'boxes lie on their side')
+
     # keyboard: real key presses on the example charts on the home page
     pg.goto(URL); pg.wait_for_timeout(800)
     bars = 'bezel-bars[heading="Commits this week"]'

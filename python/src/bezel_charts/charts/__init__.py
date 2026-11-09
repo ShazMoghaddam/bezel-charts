@@ -2,6 +2,7 @@
 
 from .area import area
 from .bars import bars
+from .boxplot import boxplot
 from .donut import donut
 from .gauge import gauge
 from .heatmap import heatmap
@@ -14,7 +15,7 @@ from .spark import spark
 
 # Same order as NAMES in src/render.js.
 TYPES = {
-    "spark": spark, "line": line, "area": area, "bars": bars, "histogram": histogram, "scatter": scatter, "ring": ring, "donut": donut,
+    "spark": spark, "line": line, "area": area, "bars": bars, "histogram": histogram, "boxplot": boxplot, "scatter": scatter, "ring": ring, "donut": donut,
     "gauge": gauge, "progress": progress, "heatmap": heatmap,
 }
 

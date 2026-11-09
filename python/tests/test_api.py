@@ -240,7 +240,7 @@ def test_donut_from_a_dataframe():
 
 
 def test_all_types_match_the_javascript_list():
-    assert bc.types == ["spark", "line", "area", "bars", "histogram", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
+    assert bc.types == ["spark", "line", "area", "bars", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
     for t in bc.types:
         assert bc.to_svg(t).startswith("<svg")
 
@@ -306,3 +306,19 @@ def test_histogram_from_a_series_a_dataframe_and_lists():
     assert ids(bc.histogram(df, y="b").svg) == ids(bc.to_svg("histogram", values="2,3,4", bins=None))
     # bin_width from Python sets the edge decimals too: 1.00, 1.25, 1.50.
     assert {"1.00", "1.25", "1.50"} <= set(texts(bc.histogram([1, 1.25, 1.5], bin_width=0.25).svg))
+
+
+def test_boxplot_quartiles_match_pandas():
+    pay = pd.Series([1, 2, 3, 4, 5, 6, 7, 8, 9, 100])
+    q1, med, q3 = pay.quantile([0.25, 0.5, 0.75])
+    assert bc.boxplot(pay).alt == f"median {med:g}, middle half {q1:g} to {q3:g}"
+
+
+def test_boxplot_from_columns_a_dict_and_a_long_frame():
+    wide = pd.DataFrame({"North": [1, 2, 3], "South": [4, 5, 6]})
+    expected = ids(bc.to_svg("boxplot", values="1,2,3|4,5,6", series="North,South"))
+    assert ids(bc.boxplot(wide).svg) == expected
+    assert ids(bc.boxplot({"North": [1, 2, 3], "South": [4, 5, 6]}).svg) == expected
+    long = pd.DataFrame({"team": ["North"] * 3 + ["South"] * 3, "pay": [1, 2, 3, 4, 5, 6]})
+    assert ids(bc.boxplot(long, y="pay", by="team").svg) == expected
+    assert bc.boxplot(long, y="pay", by="team", heading="Pay").alt == "Pay: 2 groups, medians from 2 to 5"

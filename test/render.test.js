@@ -16,6 +16,8 @@ const CASES = {
     { values: '1,3,2|2,2,4', stacked: 'percent', patterns: '' }, { values: '-1,3,-2|2,-2,4', stacked: '', straight: '' }, { values: '0,0,0|0,0,0', stacked: 'percent' }],
   histogram: [{}, { values: '5' }, { values: '5,5,5' }, { values: '1,2,2,3,3,3,4,4,5', mark: 'mean,median' }, { values: '1,2,3|2,3,4,5', series: 'A,B', percent: '', patterns: '' },
     { values: '0.1,0.2,0.3,0.4', 'bin-width': '0.1' }, { values: '-5,-2.5,0,2.5,5', bins: 4 }, { values: '1,2,3', 'bin-width': '0.0000001' }],
+  boxplot: [{}, { values: '5' }, { values: '5,5,5' }, { values: '1,2,3,4,100', mark: 'mean' }, { values: '1,2,3|4,5,6', series: 'A,B', horizontal: '' },
+    { values: '1,2,3,4,100', whiskers: 'range', goal: 50 }, { values: '1,2|3,4|5,6', color: '#f00,#0f0,#00f' }],
   bars: [{}, { values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '', goal: 7 },
     { values: '-3,5,-8,2', labels: 'a,b,c,d', 'show-values': '' }, { values: '0,0,0' },
     { values: '820,640,410,300', labels: 'Python,JavaScript,A very long language name,Go', horizontal: '', goal: 500 },
@@ -359,4 +361,43 @@ test('mean and median lines are labelled with their values', () => {
 
 test('the histogram summary says how many values and where most are', () => {
   assert.match(render('histogram', { values: '1,2,2,2,3', heading: 'Ages', 'bin-width': 1 }), /aria-label="Ages: 5 values in 2 ranges from 1 to 3, most in 2 to 3"/);
+});
+
+const boxRow = (o) => table('boxplot', o).rows[0];
+
+test('box plot quartiles match pandas', () => {
+  // pandas: Series([1..9, 100]).quantile([.25, .5, .75]) is 3.25, 5.5, 7.75, and the mean is 14.5.
+  assert.deepEqual(boxRow({ values: '1,2,3,4,5,6,7,8,9,100', mark: 'mean' }), ['Group 1', '10', '1', '3.25', '5.5', '7.75', '100', '1', '14.5']);
+  assert.deepEqual(boxRow({ values: '10,20,30,40' }), ['Group 1', '4', '10', '17.5', '25', '32.5', '40', '0']);
+  assert.deepEqual(boxRow({ values: '7' }), ['Group 1', '1', '7', '7', '7', '7', '7', '0']);
+});
+
+test('whiskers stop within 1.5 times the box, and further values are outliers', () => {
+  const svg = render('boxplot', { values: '1,2,3,4,5,6,7,8,9,100', series: 'A' });
+  assert.deepEqual(tips(svg), ['A|Median 5.5|Middle half 3.25 to 7.75|Range without outliers 1 to 9|1 outlier|n = 10']);
+  assert.equal((svg.match(/<circle[^>]*fill="none"/g) || []).length, 1);
+});
+
+test('whiskers="range" reaches the lowest and highest values, with no outliers', () => {
+  const svg = render('boxplot', { values: '1,2,3,4,5,6,7,8,9,100', whiskers: 'range' });
+  assert.match(tips(svg)[0], /\|Range 1 to 100\|/);
+  assert.doesNotMatch(svg, /fill="none"/);
+  assert.equal(boxRow({ values: '1,2,3,100', whiskers: 'range' })[7], '0');
+});
+
+test('mark="mean" adds a diamond and the mean to the tooltip', () => {
+  const svg = render('boxplot', { values: '1,2,3,10', mark: 'mean' });
+  assert.match(svg, /<path d="M[^"]*Z" fill="[^"]+" stroke/);
+  assert.match(tips(svg)[0], /\|Mean 4\|/);
+});
+
+test('box plots name each group, unless there is only one without a name', () => {
+  assert.match(render('boxplot', { values: '1,2|3,4', series: 'North,South' }), />North<\/text>/);
+  assert.doesNotMatch(render('boxplot', { values: '1,2,3' }), />Group 1<\/text>/);
+  assert.match(render('boxplot', { values: '1,2,3|4,5,6', series: 'Engineering,Marketing', horizontal: '' }), />Engineering<\/text>/, 'names that fit are not shortened');
+});
+
+test('the box plot summary gives the medians', () => {
+  assert.match(render('boxplot', { values: '1,2,3|4,5,6', heading: 'Pay' }), /aria-label="Pay: 2 groups, medians from 2 to 5"/);
+  assert.match(render('boxplot', { values: '1,2,3,4' }), /aria-label="median 2.5, middle half 1.75 to 3.25"/);
 });

@@ -59,7 +59,7 @@ Then in your README, with `chart.alt` as the alt text:
 ![Monthly revenue: latest £79k. £42k, £48k, £45k, £53k, £61k, £58k, £66k, £72k, £79k](docs/revenue.svg)
 ```
 
-## The twelve charts
+## The thirteen charts
 
 | Function | What it draws |
 | --- | --- |
@@ -68,6 +68,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.area(data)` | Filled areas over time, overlapping, stacked (`stacked=True`) or as shares of 100% (`stacked="percent"`). |
 | `bc.bars(data)` | Bars, vertical or horizontal. Several columns or series become grouped bars side by side. |
 | `bc.histogram(data)` | How raw values spread out: counts per range, with round edges, mean and median lines and shares. |
+| `bc.boxplot(data)` | Box plots comparing spreads, with quartiles matching pandas, outliers and an optional mean. |
 | `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
 | `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
 | `bc.ring(data)` | Progress rings, one per value, out of 100 unless you set `max`. |
@@ -75,7 +76,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
 | `bc.progress(data)` | A progress bar, single or stacked with a legend. |
 
-Grouped bars are `bc.bars()` with several series, which makes twelve. They are the same twelve as the web components, and `bc.types` lists them.
+Grouped bars are `bc.bars()` with several series, which makes thirteen. They are the same thirteen as the web components, and `bc.types` lists them.
 
 ### Area
 
@@ -95,6 +96,15 @@ bc.histogram(df[["before", "after"]], percent=True, bin_width=5)  # two groups o
 ```
 
 `bins=` sets roughly how many ranges and `bin_width=` an exact width. Python counts exactly like the web component, including values that sit on an edge, which belong to the range they start.
+
+### Box plot
+
+```python
+bc.boxplot(df, y="salary", by="team", mark="mean", prefix="£")  # one box per team from a long DataFrame
+bc.boxplot(df[["north", "south"]], horizontal=True)               # one box per column
+```
+
+Quartiles match `df.describe()`. `whiskers="range"` reaches the lowest and highest values instead of showing outliers.
 
 ### Bars
 
@@ -219,8 +229,9 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `angle_labels` | `angle_labels=True` | Slant labels under vertical bars when they don't fit, so every one shows (bars). |
 | `bins` | `bins=12` | Roughly how many ranges (histogram). |
 | `bin_width` | `bin_width=5` | An exact width for each range (histogram). |
-| `mark` | `mark="mean,median"` | Labelled lines at the mean, the median or both (histogram). |
+| `mark` | `mark="mean,median"` | Labelled lines at the mean, the median or both (histogram), or a diamond at the mean (box plot). |
 | `percent` | `percent=True` | Shares instead of counts (histogram). |
+| `whiskers` | `whiskers="range"` | Whiskers reach the lowest and highest values, with no outlier dots (box plot). |
 | `dash` | `dash=True` or `dash=["solid", "dashed"]` | A line style per series: `solid`, `dashed`, `dotted`, `dashdot` (line). |
 | `markers` | `markers=True` or `markers=["circle", "square"]` | A shape on each point: `circle`, `square`, `triangle`, `diamond`, `none` (line, scatter). |
 | `patterns` | `patterns=True` or `patterns=["solid", "stripes"]` | A fill per series: `solid`, `stripes`, `dots`, `grid` (grouped and stacked bars). |
