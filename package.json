@@ -1,12 +1,21 @@
 {
   "name": "bezel-charts",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, bars, rings, donuts, gauges, progress bars and heatmaps, with one-click static SVG export for READMEs.",
   "type": "module",
   "main": "dist/bezel-charts.js",
   "module": "dist/bezel-charts.js",
   "exports": {
     ".": "./dist/bezel-charts.js",
+    "./spark": "./dist/charts/spark.js",
+    "./line": "./dist/charts/line.js",
+    "./bars": "./dist/charts/bars.js",
+    "./scatter": "./dist/charts/scatter.js",
+    "./ring": "./dist/charts/ring.js",
+    "./donut": "./dist/charts/donut.js",
+    "./gauge": "./dist/charts/gauge.js",
+    "./progress": "./dist/charts/progress.js",
+    "./heatmap": "./dist/charts/heatmap.js",
     "./src/*": "./src/*"
   },
   "files": [

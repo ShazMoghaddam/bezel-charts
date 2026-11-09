@@ -1,4 +1,5 @@
-import { newId, r2, clamp, num, has, list, series, tw, bool, fmt, niceScale, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf, legend, seriesTable, styleOf, marker, DASHES, SHAPES } from '../core/util.js';
+import { newId, r2, clamp, num, has, list, series, tw, bool, fmt, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf } from '../core/util.js';
+import { niceScale, legend, seriesTable, styleOf, marker, DASHES, SHAPES } from '../core/series.js';
 import { tile } from '../core/tile.js';
 
 export default function line(o, th) {

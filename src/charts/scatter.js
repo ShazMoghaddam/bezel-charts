@@ -1,4 +1,5 @@
-import { r2, clamp, num, has, list, series, bool, fmt, niceScale, text, small, hit, palette, emptyState, parseNotes, goalLine, legend, axisWidth, styleOf, marker, SHAPES } from '../core/util.js';
+import { r2, clamp, num, has, list, series, bool, fmt, text, small, hit, palette, emptyState, parseNotes, goalLine } from '../core/util.js';
+import { niceScale, legend, axisWidth, styleOf, marker, SHAPES } from '../core/series.js';
 import { tile } from '../core/tile.js';
 
 /** Least-squares fit. Returns slope, intercept and Pearson's r, or null when x has no spread. */

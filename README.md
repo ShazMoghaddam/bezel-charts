@@ -20,7 +20,7 @@ Bezel Charts is a set of free, open-source web components: ten chart tiles drawn
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
 - **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, grouped series, goal lines and notes on key points.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 16 kB gzipped for all ten charts, with no dependencies and no build step.
+- **Light.** About 16 kB gzipped for all ten charts, or 7 to 10 kB for a page that loads just one. No dependencies and no build step.
 - **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
@@ -29,6 +29,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 ## Contents
 
 - [Quick start](#quick-start)
+- [Load only the charts you use](#load-only-the-charts-you-use)
 - [The Studio](#the-studio)
 - [The charts](#the-charts)
 - [Options for every chart](#options-for-every-chart)
@@ -48,7 +49,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.2.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.3.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -64,6 +65,30 @@ npm install bezel-charts
 import 'bezel-charts';                      // registers every element
 import { render, toSVG } from 'bezel-charts'; // draw charts as SVG strings, even in Node
 ```
+
+## Load only the charts you use
+
+Each chart also comes as its own file, so a page with a single chart loads less than half the full bundle. The files share their common code, so a page with two or three charts downloads that part once.
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/charts/line.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/charts/bars.js"></script>
+```
+
+```js
+import 'bezel-charts/line';
+import 'bezel-charts/bars';
+import { toSVG } from 'bezel-charts/line'; // render and toSVG work for every chart loaded so far
+```
+
+| Page | Gzipped |
+| --- | --- |
+| One sparkline, ring, donut, gauge, progress bar or heatmap | 7.2 to 7.4 kB |
+| One line, scatter or bar chart | 9.2 to 10.1 kB |
+| A line and a bar chart | 12.0 kB |
+| Every chart: the full bundle | 15.9 kB |
+
+Once a page needs four or five different charts, load the full bundle instead. `<bezel-chart type="…">` works with whichever charts are loaded, and tells you which file to add if its type isn't one of them. The classic `iife.js` script always has every chart, because a classic script can't load the shared file.
 
 ## The Studio
 
@@ -433,17 +458,18 @@ npm run test:browser # click through every Studio control in a real browser (nee
 
 ```
 src/
-  core/        shared helpers, the bezel frame and the colour themes
+  core/        shared helpers, the bezel frame and the colour themes; series.js has the extras for line, bars and scatter
   charts/      one file per chart type: options in, SVG string out
   render.js    picks the chart and returns its SVG
-  element.js   the custom element: sizing, theme, tooltips and export
+  element.js   the custom element: sizing, theme, tooltips, keyboard and export
+  entries/     one file per chart that registers it and defines its tag, for per-chart imports
 site/          the website and Studio, with sample files in site/samples
 python/        the Python package, with parity tests against the JavaScript
 docs/          the README image and social preview, with the pages that render them
 test/          node:test suites, plus a Playwright browser test
 ```
 
-Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The bundle has a 16 kB gzip budget, checked in CI. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The full bundle has a 20 kB gzip budget and each chart file its own, checked in CI by `npm run size`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 

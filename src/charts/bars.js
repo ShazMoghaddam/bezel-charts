@@ -1,4 +1,5 @@
-import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, statOf, legend, seriesTable, styleOf, pattern, PATTERNS, SANS, MONO } from '../core/util.js';
+import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, statOf, SANS, MONO } from '../core/util.js';
+import { legend, seriesTable, styleOf, pattern, PATTERNS } from '../core/series.js';
 import { tile, dims } from '../core/tile.js';
 
 /** How far angled labels lean, and the longest label they show before shortening it. */
