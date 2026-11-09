@@ -17,7 +17,7 @@ const flush = () => new Promise((r) => setTimeout(r, 0));
 test('importing one chart defines its tag and <bezel-chart>, and no others', () => {
   assert.ok(customElements.get('bezel-line'));
   assert.ok(customElements.get('bezel-chart'));
-  for (const t of ['spark', 'area', 'bars', 'histogram', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'heatmap']) assert.equal(customElements.get(`bezel-${t}`), undefined, t);
+  for (const t of ['spark', 'area', 'bars', 'histogram', 'boxplot', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'heatmap']) assert.equal(customElements.get(`bezel-${t}`), undefined, t);
 });
 
 test('the entry also exports render and toSVG for its chart', () => {
@@ -43,7 +43,7 @@ test('every chart has a built file, an export and a budget', () => {
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
   const size = readFileSync('scripts/size.mjs', 'utf8');
   const built = readdirSync('dist/charts');
-  for (const t of ['spark', 'line', 'area', 'bars', 'histogram', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'heatmap']) {
+  for (const t of ['spark', 'line', 'area', 'bars', 'histogram', 'boxplot', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'heatmap']) {
     assert.ok(built.includes(`${t}.js`), t);
     assert.equal(pkg.exports[`./${t}`], `./dist/charts/${t}.js`, t);
     assert.match(size, new RegExp(`\\b${t}: \\d+`), t);

@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bezel Charts</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Twelve polished chart tiles as zero-dependency web components, with static SVG export for READMEs, Notion and slides.">
+<meta name="description" content="Thirteen polished chart tiles as zero-dependency web components, with static SVG export for READMEs, Notion and slides.">
 <link rel="canonical" href="https://shazmoghaddam.github.io/bezel-charts/site/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bezel Charts">
 <meta property="og:title" content="Bezel Charts: charts that look finished the moment you add them">
-<meta property="og:description" content="Twelve polished chart tiles as free, open-source web components. Build one in the Studio, copy one line of HTML, or save it as an SVG for your README.">
+<meta property="og:description" content="Thirteen polished chart tiles as free, open-source web components. Build one in the Studio, copy one line of HTML, or save it as an SVG for your README.">
 <meta property="og:url" content="https://shazmoghaddam.github.io/bezel-charts/site/">
 <meta property="og:image" content="https://shazmoghaddam.github.io/bezel-charts/docs/social-preview.png">
 <meta property="og:image:width" content="2560">
@@ -47,12 +47,12 @@
 <main id="top">
   <section class="hero in">
     <h1>Charts that look <em>finished</em> the moment you add them.</h1>
-    <p class="lede">Twelve polished chart tiles as web components. Write one HTML tag, pass your numbers, done. Every chart also exports as a static SVG for READMEs, Notion and slides, where JavaScript can't run.</p>
+    <p class="lede">Thirteen polished chart tiles as web components. Write one HTML tag, pass your numbers, done. Every chart also exports as a static SVG for READMEs, Notion and slides, where JavaScript can't run.</p>
   </section>
 
   <section class="in" id="charts" aria-labelledby="charts-h">
     <div class="toolbar">
-      <h2 id="charts-h">Twelve chart types · sample data</h2>
+      <h2 id="charts-h">Thirteen chart types · sample data</h2>
       <div class="seg" role="group" aria-label="Tile theme">
         <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
         <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
@@ -79,6 +79,11 @@
       <article class="card wide" data-card="histogram">
         <bezel-histogram heading="Commute times · minutes" values="21,38,45,28,19,33,39,46,21,20,42,39,51,45,33,31,62,31,25,21,35,36,30,33,37,42,46,36,14,42,18,32,18,34,25,36,70,33,43,19,31,41,33,38,35,23,40,25,55,28,42,34,44,27,45,33,48,41,36,25,42,39,52,30,40,40,37,36,36,27,23,30,40,51,45,46,43,42,36,42" mark="median"></bezel-histogram>
         <div class="meta"><div><b>Histogram</b><span>How values spread out, with round ranges and the median marked.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card wide" data-card="boxplot">
+        <bezel-boxplot heading="Salaries by team · £k" values="60,66,60,59,55,60,71,65,70,64,65,63,49,69,66,66,48,48,55,58,64,62,66,57,95|50,50,44,58,51,55,44,44,46,47,52,49,45,42,45,55,43,49,51,39,22|55,68,35,52,54,47,60,54,40,63,62,64,69,59,56,42,61,49,50,42,45,50|47,31,34,42,48,44,32,28,43,37,35,46,47,42,42,43,49,44,70" series="Engineering,Marketing,Product,Support" prefix="£" suffix="k" mark="mean"></bezel-boxplot>
+        <div class="meta"><div><b>Box plot</b><span>Compare spreads side by side, with medians, quartiles and outliers.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
       <article class="card" data-card="bars">
@@ -196,14 +201,14 @@
           <svg viewBox="0 0 32 32" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="9" stroke="currentColor" stroke-width="2.4"/><path d="M9 21.5V17M14 21.5v-9M19 21.5V15M24 21.5V10" stroke="currentColor" stroke-width="2.6"/></svg>
           Bezel Charts
         </a>
-        <p class="foot__eyebrow">Open-source web components · v1.5</p>
-        <p class="foot__lede">Twelve chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Add one tag to any page, or save any chart as an image for a README, Notion page or slide.</p>
+        <p class="foot__eyebrow">Open-source web components · v1.6</p>
+        <p class="foot__lede">Thirteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Add one tag to any page, or save any chart as an image for a README, Notion page or slide.</p>
       </div>
 
       <dl class="foot__specs">
-        <div><dt>Chart types</dt><dd>12</dd></div>
+        <div><dt>Chart types</dt><dd>13</dd></div>
         <div><dt>Dependencies</dt><dd>0</dd></div>
-        <div><dt>Gzipped</dt><dd>19 kB</dd></div>
+        <div><dt>Gzipped</dt><dd>20 kB</dd></div>
       </dl>
 
       <nav class="foot__links" aria-label="Footer">

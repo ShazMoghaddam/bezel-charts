@@ -1,5 +1,9 @@
 # Changelog (Python package)
 
+## 1.6.0 (2026-11-09)
+
+- `bc.boxplot()`: box plots from a list, Series, dict, DataFrame columns, or a long DataFrame with `y=` and `by=`. Quartiles match pandas. `whiskers="range"`, `mark="mean"` and `horizontal=True`. Matches `<bezel-boxplot>` byte for byte, with 13 parity cases.
+
 ## 1.5.0 (2026-11-09)
 
 - `bc.histogram()`: counts raw values from a Series, list, DataFrame or dict into round ranges, with `bins=`, `bin_width=`, `mark="mean,median"` and `percent=True`. Counts and edges match `<bezel-histogram>` exactly, including values on an edge, with 18 parity cases.

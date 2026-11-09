@@ -29,9 +29,9 @@ from ._tile import THEMES as themes
 from ._util import Opts, fmt, lst, series
 from .charts import TYPES
 
-__version__ = "1.5.0"
+__version__ = "1.6.0"
 __all__ = [
-    "Chart", "area", "bars", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
+    "Chart", "area", "bars", "boxplot", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
     "to_svg", "types", "__version__",
 ]
 
@@ -163,6 +163,24 @@ def bars(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None
         return Chart("bars", _options(options, None, None, None))
     values, names, lbls = _data.prepare(data, x, y, x_format)
     return Chart("bars", _options(options, values, names, lbls))
+
+
+def boxplot(data: Any = None, *, y: Any = None, by: Any = None, **options: Any) -> Chart:
+    """Box plots: one box per group of raw values, with quartiles calculated the way pandas does.
+
+    ``data`` can be a list or Series (one box), a dict of name to values, a DataFrame (one box per numeric column,
+    or ``y=`` to choose), or a long DataFrame split by a column with ``by=``: ``bc.boxplot(df, y="salary", by="team")``.
+    ``whiskers="range"`` reaches the lowest and highest values, ``mark="mean"`` adds a diamond at the mean and
+    ``horizontal=True`` lays the boxes on their side.
+    """
+    if data is None:
+        return Chart("boxplot", _options(options, None, None, None))
+    if by is not None:
+        groups = {str(name): g[y] for name, g in data.groupby(by, sort=False)}
+        values, names, _labels = _data.prepare(groups, None, None, None)
+    else:
+        values, names, _labels = _data.prepare(data, None, y, None)
+    return Chart("boxplot", _options(options, values, names, None))
 
 
 def histogram(data: Any = None, *, y: Any = None, **options: Any) -> Chart:

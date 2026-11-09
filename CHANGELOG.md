@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.6.0 (2026-11-09)
+
+Box plots.
+
+- `<bezel-boxplot>`: one box per group of raw values, from the lower to the upper quartile, with a line at the median. Whiskers reach the furthest values within 1.5 times the box's height, and anything further out is an outlier dot. `whiskers="range"` reaches the lowest and highest values instead.
+- Quartiles use linear interpolation, as pandas, NumPy and Excel's `QUARTILE.INC` do, so the numbers match `df.describe()`.
+- `mark="mean"` adds a diamond at the mean, `horizontal` lays the boxes on their side, `goal` draws a reference line and `color` can give each box its own colour. Long group names are shortened to fit.
+- Tooltips give each group's median, middle half, range, outliers and count, and the data table lists every figure. Keyboard and screen reader support work as on every chart.
+- In the Studio, the Python package as `bc.boxplot()` (with `by=` for long DataFrames), and on its own as `bezel-charts/boxplot` (9.4 kB).
+- The full bundle's budget is now 22 kB (the bundle is 20.4 kB). It will rise a little with each new chart, so it keeps catching growth nobody meant.
+- Studio: a toggle can now set a value, such as `mark="mean"`, and toggles with the same name on different charts no longer mix up.
+
 ## 1.5.0 (2026-11-09)
 
 Histograms.
