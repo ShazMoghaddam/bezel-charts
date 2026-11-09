@@ -38,7 +38,7 @@
     "type": "git",
     "url": "git+https://github.com/ShazMoghaddam/bezel-charts.git"
   },
-  "homepage": "https://shazmoghaddam.github.io/bezel-charts/",
+  "homepage": "https://shazmoghaddam.github.io/bezel-charts/site/",
   "bugs": "https://github.com/ShazMoghaddam/bezel-charts/issues",
   "engines": {
     "node": ">=20"

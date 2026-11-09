@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Bezel Charts is on npm: `npm install bezel-charts`. New releases publish there automatically from GitHub, with a provenance statement showing each package was built from this repository.
+- A security policy in [SECURITY.md](SECURITY.md), with private reporting through GitHub.
+- Dependabot checks npm, Python and GitHub Actions dependencies every week.
+
 ## 1.1.0 (2026-11-07)
 
 - Stacked bars: add `stacked` to bars with several series to pile them into one bar per group, vertical or horizontal. Negative parts stack below zero. The tooltip lists every part and the total, and `show-values` writes the total on each bar.

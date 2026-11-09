@@ -3,6 +3,7 @@
 **Charts that look finished the moment you add them.**
 
 [![Web components release](https://img.shields.io/github/v/release/ShazMoghaddam/bezel-charts?filter=v*&label=web%20components&color=6E70F0)](https://github.com/ShazMoghaddam/bezel-charts/releases)
+[![npm](https://img.shields.io/npm/v/bezel-charts?label=npm&color=CB3837)](https://www.npmjs.com/package/bezel-charts)
 [![PyPI](https://img.shields.io/pypi/v/bezel-charts?label=PyPI&color=16A884)](https://pypi.org/project/bezel-charts/)
 [![CI](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/ci.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/ci.yml)
 [![Python](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml)
@@ -52,10 +53,10 @@ That's all. Charts fill the width of whatever they sit in and redraw when it cha
 
 Prefer a classic script tag? `dist/bezel-charts.iife.js` registers the same elements and exposes a `BezelCharts` global.
 
-With npm, straight from GitHub:
+With npm:
 
 ```sh
-npm install github:ShazMoghaddam/bezel-charts
+npm install bezel-charts
 ```
 
 ```js
@@ -406,6 +407,10 @@ test/          node:test suites, plus a Playwright browser test
 ```
 
 Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The bundle has a 14 kB gzip budget, checked in CI. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Security
+
+Found a security problem? Please report it privately through GitHub rather than in an issue. [SECURITY.md](SECURITY.md) explains how, and which versions get fixes.
 
 ## Credits
 
