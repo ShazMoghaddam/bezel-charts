@@ -12,6 +12,8 @@ const CASES = {
     { values: '-5,-3,0,4,-2', prefix: '£' }, { values: '1200000,1500000,1900000', compact: '' }, { values: [3, 3, 3], theme: 'light', frame: 'none' }],
   line: [{}, { values: '1,2,3|3,2,1', series: 'A,B', labels: 'Jan,Feb,Mar', goal: 2.5, notes: 'Feb:Launch day', prefix: '£' },
     { values: '4' }, { values: '-10,5,-3,8', straight: '' }, { values: '1,2,3', labels: 'a,b,c', zero: '', stat: 'last' }],
+  area: [{}, { values: '5' }, { values: '1,3,2|2,2,4', series: 'A,B', labels: 'a,b,c', notes: 'b:Mid', goal: 3 }, { values: '1,3,2|2,2,4', stacked: '', 'show-values': '' },
+    { values: '1,3,2|2,2,4', stacked: 'percent', patterns: '' }, { values: '-1,3,-2|2,-2,4', stacked: '', straight: '' }, { values: '0,0,0|0,0,0', stacked: 'percent' }],
   bars: [{}, { values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '', goal: 7 },
     { values: '-3,5,-8,2', labels: 'a,b,c,d', 'show-values': '' }, { values: '0,0,0' },
     { values: '820,640,410,300', labels: 'Python,JavaScript,A very long language name,Go', horizontal: '', goal: 500 },
@@ -254,4 +256,49 @@ test('data tables list every value, including ones the chart groups or drops', (
   assert.equal(table('heatmap', { values: Array(365).fill(1).join(','), width: 200, start: '2026-01-01' }).rows.length, 365);
   assert.deepEqual(table('bars', { values: '1,2|3,4', stacked: '' }).head, ['Label', 'Series 1', 'Series 2', 'Total']);
   assert.deepEqual(table('scatter', { x: '1|2', y: '3|4', 'x-label': 'Hours' }).rows, [['#1', 'Group 1', '1', '3'], ['#2', 'Group 2', '2', '4']]);
+});
+
+const tips = (svg) => [...svg.matchAll(/data-tip="([^"]*)"/g)].map((m) => m[1].replace(/&#10;|\n/g, '|'));
+
+test('area charts always include zero on the axis', () => {
+  const svg = render('area', { values: '100,110,120' });
+  assert.match(svg, />0<\/text>/);
+  assert.doesNotMatch(render('line', { values: '100,110,120' }), />0<\/text>/, 'line charts can start above zero');
+});
+
+test('stacked areas pile up, list every part and the total, and write totals with show-values', () => {
+  const svg = render('area', { values: '1,3|2,2', series: 'A,B', labels: 'x,y', stacked: '', 'show-values': '' });
+  assert.deepEqual(tips(svg), ['x|A: 1|B: 2|Total: 3', 'y|A: 3|B: 2|Total: 5']);
+  assert.match(svg, />3<\/text>/);
+  assert.match(svg, />5<\/text>/);
+});
+
+test('negative parts stack below zero, as stacked bars do', () => {
+  const svg = render('area', { values: '-2,-2|-3,-3', stacked: '' });
+  assert.match(svg, />−5<\/text>|>−4<\/text>|>−6<\/text>/, 'the axis reaches below the larger negative total');
+});
+
+test('percent stacks scale each column to 100% and give each share in the tooltip', () => {
+  const svg = render('area', { values: '1,3|3,1', series: 'A,B', labels: 'x,y', stacked: 'percent', prefix: '£' });
+  assert.match(svg, />100%<\/text>/);
+  assert.doesNotMatch(svg, />£100<\/text>/, 'percent ticks drop the prefix');
+  assert.deepEqual(tips(svg), ['x|A: £1 (25%)|B: £3 (75%)|Total: £4', 'y|A: £3 (75%)|B: £1 (25%)|Total: £4']);
+});
+
+test('stacking needs several series', () => {
+  const ids = (svg) => svg.replace(/bzc[gc][0-9a-z]+/g, 'id');
+  assert.equal(ids(render('area', { values: '1,2,3', stacked: '' })), ids(render('area', { values: '1,2,3' })));
+  assert.equal(ids(render('area', { values: '1,2,3', stacked: 'percent' })), ids(render('area', { values: '1,2,3' })));
+});
+
+test('areas take dashes, markers and patterns', () => {
+  const svg = render('area', { values: '1,2|3,4', series: 'A,B', stacked: '', dash: '', markers: '', patterns: '' });
+  assert.match(svg, /stroke-dasharray="7 5"/);
+  assert.match(svg, /rx="1"/);
+  assert.equal((svg.match(/<pattern /g) || []).length, 1);
+});
+
+test('area tables add a total column when stacked', () => {
+  assert.deepEqual(table('area', { values: '1,2|3,4', stacked: 'percent' }).head, ['Label', 'Series 1', 'Series 2', 'Total']);
+  assert.deepEqual(table('area', { values: '1,2|3,4' }).head, ['Label', 'Series 1', 'Series 2']);
 });

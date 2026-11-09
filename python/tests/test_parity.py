@@ -18,7 +18,7 @@ from bezel_charts._js import js_str
 from bezel_charts._util import Opts, fmt, nice_scale
 
 FIXTURES = Path(__file__).parent / "fixtures"
-CHART_TYPES = ["spark", "line", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
+CHART_TYPES = ["spark", "line", "area", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
 
 
 def stable(svg: str) -> str:

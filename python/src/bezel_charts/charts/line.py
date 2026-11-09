@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-import math
-
+from .._series import line_key, point_marks, series_line, xy_finish, xy_frame
 from .._tile import tile
 from .._util import (
-    DASHES, SHAPES, N, R, anim, bool_, clamp, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, marker,
-    new_id, nice_scale, num, palette, parse_notes, path_of, series, small, stat_of, style_of, text, to_number,
-    to_string, truthy, tw,
+    DASHES, SHAPES, R, bool_, empty_state, fmt, jmax, jmin, lst, new_id, num, palette, parse_notes, path_of, series,
+    small, stat_of, style_of, text, to_string, truthy,
 )
 
 
@@ -22,83 +20,25 @@ def line(o, th) -> str:
     notes = parse_notes(o, labels)
     multi = len(S) > 1 or len(names) > 0
     st = stat_of(S[0] if S else [], o, "")
-
     dash_of = style_of(o.dash, list(DASHES), "solid")
     mark_of = style_of(o.markers, SHAPES, "none")
     bg = to_string(o.background if truthy(o.background) else th["tile"])
-
     # With dashes or markers, the legend shows a short sample of each line instead of a dot.
-    def key(k, x, y):
-        c = pal[k % len(pal)]
-        dk = DASHES[dash_of(k)] if dash_of else ""
-        mk = mark_of(k) if mark_of else "none"
-        return (
-            '<line x1="' + R(x) + '" x2="' + R(x + 18) + '" y1="' + R(y + 6) + '" y2="' + R(y + 6) + '" stroke="' + c
-            + '" stroke-width="2.5" stroke-linecap="round"' + (' stroke-dasharray="' + dk + '"' if dk else "") + "/>"
-            + (marker(mk, x + 9, y + 6, 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"') if mk != "none" else "")
-        )
+    key = line_key(pal, dash_of, mark_of, bg) if dash_of or mark_of else None
 
-    styled = bool(dash_of or mark_of)
-
-    def series_name(k):
+    def name_of(k):
         return names[k] if k < len(names) and names[k] else "Series " + str(k + 1)
 
     def draw(x0, y0, w, h):
         if not n:
             return empty_state(th, x0, y0, w, h)
-        s = ""
-        top = y0
-        if multi:
-            lg = legend([series_name(k) for k in range(len(S))], pal, th, x0, top, w, key if styled else None, 24 if styled else None)
-            s += lg["svg"]
-            top += lg["height"]
         flat = [x for v in S for x in v]
-        mn, mx = jmin(*flat), jmax(*flat)
-        if has(o.goal):
-            mn = jmin(mn, to_number(o.goal))
-            mx = jmax(mx, to_number(o.goal))
-        if bool_(o.zero):
-            mn = jmin(0, mn)
-            mx = jmax(0, mx)
-        sc = nice_scale(mn, mx, 4)
-        tl = [fmt(t, o, True) for t in sc.ticks]
-        axis_w = jmax(*[tw(t, 10, True) for t in tl]) + 10
-        bottom = 20 if labels else 4
-        px = x0 + axis_w
-        pw = w - axis_w
-        ph = h - (top - y0) - bottom
-
-        def X(i):
-            return px + pw / 2 if n == 1 else px + i * pw / (n - 1)
-
-        def Y(v):
-            return top + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph
-
-        for i, t in enumerate(sc.ticks):
-            y = Y(t)
-            s += (
-                '<line x1="' + R(px) + '" x2="' + R(px + pw) + '" y1="' + R(y) + '" y2="' + R(y) + '" stroke="'
-                + th["grid"] + '"' + ("" if t == 0 else ' stroke-dasharray="2 4"') + "/>"
-                + text(px - 8, y + 3.5, tl[i], small(th, 10, 'text-anchor="end"'))
-            )
-        if labels:
-            widest = jmax(*[tw(lb, 10, True) for lb in labels])
-            every = int(jmax(1, math.ceil(n * (widest + 10) / pw)))
-            for i in range(0, n, every):
-                if i >= len(labels):
-                    continue
-                anchor = "start" if n > 1 and i == 0 else "end" if n > 1 and i == n - 1 else "middle"
-                s += text(X(i), top + ph + 15, labels[i], small(th, 10, 'text-anchor="' + anchor + '"'))
-        for nt in notes:
-            if nt["i"] >= n:
-                continue
-            x = X(nt["i"])
-            s += (
-                '<line x1="' + R(x) + '" x2="' + R(x) + '" y1="' + R(top + 12) + '" y2="' + R(top + ph) + '" stroke="'
-                + th["fg"] + '" stroke-opacity=".4" stroke-dasharray="3 3"/>'
-                + text(clamp(x, px + 30, px + pw - 30), top + 8, nt["text"], small(th, 10, 'text-anchor="middle"', th["fg"]))
-            )
-        tile_bg = o.background if truthy(o.background) else th["tile"]
+        f = xy_frame(o, th, {
+            "n": n, "names": [name_of(k) for k in range(len(S))] if multi else None, "pal": pal, "key": key,
+            "kw": 24 if key else None, "lo": jmin(*flat), "hi": jmax(*flat), "zero": bool_(o.zero), "labels": labels,
+            "notes": notes, "tick": lambda t: fmt(t, o, True),
+        }, x0, y0, w, h)
+        s, X, Y, px, pw, top, ph = f.svg, f.X, f.Y, f.px, f.pw, f.top, f.ph
         for k, v in enumerate(S):
             c = pal[k % len(pal)]
             P = [[X(i), Y(y)] for i, y in enumerate(v)]
@@ -115,48 +55,24 @@ def line(o, th) -> str:
                     + '<path d="' + d + "L" + R(last[0]) + "," + R(top + ph) + "L" + R(P[0][0]) + "," + R(top + ph)
                     + 'Z" fill="url(#' + g + ')"' + (' class="bzc-a"' if o.animate else "") + "/>"
                 )
-            dk = DASHES[dash_of(k)] if dash_of else ""
             mk = mark_of(k) if mark_of else "none"
-            # The draw-in animation is itself a dash, so dashed lines fade in instead.
-            if dk:
-                s += (
-                    '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" '
-                    'stroke-linejoin="round" stroke-dasharray="' + dk + '"' + anim(o, "bzc-a", k * 0.15) + "/>"
-                )
-            else:
-                s += (
-                    '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" '
-                    'stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1'
-                    + (";animation-delay:" + N(k * 0.15) + "s" if o.animate else "") + '"'
-                    + (' class="bzc-d"' if o.animate else "") + "/>"
-                )
+            s += series_line(o, d, c, k, DASHES[dash_of(k)] if dash_of else "")
             if mk != "none":
-                # Long series get a marker on every few points, and always on the last.
-                every = math.ceil(len(v) / 40)
-                for i, y in enumerate(v):
-                    if i % every == 0 or i == len(v) - 1:
-                        s += marker(
-                            mk, X(i), Y(y), 3.5,
-                            ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"' + anim(o, "bzc-a", 0.6 + k * 0.15),
-                        )
+                s += point_marks(o, mk, v, X, Y, c, bg, k)
             else:
                 e = P[-1]
-                s += (
-                    '<circle cx="' + R(e[0]) + '" cy="' + R(e[1]) + '" r="4" fill="' + c + '" stroke="' + to_string(tile_bg)
-                    + '" stroke-width="2"/>'
-                )
+                s += '<circle cx="' + R(e[0]) + '" cy="' + R(e[1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>'
             if bool_(o.showValues):
                 for i, y in enumerate(v):
                     s += text(X(i), Y(y) - 8, fmt(y, o, True), small(th, 9, 'text-anchor="middle"'))
-        if has(o.goal):
-            s += goal_line(o, th, px, px + pw, Y(to_number(o.goal)))
-        step = pw / (n - 1) if n > 1 else pw
-        for j in range(n):
-            tip = labels[j] if j < len(labels) and labels[j] else "#" + str(j + 1)
+
+        def tip(j):
+            t = labels[j] if j < len(labels) and labels[j] else "#" + str(j + 1)
             for k, v in enumerate(S):
                 if j < len(v):
-                    tip += "\n" + (series_name(k) + ": " if multi else "") + fmt(v[j], o)
-            s += hit(X(j) - step / 2, top, step, ph, tip)
-        return s
+                    t += "\n" + (name_of(k) + ": " if multi else "") + fmt(v[j], o)
+            return t
+
+        return s + xy_finish(o, th, f, n, tip)
 
     return tile(o, th, h, draw, {"stat": st, "summary": str(len(S)) + " series over " + str(n) + " points"})

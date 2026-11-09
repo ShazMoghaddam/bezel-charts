@@ -29,9 +29,9 @@ from ._tile import THEMES as themes
 from ._util import Opts, fmt, lst, series
 from .charts import TYPES
 
-__version__ = "1.2.0"
+__version__ = "1.4.0"
 __all__ = [
-    "Chart", "bars", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
+    "Chart", "area", "bars", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
     "to_svg", "types", "__version__",
 ]
 
@@ -84,7 +84,7 @@ class Chart:
         m = re.search(r'aria-label="([^"]*)"', self.svg)
         out = html.unescape(m.group(1)) if m else f"{self.type} chart"
         o = Opts({_camel(k): v for k, v in self.options.items()})
-        S = series(o.values) if self.type in ("spark", "line", "bars", "donut", "progress") else []
+        S = series(o.values) if self.type in ("spark", "line", "area", "bars", "donut", "progress") else []
         if len(S) == 1:
             labels = lst(o.labels)
             parts = [(labels[i] + " " if i < len(labels) and labels[i] else "") + fmt(v, o) for i, v in enumerate(S[0])]
@@ -137,6 +137,18 @@ def line(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None
         return Chart("line", _options(options, None, None, None))
     values, names, lbls = _data.prepare(data, x, y, x_format)
     return Chart("line", _options(options, values, names, lbls))
+
+
+def area(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+    """An area chart: one or more filled series over time, with the value axis always starting at zero.
+
+    Takes the same data as ``line()``. With several series, ``stacked=True`` piles them up so the top edge is
+    the total, and ``stacked="percent"`` scales each column to 100% to show shares.
+    """
+    if data is None:
+        return Chart("area", _options(options, None, None, None))
+    values, names, lbls = _data.prepare(data, x, y, x_format)
+    return Chart("area", _options(options, values, names, lbls))
 
 
 def bars(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:

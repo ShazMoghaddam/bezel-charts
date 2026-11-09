@@ -201,6 +201,17 @@ with sync_playwright() as p:
     pg.wait_for_timeout(500)
     check('Loaded dropped.csv' in note() and 'series="Sales,Costs,Profit"' in code(), 'drop a file onto the Studio')
 
+    # area stacking: one choice with three settings, which must not be confused with the grouped bars toggle
+    pg.goto(URL + '#studio'); pg.wait_for_timeout(600)
+    pg.click('[data-ui="area"]'); pg.wait_for_timeout(300)
+    pg.click('[role="tab"]:has-text("Extras")'); pg.wait_for_timeout(200)
+    check('stacked="true"' in code(), 'the area sample starts stacked: ' + code()[:200])
+    pg.click('[data-seg="stacked"][data-val="percent"]'); pg.wait_for_timeout(300)
+    check('stacked="percent"' in code() and '100%' in pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML"), 'Share of 100% draws a percent stack')
+    pg.click('[data-seg="stacked"][data-val=""]'); pg.wait_for_timeout(300)
+    check('stacked' not in code(), 'Overlap removes stacked: ' + code()[:200])
+    check(svg_ok(), 'area renders after switching')
+
     # keyboard: real key presses on the example charts on the home page
     pg.goto(URL); pg.wait_for_timeout(800)
     bars = 'bezel-bars[heading="Commits this week"]'

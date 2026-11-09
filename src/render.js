@@ -2,7 +2,7 @@
 import { THEMES } from './core/themes.js';
 import { bool } from './core/util.js';
 /** Every chart type, in the order the full bundle loads them. */
-export const NAMES = ['spark', 'line', 'bars', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'heatmap'];
+export const NAMES = ['spark', 'line', 'area', 'bars', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'heatmap'];
 
 /** The renderers loaded so far. Each chart's entry file adds its own, so a page only loads the charts it uses. */
 export const TYPES = {};

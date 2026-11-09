@@ -55,7 +55,7 @@ Change a chart in `src/charts/` and its port in `python/src/bezel_charts/charts/
 - Where several series share a chart, let `dash`, `markers` or `patterns` tell them apart as well as colour.
 - Respect `prefers-reduced-motion`, and keep animation in the classes from `src/core/tile.js`.
 - Check new work at phone, tablet and desktop widths, in light and dark.
-- Keep the full bundle and each chart file within their budgets in `scripts/size.mjs`. Helpers only some charts use belong in their own module, like `src/core/series.js`, so the other charts' files don't load them.
+- Keep the full bundle and each chart file within their budgets in `scripts/size.mjs`. Helpers only some charts use belong in their own module, like `src/core/series.js` or `src/core/xy.js`, so the other charts' files don't load them.
 - Run `npm run check` before opening a pull request.
 
 ## Releasing
