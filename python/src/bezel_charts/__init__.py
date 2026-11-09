@@ -29,9 +29,9 @@ from ._tile import THEMES as themes
 from ._util import Opts, fmt, lst, series
 from .charts import TYPES
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 __all__ = [
-    "Chart", "area", "bars", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
+    "Chart", "area", "bars", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
     "to_svg", "types", "__version__",
 ]
 
@@ -163,6 +163,20 @@ def bars(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None
         return Chart("bars", _options(options, None, None, None))
     values, names, lbls = _data.prepare(data, x, y, x_format)
     return Chart("bars", _options(options, values, names, lbls))
+
+
+def histogram(data: Any = None, *, y: Any = None, **options: Any) -> Chart:
+    """A histogram: counts how many raw values fall into each range, with round edges chosen for you.
+
+    ``data`` can be a Series or list of raw values, a DataFrame (``y=`` for one column or a list of them; by default
+    every numeric column), or a dict of name to values. Several series share the same ranges and overlap.
+    ``bins=`` sets roughly how many ranges, ``bin_width=`` an exact width, ``mark="mean,median"`` adds those lines
+    and ``percent=True`` shows shares instead of counts.
+    """
+    if data is None:
+        return Chart("histogram", _options(options, None, None, None))
+    values, names, _labels = _data.prepare(data, None, y, None)
+    return Chart("histogram", _options(options, values, names, None))
 
 
 def scatter(

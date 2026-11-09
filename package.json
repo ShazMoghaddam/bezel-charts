@@ -1,7 +1,7 @@
 {
   "name": "bezel-charts",
-  "version": "1.4.0",
-  "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, areas, bars, rings, donuts, gauges, progress bars and heatmaps, with one-click static SVG export for READMEs.",
+  "version": "1.5.0",
+  "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, areas, bars, histograms, rings, donuts, gauges, progress bars and heatmaps, with one-click static SVG export for READMEs.",
   "type": "module",
   "main": "dist/bezel-charts.js",
   "module": "dist/bezel-charts.js",
@@ -11,6 +11,7 @@
     "./line": "./dist/charts/line.js",
     "./area": "./dist/charts/area.js",
     "./bars": "./dist/charts/bars.js",
+    "./histogram": "./dist/charts/histogram.js",
     "./scatter": "./dist/charts/scatter.js",
     "./ring": "./dist/charts/ring.js",
     "./donut": "./dist/charts/donut.js",
@@ -40,7 +41,8 @@
     "svg",
     "dashboard",
     "readme",
-    "data-visualization"
+    "data-visualization",
+    "histogram"
   ],
   "author": "Shaz Moghaddam (https://shazmoghaddam.github.io)",
   "license": "MIT",

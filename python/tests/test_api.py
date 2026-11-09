@@ -240,7 +240,7 @@ def test_donut_from_a_dataframe():
 
 
 def test_all_types_match_the_javascript_list():
-    assert bc.types == ["spark", "line", "area", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
+    assert bc.types == ["spark", "line", "area", "bars", "histogram", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
     for t in bc.types:
         assert bc.to_svg(t).startswith("<svg")
 
@@ -293,3 +293,16 @@ def test_area_from_a_dataframe_stacked_and_as_shares():
     shares = bc.area(df, x="year", stacked="percent")
     assert "100%" in texts(shares.svg)
     assert bc.area([1, 2, 3]).alt == "1 series filled over 3 points. 1, 2, 3"
+
+
+def test_histogram_from_a_series_a_dataframe_and_lists():
+    ages = pd.Series([23, 25, 31, 34, 35, 36, 38, 41, 42, 44, 45, 47, 48, 52, 55], name="age")
+    chart = bc.histogram(ages, mark="mean", heading="Ages")
+    assert ids(chart.svg) == ids(bc.to_svg("histogram", values=",".join(map(str, ages)), mark="mean", heading="Ages"))
+    assert chart.alt.startswith("Ages: 15 values in")
+    df = pd.DataFrame({"a": [1, 2, 3], "b": [2, 3, 4], "label": ["x", "y", "z"]})
+    two = bc.histogram(df, bins=3)
+    assert ids(two.svg) == ids(bc.to_svg("histogram", values="1,2,3|2,3,4", series="a,b", bins=3))
+    assert ids(bc.histogram(df, y="b").svg) == ids(bc.to_svg("histogram", values="2,3,4", bins=None))
+    # bin_width from Python sets the edge decimals too: 1.00, 1.25, 1.50.
+    assert {"1.00", "1.25", "1.50"} <= set(texts(bc.histogram([1, 1.25, 1.5], bin_width=0.25).svg))

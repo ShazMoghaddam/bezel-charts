@@ -7,7 +7,7 @@ export const ATTRIBUTES = [
   'type', 'values', 'labels', 'series', 'heading', 'prefix', 'suffix', 'decimals', 'compact', 'color', 'theme', 'frame',
   'width', 'height', 'goal', 'goal-label', 'notes', 'show-values', 'stat', 'delta', 'delta-label', 'max', 'min', 'value',
   'zones', 'horizontal', 'straight', 'zero', 'start', 'lang', 'corners', 'background', 'center-label', 'highlight',
-  'x', 'y', 'x-label', 'y-label', 'trend', 'static', 'no-tooltips', 'stacked', 'angle-labels', 'dash', 'markers', 'patterns',
+  'x', 'y', 'x-label', 'y-label', 'trend', 'static', 'no-tooltips', 'stacked', 'angle-labels', 'dash', 'markers', 'patterns', 'bins', 'bin-width', 'mark', 'percent',
 ];
 
 const HOST_CSS =
