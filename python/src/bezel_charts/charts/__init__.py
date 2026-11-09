@@ -5,6 +5,7 @@ from .bars import bars
 from .donut import donut
 from .gauge import gauge
 from .heatmap import heatmap
+from .histogram import histogram
 from .line import line
 from .progress import progress
 from .ring import ring
@@ -13,7 +14,7 @@ from .spark import spark
 
 # Same order as NAMES in src/render.js.
 TYPES = {
-    "spark": spark, "line": line, "area": area, "bars": bars, "scatter": scatter, "ring": ring, "donut": donut,
+    "spark": spark, "line": line, "area": area, "bars": bars, "histogram": histogram, "scatter": scatter, "ring": ring, "donut": donut,
     "gauge": gauge, "progress": progress, "heatmap": heatmap,
 }
 

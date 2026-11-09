@@ -59,7 +59,7 @@ Then in your README, with `chart.alt` as the alt text:
 ![Monthly revenue: latest £79k. £42k, £48k, £45k, £53k, £61k, £58k, £66k, £72k, £79k](docs/revenue.svg)
 ```
 
-## The eleven charts
+## The twelve charts
 
 | Function | What it draws |
 | --- | --- |
@@ -67,6 +67,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.line(data)` | A line chart with one or more series, a value axis, labels and a legend. |
 | `bc.area(data)` | Filled areas over time, overlapping, stacked (`stacked=True`) or as shares of 100% (`stacked="percent"`). |
 | `bc.bars(data)` | Bars, vertical or horizontal. Several columns or series become grouped bars side by side. |
+| `bc.histogram(data)` | How raw values spread out: counts per range, with round edges, mean and median lines and shares. |
 | `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
 | `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
 | `bc.ring(data)` | Progress rings, one per value, out of 100 unless you set `max`. |
@@ -74,7 +75,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
 | `bc.progress(data)` | A progress bar, single or stacked with a legend. |
 
-Grouped bars are `bc.bars()` with several series, which makes eleven. They are the same eleven as the web components, and `bc.types` lists them.
+Grouped bars are `bc.bars()` with several series, which makes twelve. They are the same twelve as the web components, and `bc.types` lists them.
 
 ### Area
 
@@ -85,6 +86,15 @@ bc.area(energy, x="year", stacked="percent", heading="Share of supply")
 ```
 
 The value axis always starts at zero, and the tooltip shows each series, the total and, in a percent stack, each share.
+
+### Histogram
+
+```python
+bc.histogram(df["age"], mark="mean,median", heading="Customer ages")
+bc.histogram(df[["before", "after"]], percent=True, bin_width=5)  # two groups on the same ranges
+```
+
+`bins=` sets roughly how many ranges and `bin_width=` an exact width. Python counts exactly like the web component, including values that sit on an edge, which belong to the range they start.
 
 ### Bars
 
@@ -207,6 +217,10 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `horizontal` | `horizontal=True` | Bars run sideways, good for long labels (bars). |
 | `stacked` | `stacked=True` or `stacked="percent"` | Pile several series up, with the total in the tooltip (bars, area). `"percent"` scales each column to 100% (area). |
 | `angle_labels` | `angle_labels=True` | Slant labels under vertical bars when they don't fit, so every one shows (bars). |
+| `bins` | `bins=12` | Roughly how many ranges (histogram). |
+| `bin_width` | `bin_width=5` | An exact width for each range (histogram). |
+| `mark` | `mark="mean,median"` | Labelled lines at the mean, the median or both (histogram). |
+| `percent` | `percent=True` | Shares instead of counts (histogram). |
 | `dash` | `dash=True` or `dash=["solid", "dashed"]` | A line style per series: `solid`, `dashed`, `dotted`, `dashdot` (line). |
 | `markers` | `markers=True` or `markers=["circle", "square"]` | A shape on each point: `circle`, `square`, `triangle`, `diamond`, `none` (line, scatter). |
 | `patterns` | `patterns=True` or `patterns=["solid", "stripes"]` | A fill per series: `solid`, `stripes`, `dots`, `grid` (grouped and stacked bars). |

@@ -212,6 +212,19 @@ with sync_playwright() as p:
     check('stacked' not in code(), 'Overlap removes stacked: ' + code()[:200])
     check(svg_ok(), 'area renders after switching')
 
+    # histogram: its controls change the chart. A fresh load, since the Studio keeps data from earlier steps.
+    pg.goto(URL); pg.wait_for_timeout(600)
+    pg.click('[data-ui="histogram"]'); pg.wait_for_timeout(300)
+    check('mark="median"' in code() and svg_ok(), 'the histogram sample draws with its median line')
+    pg.click('#tab-extras'); pg.wait_for_timeout(200)
+    pg.select_option('select[data-key="mark"]', 'mean,median'); pg.wait_for_timeout(300)
+    inner_h = lambda: pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML")
+    check('>mean ' in inner_h() and '>median ' in inner_h(), 'both lines draw')
+    pg.fill('input[data-key="bin-width"]', '10'); pg.wait_for_timeout(400)
+    check('bin-width="10"' in code() and inner_h().count('class="bzc-hit"') <= 10, 'a range width of 10 gives at most 10 ranges')
+    pg.locator('[data-toggle="percent"]').locator('xpath=..').click(); pg.wait_for_timeout(300)
+    check('percent' in code() and '%</text>' in inner_h(), 'shares put percentages on the axis')
+
     # keyboard: real key presses on the example charts on the home page
     pg.goto(URL); pg.wait_for_timeout(800)
     bars = 'bezel-bars[heading="Commits this week"]'

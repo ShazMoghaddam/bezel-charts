@@ -14,6 +14,8 @@ const CASES = {
     { values: '4' }, { values: '-10,5,-3,8', straight: '' }, { values: '1,2,3', labels: 'a,b,c', zero: '', stat: 'last' }],
   area: [{}, { values: '5' }, { values: '1,3,2|2,2,4', series: 'A,B', labels: 'a,b,c', notes: 'b:Mid', goal: 3 }, { values: '1,3,2|2,2,4', stacked: '', 'show-values': '' },
     { values: '1,3,2|2,2,4', stacked: 'percent', patterns: '' }, { values: '-1,3,-2|2,-2,4', stacked: '', straight: '' }, { values: '0,0,0|0,0,0', stacked: 'percent' }],
+  histogram: [{}, { values: '5' }, { values: '5,5,5' }, { values: '1,2,2,3,3,3,4,4,5', mark: 'mean,median' }, { values: '1,2,3|2,3,4,5', series: 'A,B', percent: '', patterns: '' },
+    { values: '0.1,0.2,0.3,0.4', 'bin-width': '0.1' }, { values: '-5,-2.5,0,2.5,5', bins: 4 }, { values: '1,2,3', 'bin-width': '0.0000001' }],
   bars: [{}, { values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '', goal: 7 },
     { values: '-3,5,-8,2', labels: 'a,b,c,d', 'show-values': '' }, { values: '0,0,0' },
     { values: '820,640,410,300', labels: 'Python,JavaScript,A very long language name,Go', horizontal: '', goal: 500 },
@@ -301,4 +303,60 @@ test('areas take dashes, markers and patterns', () => {
 test('area tables add a total column when stacked', () => {
   assert.deepEqual(table('area', { values: '1,2|3,4', stacked: 'percent' }).head, ['Label', 'Series 1', 'Series 2', 'Total']);
   assert.deepEqual(table('area', { values: '1,2|3,4' }).head, ['Label', 'Series 1', 'Series 2']);
+});
+
+const ranges = (o) => table('histogram', o).rows.map((r) => `${r[0]}: ${r[1]}`);
+
+test('histograms count values into round ranges, lower edge in, upper edge out', () => {
+  assert.deepEqual(ranges({ values: '0,10,20,30,40,50,60,70,80,90,100', 'bin-width': 10 }), [
+    '0 to 10: 1', '10 to 20: 1', '20 to 30: 1', '30 to 40: 1', '40 to 50: 1', '50 to 60: 1', '60 to 70: 1', '70 to 80: 1', '80 to 90: 1', '90 to 100: 2',
+  ], 'the largest value counts in the last range');
+});
+
+test('edges are round, so a value typed as 0.3 starts the 0.3 range', () => {
+  assert.deepEqual(ranges({ values: '0.1,0.2,0.3,0.30000000000000004,0.4', 'bin-width': '0.1' }), ['0.1 to 0.2: 1', '0.2 to 0.3: 1', '0.3 to 0.4: 3'], 'and 0.4, the largest, counts in the last range');
+  assert.deepEqual(ranges({ values: '1,1.25,1.5', 'bin-width': '0.25' }), ['1.00 to 1.25: 1', '1.25 to 1.50: 2']);
+});
+
+test('the automatic width is the round number nearest the ideal', () => {
+  // 240 values give 9 ranges' worth of width: about 5.5 here, which rounds to 5, not up to 10.
+  const values = Array.from({ length: 240 }, (_, i) => 40 + (i % 50)).join(',');
+  assert.equal(table('histogram', { values }).rows.length, 10);
+  const four = table('histogram', { values, bins: 4 }).rows.length;
+  assert.ok(four >= 3 && four <= 6, `bins is roughly how many: ${four}`);
+});
+
+test('a very small bin-width falls back to automatic ranges instead of thousands of bars', () => {
+  assert.ok(table('histogram', { values: '1,2,3', 'bin-width': '0.0000001' }).rows.length <= 50);
+});
+
+test('one repeated value makes one range', () => {
+  assert.deepEqual(ranges({ values: '5,5,5' }), ['5 to 10: 3']);
+});
+
+test('several series share ranges, with a column each', () => {
+  const t = table('histogram', { values: '1,2,3|2,3,4,5', series: 'A,B', bins: 4 });
+  assert.deepEqual(t.head, ['Range', 'A', 'B']);
+  assert.deepEqual(t.rows, [['1 to 2', '1', '0'], ['2 to 3', '1', '1'], ['3 to 4', '1', '1'], ['4 to 5', '0', '2']]);
+});
+
+test('histogram tooltips give the range, the count and the share', () => {
+  const svg = render('histogram', { values: '1,2,2,3', 'bin-width': 1, series: '' });
+  assert.deepEqual(tips(svg), ['1 to 2|1 (25%)', '2 to 3|3 (75%)'], '3 is the largest value, so it counts in the last range');
+});
+
+test('percent puts shares on the axis', () => {
+  const svg = render('histogram', { values: '1,2,2,3', percent: '' });
+  assert.match(svg, />\d+%<\/text>/);
+});
+
+test('mean and median lines are labelled with their values', () => {
+  const svg = render('histogram', { values: '1,2,2,3,10', mark: 'mean,median' });
+  assert.match(svg, />mean 3\.6<\/text>/);
+  assert.match(svg, />median 2<\/text>/);
+  assert.doesNotMatch(render('histogram', { values: '1,2', mark: 'mode' }), /mode/, 'unknown marks are ignored');
+});
+
+test('the histogram summary says how many values and where most are', () => {
+  assert.match(render('histogram', { values: '1,2,2,2,3', heading: 'Ages', 'bin-width': 1 }), /aria-label="Ages: 5 values in 2 ranges from 1 to 3, most in 2 to 3"/);
 });

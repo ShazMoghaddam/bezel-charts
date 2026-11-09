@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0 (2026-11-09)
+
+Histograms.
+
+- `<bezel-histogram>`: give it raw values and it counts how many fall into each range. Ranges get round edges (1, 2, 2.5 or 5 times a power of ten), about log₂(n) + 1 of them by default. `bins` sets roughly how many and `bin-width` an exact width.
+- Each range includes its lower edge and not its upper one, except the last, which includes both. Edges are rounded to the width's decimals, so a value typed as 0.3 starts the 0.3 range rather than ending the one before.
+- Several series share the same ranges and overlap, with `patterns` available. `mark="mean,median"` adds labelled lines, and `percent` shows shares instead of counts, so groups of different sizes compare.
+- Tooltips and the data table give each range's count and share. Keyboard and screen reader support work as on every chart.
+- In the Studio (with range, line and share controls), the Python package as `bc.histogram()`, and on its own as `bezel-charts/histogram` (9.8 kB).
+- The full bundle is 19.0 kB, close to its 20 kB budget. v1.6.0 will need to revisit it.
+
 ## 1.4.0 (2026-11-09)
 
 Area charts.

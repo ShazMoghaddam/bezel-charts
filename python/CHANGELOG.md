@@ -1,5 +1,9 @@
 # Changelog (Python package)
 
+## 1.5.0 (2026-11-09)
+
+- `bc.histogram()`: counts raw values from a Series, list, DataFrame or dict into round ranges, with `bins=`, `bin_width=`, `mark="mean,median"` and `percent=True`. Counts and edges match `<bezel-histogram>` exactly, including values on an edge, with 18 parity cases.
+
 ## 1.4.0 (2026-11-09)
 
 The Python package skips 1.3.0, which only changed how the web components load, so both packages are 1.4.0 again.

@@ -19,6 +19,7 @@ const CHARTS = [
   { id: 'area', tag: 'area', name: 'Area', icon: 'M3 15l5-5 4 3 8-8v15H3z' },
   { id: 'bars', tag: 'bars', name: 'Bars', icon: 'M6 20v-8M12 20V5M18 20v-11' },
   { id: 'grouped', tag: 'bars', name: 'Grouped bars', icon: 'M4 20v-8M8 20V8M14 20V9M18 20v-6' },
+  { id: 'histogram', tag: 'histogram', name: 'Histogram', icon: 'M3 20v-5h4v5M7 20V9h4v11M11 20V5h4v15M15 20v-8h4v8' },
   { id: 'scatter', tag: 'scatter', name: 'Scatter', icon: 'M6 17h.01M9 12h.01M13 14h.01M17 8h.01M19 11h.01M8 7h.01' },
   { id: 'ring', tag: 'ring', name: 'Rings', icon: 'M12 4a8 8 0 1 1-8 8M12 8a4 4 0 1 1-4 4' },
   { id: 'donut', tag: 'donut', name: 'Donut', icon: 'M12 3a9 9 0 0 1 9 9M19.4 17.2A9 9 0 1 1 12 3' },
@@ -27,12 +28,13 @@ const CHARTS = [
   { id: 'heatmap', tag: 'heatmap', name: 'Heatmap', icon: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4zM4 16h4v4H4z' },
 ];
 const byId = Object.fromEntries(CHARTS.map((c) => [c.id, c]));
-const WIDE = new Set(['line', 'area', 'grouped', 'scatter', 'heatmap']);
+const WIDE = new Set(['line', 'area', 'grouped', 'histogram', 'scatter', 'heatmap']);
 
 const PRESETS = {
   spark: { heading: 'London · 7 day high', values: '17,16,15,15,13,12,14', labels: 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', suffix: '°C', 'delta-label': 'since Monday' },
   line: { heading: 'Site visitors', values: '420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640', series: '2026,2025', labels: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec', notes: 'Jun:Launch day', compact: '' },
   area: { heading: 'Energy mix · GWh', values: '120,130,125,140,150,160|80,85,90,88,95,100|40,45,60,70,85,110', series: 'Gas,Nuclear,Wind', labels: '2021,2022,2023,2024,2025,2026', stacked: 'true' },
+  histogram: { heading: 'Commute times · minutes', values: '21,38,45,28,19,33,39,46,21,20,42,39,51,45,33,31,62,31,25,21,35,36,30,33,37,42,46,36,14,42,18,32,18,34,25,36,70,33,43,19,31,41,33,38,35,23,40,25,55,28,42,34,44,27,45,33,48,41,36,25,42,39,52,30,40,40,37,36,36,27,23,30,40,51,45,46,43,42,36,42', mark: 'median' },
   bars: { heading: 'Commits this week', values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '' },
   grouped: { heading: 'Revenue by quarter', values: '182000,214000,236000,268000|151000,170000,198000,205000', series: '2026,2025', labels: 'Q1,Q2,Q3,Q4', prefix: '£', compact: '' },
   scatter: { heading: 'Study hours vs exam score', x: '2,3,3.5,4,5,5.5,6,6.5,7,8,8.5,9,10,11,12', y: '48,52,61,55,63,58,70,66,72,75,71,82,80,88,91', 'x-label': 'Hours studied', 'y-label': 'Score', suffix: '%', trend: '' },
@@ -42,11 +44,11 @@ const PRESETS = {
   progress: { heading: 'Sprint 14', values: '18,6,3', labels: 'Done,In review,Blocked', max: '34' },
   heatmap: { heading: 'Contributions', suffix: ' commits' },
 };
-const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
+const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], histogram: [120, 360, 190], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
 const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
-  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'dash', 'markers', 'patterns', 'zones',
+  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'dash', 'markers', 'patterns', 'zones',
   'center-label', 'theme', 'frame', 'corners', 'height', 'color', 'background', 'no-tooltips', 'static'];
 
 const all = CHARTS.map((c) => c.id);
@@ -59,7 +61,7 @@ const effectiveStat = (ui, a) => a.stat || statDefault(ui);
 const FIELDS = [
   { tab: 'data', kind: 'import', only: all },
   { tab: 'data', key: 'heading', kind: 'text', label: 'Title', placeholder: 'e.g. Monthly sales', only: all },
-  { tab: 'data', kind: 'series', only: only('line', 'area', 'bars', 'grouped') },
+  { tab: 'data', kind: 'series', only: only('line', 'area', 'bars', 'grouped', 'histogram') },
   { tab: 'data', kind: 'groups', only: only('scatter') },
   { tab: 'data', key: 'values', kind: 'numbers', only: only('spark', 'ring', 'donut', 'progress', 'heatmap'),
     label: { spark: 'Values', ring: 'Values, one ring each', donut: 'Values, one slice each', progress: 'Values, one segment each', heatmap: 'Values, one per day' },
@@ -105,10 +107,14 @@ const FIELDS = [
   { tab: 'extras', key: 'straight', kind: 'toggle', label: 'Straight lines instead of curves', only: only('spark', 'line', 'area') },
   { tab: 'extras', key: 'zero', kind: 'toggle', label: 'Start the axis at zero', only: only('line', 'scatter') },
   { tab: 'extras', key: 'trend', kind: 'toggle', label: 'Trend line with its r value', only: only('scatter') },
+  { tab: 'extras', kind: 'pair', only: only('histogram'), fields: [{ key: 'bins', kind: 'number', label: 'About how many ranges', placeholder: 'Auto' }, { key: 'bin-width', kind: 'number', label: 'Or each range’s width', placeholder: 'Auto' }] },
+  { tab: 'extras', key: 'mark', kind: 'select', label: 'Lines for', only: only('histogram'),
+    options: [['', 'Nothing'], ['mean', 'The mean'], ['median', 'The median'], ['mean,median', 'The mean and the median']] },
+  { tab: 'extras', key: 'percent', kind: 'toggle', label: 'Show shares instead of counts', only: only('histogram') },
   // Ways to tell series apart without relying on colour. Each only shows once there is more than one series to tell apart.
   { tab: 'extras', key: 'dash', kind: 'toggle', label: 'A different dash for each line', only: only('line', 'area'), when: (a) => String(a.values || '').includes('|') },
   { tab: 'extras', key: 'markers', kind: 'toggle', label: 'Shapes on the points', only: only('line', 'area', 'scatter'), when: (a, ui) => ui !== 'scatter' || String(a.x || '').includes('|') },
-  { tab: 'extras', key: 'patterns', kind: 'toggle', label: 'A different pattern for each series', only: only('grouped', 'area'), when: (a, ui) => ui === 'grouped' || String(a.values || '').includes('|') },
+  { tab: 'extras', key: 'patterns', kind: 'toggle', label: 'A different pattern for each series', only: only('grouped', 'area', 'histogram'), when: (a, ui) => ui === 'grouped' || String(a.values || '').includes('|') },
   { tab: 'extras', key: 'no-tooltips', kind: 'toggle', invert: true, label: 'Exact values on hover and with the keyboard', only: all },
   { tab: 'extras', key: 'static', kind: 'toggle', invert: true, label: 'Animate when it first appears', only: all },
 ];
@@ -323,7 +329,8 @@ export function createStudio(root) {
     if (labels.length) attrs.labels = labels.join(',');
 
     switch (ui) {
-      case 'line': case 'area': case 'bars': case 'grouped': {
+      case 'line': case 'area': case 'bars': case 'grouped': case 'histogram': {
+        if (ui === 'histogram') delete attrs.labels;
         const use = N.slice(0, 6);
         attrs.values = use.map((c) => col(c).join(',')).join('|');
         if (use.length > 1) attrs.series = use.map((c, i) => (c.name || `Series ${i + 1}`).replace(/,/g, ' ')).join(',');
@@ -536,7 +543,7 @@ export function createStudio(root) {
     const labels = listOf(attrs.labels);
     const valuesCount = tokens(attrs.values).length;
     switch (ui) {
-      case 'line': case 'area': case 'bars': case 'grouped': {
+      case 'line': case 'area': case 'bars': case 'grouped': case 'histogram': {
         const rows = seriesRows();
         return rows.length > 1 ? rows.map((r, i) => r.name || `Series ${i + 1}`) : [ui === 'line' ? 'Line' : ui === 'area' ? 'Area' : 'Bars'];
       }
