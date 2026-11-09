@@ -1,5 +1,12 @@
 # Changelog (Python package)
 
+## 1.4.0 (2026-11-09)
+
+The Python package skips 1.3.0, which only changed how the web components load, so both packages are 1.4.0 again.
+
+- `bc.area()`: filled areas over time from a DataFrame, Series, dict or lists. `stacked=True` piles the series up and `stacked="percent"` shows each column as shares of 100%. Matches `<bezel-area>` byte for byte, with 15 parity cases.
+- `chart.alt` lists the values for single-series area charts too.
+
 ## 1.2.0 (2026-11-09)
 
 - `dash`, `markers` and `patterns` tell series apart without relying on colour, matching the web components. Pass `True` to hand out styles in turn, or a list with one per series: `dash=["solid", "dashed"]`.

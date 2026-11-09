@@ -9,7 +9,7 @@
 [![Python](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-D99A0E)](LICENSE)
 
-Bezel Charts is a set of free, open-source web components: ten chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
+Bezel Charts is a set of free, open-source web components: eleven chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
 ![Bezel Charts: a sparkline, rings, a gauge, a line chart with a launch day note, a donut, a bar chart with a target, a scatter plot with a trend line and a year-long activity heatmap, in light and dark tiles](docs/bezel-charts.png)
 
@@ -20,7 +20,7 @@ Bezel Charts is a set of free, open-source web components: ten chart tiles drawn
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
 - **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, grouped series, goal lines and notes on key points.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 16 kB gzipped for all ten charts, or 7 to 10 kB for a page that loads just one. No dependencies and no build step.
+- **Light.** About 17 kB gzipped for all eleven charts, or 7 to 10 kB for a page that loads just one. No dependencies and no build step.
 - **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
@@ -49,7 +49,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.3.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.4.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -84,9 +84,9 @@ import { toSVG } from 'bezel-charts/line'; // render and toSVG work for every ch
 | Page | Gzipped |
 | --- | --- |
 | One sparkline, ring, donut, gauge, progress bar or heatmap | 7.2 to 7.4 kB |
-| One line, scatter or bar chart | 9.2 to 10.1 kB |
-| A line and a bar chart | 12.0 kB |
-| Every chart: the full bundle | 15.9 kB |
+| One line, area, scatter or bar chart | 9.5 to 10.3 kB |
+| A line and a bar chart | 12.6 kB |
+| Every chart: the full bundle | 17.3 kB |
 
 Once a page needs four or five different charts, load the full bundle instead. `<bezel-chart type="…">` works with whichever charts are loaded, and tells you which file to add if its type isn't one of them. The classic `iife.js` script always has every chart, because a classic script can't load the shared file.
 
@@ -163,6 +163,28 @@ One or more lines over time, with an axis, a legend and notes on key moments. Se
 | `straight`    | boolean, straight lines instead of curves   | off     |
 | `dash`        | a line style per series: `solid`, `dashed`, `dotted`, `dashdot`. On its own, gives each series the next style | off |
 | `markers`     | a shape on each point, per series: `circle`, `square`, `triangle`, `diamond`, `none`. On its own, gives each series the next shape | off |
+
+### `<bezel-area>`
+
+Filled areas over time. Several series overlap as see-through fills, or add `stacked` to pile them up so the top edge is the total, or `stacked="percent"` to show how each total splits. The axis always starts at zero, since an area's height reads as an amount.
+
+```html
+<bezel-area heading="Energy mix · GWh" values="120,130,125,140,150,160|80,85,90,88,95,100|40,45,60,70,85,110"
+  series="Gas,Nuclear,Wind" labels="2021,2022,2023,2024,2025,2026" stacked></bezel-area>
+```
+
+| Attribute     | Values                                                   | Default |
+| ------------- | -------------------------------------------------------- | ------- |
+| `values`      | numbers, series separated by `\|`                        |         |
+| `series`      | series names for the legend                              |         |
+| `labels`      | one per point, along the bottom                          |         |
+| `stacked`     | with several series: on its own to pile them up, or `percent` to scale each column to 100% | off |
+| `height`      | chart height in px                                       | `170`   |
+| `straight`    | boolean, straight edges instead of curves                | off     |
+| `dash`, `markers` | styles for each series' top edge, as on line charts  | off     |
+| `patterns`    | a fill per series, as on bars                            | off     |
+
+The tooltip lists every series, plus the total when stacked, and each series' share in a percent stack. `show-values` writes each value, or the total above each column of a stack. Negative values stack below zero, as stacked bars do, but stacks read best when every value is positive: bands that swing between positive and negative cross over each other.
 
 ### `<bezel-bars>`
 
@@ -331,7 +353,7 @@ Any of the above, picked with `type`: `<bezel-chart type="donut" values="3,2,1">
 | `no-tooltips`   | boolean, turns off hover, tap and keyboard values, and leaves the chart out of the Tab order | off |
 | `static`        | boolean, skips the entrance animation                           | off           |
 
-Not every option suits every chart: `notes` works on spark, line and scatter; `show-values` on spark, line and bars; `goal-label` on spark, line, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
+Not every option suits every chart: `notes` works on spark, line, area and scatter; `show-values` on spark, line, area and bars; `goal-label` on spark, line, area, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
 
 ## Colours and dark mode
 
@@ -425,7 +447,7 @@ bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
 bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
 ```
 
-All ten charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
+All eleven charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
 
 ## Frameworks
 
@@ -458,7 +480,8 @@ npm run test:browser # click through every Studio control in a real browser (nee
 
 ```
 src/
-  core/        shared helpers, the bezel frame and the colour themes; series.js has the extras for line, bars and scatter
+  core/        shared helpers, the bezel frame and the colour themes; series.js has the extras for line, area, bars
+               and scatter, and xy.js the axis frame line and area charts share
   charts/      one file per chart type: options in, SVG string out
   render.js    picks the chart and returns its SVG
   element.js   the custom element: sizing, theme, tooltips, keyboard and export

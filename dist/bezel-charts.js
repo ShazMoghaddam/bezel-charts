@@ -1,4 +1,4 @@
-/*! Bezel Charts v1.3.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.4.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/util.js
 var SANS = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -268,7 +268,7 @@ var THEMES = {
 };
 
 // src/render.js
-var NAMES = ["spark", "line", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"];
+var NAMES = ["spark", "line", "area", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"];
 var TYPES = {};
 function register(type, fn) {
   TYPES[type] = fn;
@@ -655,6 +655,80 @@ function seriesTable(o, total) {
   return { head: ["Label"].concat(head, total ? ["Total"] : []), rows };
 }
 
+// src/core/xy.js
+function xyFrame(o, th, c, x0, y0, w, h) {
+  var s = "", top = y0, n = c.n, labels = c.labels;
+  if (c.names) {
+    var lg = legend(c.names, c.pal, th, x0, top, w, c.key, c.kw);
+    s += lg.svg;
+    top += lg.height;
+  }
+  var mn = c.lo, mx = c.hi;
+  if (has(o.goal)) {
+    mn = Math.min(mn, +o.goal);
+    mx = Math.max(mx, +o.goal);
+  }
+  if (c.zero) {
+    mn = Math.min(0, mn);
+    mx = Math.max(0, mx);
+  }
+  var sc = niceScale(mn, mx, 4);
+  var tl = sc.ticks.map(c.tick);
+  var axisW = Math.max.apply(null, tl.map(function(t) {
+    return tw(t, 10, true);
+  })) + 10;
+  var bottom = labels.length ? 20 : 4;
+  var px = x0 + axisW, pw = w - axisW, ph = h - (top - y0) - bottom;
+  var X = function(i2) {
+    return n === 1 ? px + pw / 2 : px + i2 * pw / (n - 1);
+  };
+  var Y = function(v) {
+    return top + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph;
+  };
+  sc.ticks.forEach(function(t, i2) {
+    var y = Y(t);
+    s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '"' + (t === 0 ? "" : ' stroke-dasharray="2 4"') + "/>" + text(px - 8, y + 3.5, tl[i2], small(th, 10, 'text-anchor="end"'));
+  });
+  if (labels.length) {
+    var every = Math.max(1, Math.ceil(n * (Math.max.apply(null, labels.map(function(l) {
+      return tw(l, 10, true);
+    })) + 10) / pw));
+    for (var i = 0; i < n; i += every) {
+      if (labels[i] == null) continue;
+      var anchor = n > 1 && i === 0 ? "start" : n > 1 && i === n - 1 ? "end" : "middle";
+      s += text(X(i), top + ph + 15, labels[i], small(th, 10, 'text-anchor="' + anchor + '"'));
+    }
+  }
+  c.notes.forEach(function(nt) {
+    if (nt.i >= n) return;
+    var x = X(nt.i);
+    s += '<line x1="' + r2(x) + '" x2="' + r2(x) + '" y1="' + r2(top + 12) + '" y2="' + r2(top + ph) + '" stroke="' + th.fg + '" stroke-opacity=".4" stroke-dasharray="3 3"/>' + text(clamp(x, px + 30, px + pw - 30), top + 8, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
+  });
+  return { svg: s, X, Y, px, pw, top, ph };
+}
+function xyFinish(o, th, f, n, tip) {
+  var s = has(o.goal) ? goalLine(o, th, f.px, f.px + f.pw, f.Y(+o.goal)) : "";
+  var step = n > 1 ? f.pw / (n - 1) : f.pw;
+  for (var j = 0; j < n; j++) s += hit(f.X(j) - step / 2, f.top, step, f.ph, tip(j));
+  return s;
+}
+function lineKey(pal, dashOf, markOf, bg) {
+  return function(k, x, y) {
+    var c = pal[k % pal.length], dk = dashOf ? DASHES[dashOf(k)] : "", mk = markOf ? markOf(k) : "none";
+    return '<line x1="' + r2(x) + '" x2="' + r2(x + 18) + '" y1="' + r2(y + 6) + '" y2="' + r2(y + 6) + '" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round"' + (dk ? ' stroke-dasharray="' + dk + '"' : "") + "/>" + (mk !== "none" ? marker(mk, x + 9, y + 6, 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"') : "");
+  };
+}
+function seriesLine(o, d, c, k, dk) {
+  return dk ? '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="' + dk + '"' + anim(o, "bzc-a", k * 0.15) + "/>" : '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1' + (o.animate ? ";animation-delay:" + k * 0.15 + "s" : "") + '"' + (o.animate ? ' class="bzc-d"' : "") + "/>";
+}
+function pointMarks(o, mk, ys, X, Y, c, bg, k) {
+  var s = "", every = Math.ceil(ys.length / 40);
+  ys.forEach(function(y, i) {
+    if (i % every === 0 || i === ys.length - 1) s += marker(mk, X(i), Y(y), 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"' + anim(o, "bzc-a", 0.6 + k * 0.15));
+  });
+  return s;
+}
+
 // src/charts/line.js
 function line(o, th) {
   var S = series(o.values), names = list(o.series), labels = list(o.labels), pal = palette(o, th);
@@ -665,68 +739,35 @@ function line(o, th) {
   var st = statOf(S[0] || [], o, "");
   var dashOf = styleOf(o.dash, Object.keys(DASHES), "solid"), markOf = styleOf(o.markers, SHAPES, "none");
   var bg = o.background || th.tile;
-  var key = (dashOf || markOf) && function(k, x, y) {
-    var c = pal[k % pal.length], dk = dashOf ? DASHES[dashOf(k)] : "", mk = markOf ? markOf(k) : "none";
-    return '<line x1="' + r2(x) + '" x2="' + r2(x + 18) + '" y1="' + r2(y + 6) + '" y2="' + r2(y + 6) + '" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round"' + (dk ? ' stroke-dasharray="' + dk + '"' : "") + "/>" + (mk !== "none" ? marker(mk, x + 9, y + 6, 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"') : "");
+  var key = (dashOf || markOf) && lineKey(pal, dashOf, markOf, bg);
+  var nameOf = function(k) {
+    return names[k] || "Series " + (k + 1);
   };
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!n) return emptyState(th, x0, y0, w, h2);
-    var s = "", top = y0;
-    if (multi) {
-      var lg = legend(S.map(function(_, k) {
-        return names[k] || "Series " + (k + 1);
-      }), pal, th, x0, top, w, key, key && 24);
-      s += lg.svg;
-      top += lg.height;
-    }
     var all = [].concat.apply([], S);
-    var mn = Math.min.apply(null, all), mx = Math.max.apply(null, all);
-    if (has(o.goal)) {
-      mn = Math.min(mn, +o.goal);
-      mx = Math.max(mx, +o.goal);
-    }
-    if (bool(o.zero)) {
-      mn = Math.min(0, mn);
-      mx = Math.max(0, mx);
-    }
-    var sc = niceScale(mn, mx, 4);
-    var tl = sc.ticks.map(function(t) {
-      return fmt(t, o, true);
-    });
-    var axisW = Math.max.apply(null, tl.map(function(t) {
-      return tw(t, 10, true);
-    })) + 10;
-    var bottom = labels.length ? 20 : 4;
-    var px = x0 + axisW, pw = w - axisW, ph = h2 - (top - y0) - bottom;
-    var X = function(i2) {
-      return n === 1 ? px + pw / 2 : px + i2 * pw / (n - 1);
-    };
-    var Y = function(v) {
-      return top + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph;
-    };
-    sc.ticks.forEach(function(t, i2) {
-      var y = Y(t);
-      s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '"' + (t === 0 ? "" : ' stroke-dasharray="2 4"') + "/>" + text(px - 8, y + 3.5, tl[i2], small(th, 10, 'text-anchor="end"'));
-    });
-    if (labels.length) {
-      var every = Math.max(1, Math.ceil(n * (Math.max.apply(null, labels.map(function(l) {
-        return tw(l, 10, true);
-      })) + 10) / pw));
-      for (var i = 0; i < n; i += every) {
-        if (labels[i] == null) continue;
-        var anchor = n > 1 && i === 0 ? "start" : n > 1 && i === n - 1 ? "end" : "middle";
-        s += text(X(i), top + ph + 15, labels[i], small(th, 10, 'text-anchor="' + anchor + '"'));
+    var f = xyFrame(o, th, {
+      n,
+      names: multi ? S.map(function(_, k) {
+        return nameOf(k);
+      }) : null,
+      pal,
+      key,
+      kw: key && 24,
+      lo: Math.min.apply(null, all),
+      hi: Math.max.apply(null, all),
+      zero: bool(o.zero),
+      labels,
+      notes,
+      tick: function(t) {
+        return fmt(t, o, true);
       }
-    }
-    notes.forEach(function(nt) {
-      if (nt.i >= n) return;
-      var x = X(nt.i);
-      s += '<line x1="' + r2(x) + '" x2="' + r2(x) + '" y1="' + r2(top + 12) + '" y2="' + r2(top + ph) + '" stroke="' + th.fg + '" stroke-opacity=".4" stroke-dasharray="3 3"/>' + text(clamp(x, px + 30, px + pw - 30), top + 8, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
-    });
+    }, x0, y0, w, h2);
+    var s = f.svg, X = f.X, Y = f.Y, px = f.px, pw = f.pw, top = f.top, ph = f.ph;
     S.forEach(function(v, k) {
       var c = pal[k % pal.length];
-      var P = v.map(function(y, i2) {
-        return [X(i2), Y(y)];
+      var P = v.map(function(y, i) {
+        return [X(i), Y(y)];
       });
       if (P.length === 1) P = [[px, P[0][1]], [px + pw, P[0][1]]];
       var d = pathOf(P, bool(o.straight));
@@ -734,31 +775,25 @@ function line(o, th) {
         var g = newId("g"), last = P[P.length - 1];
         s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".26"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs><path d="' + d + "L" + r2(last[0]) + "," + r2(top + ph) + "L" + r2(P[0][0]) + "," + r2(top + ph) + 'Z" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
       }
-      var dk = dashOf ? DASHES[dashOf(k)] : "", mk = markOf ? markOf(k) : "none";
-      s += dk ? '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="' + dk + '"' + anim(o, "bzc-a", k * 0.15) + "/>" : '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1' + (o.animate ? ";animation-delay:" + k * 0.15 + "s" : "") + '"' + (o.animate ? ' class="bzc-d"' : "") + "/>";
+      var mk = markOf ? markOf(k) : "none";
+      s += seriesLine(o, d, c, k, dashOf ? DASHES[dashOf(k)] : "");
       if (mk !== "none") {
-        var every2 = Math.ceil(v.length / 40);
-        v.forEach(function(y, i2) {
-          if (i2 % every2 === 0 || i2 === v.length - 1) s += marker(mk, X(i2), Y(y), 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"' + anim(o, "bzc-a", 0.6 + k * 0.15));
-        });
+        s += pointMarks(o, mk, v, X, Y, c, bg, k);
       } else {
         var e = P[P.length - 1];
         s += '<circle cx="' + r2(e[0]) + '" cy="' + r2(e[1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
       }
-      if (bool(o.showValues)) v.forEach(function(y, i2) {
-        s += text(X(i2), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"'));
+      if (bool(o.showValues)) v.forEach(function(y, i) {
+        s += text(X(i), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"'));
       });
     });
-    if (has(o.goal)) s += goalLine(o, th, px, px + pw, Y(+o.goal));
-    var step = n > 1 ? pw / (n - 1) : pw;
-    for (var j = 0; j < n; j++) {
+    return s + xyFinish(o, th, f, n, function(j) {
       var tip = labels[j] || "#" + (j + 1);
       S.forEach(function(v, k) {
-        if (j < v.length) tip += "\n" + (multi ? (names[k] || "Series " + (k + 1)) + ": " : "") + fmt(v[j], o);
+        if (j < v.length) tip += "\n" + (multi ? nameOf(k) + ": " : "") + fmt(v[j], o);
       });
-      s += hit(X(j) - step / 2, top, step, ph, tip);
-    }
-    return s;
+      return tip;
+    });
   }, { stat: st, summary: S.length + " series over " + n + " points" });
 }
 line.table = function(o) {
@@ -768,6 +803,140 @@ line.table = function(o) {
 // src/entries/line.js
 register("line", line);
 define("line");
+
+// src/charts/area.js
+function area(o, th) {
+  var S = series(o.values), names = list(o.series), labels = list(o.labels), pal = palette(o, th);
+  var h = num(o.height, 170), k = S.length, n = Math.max.apply(null, [0].concat(S.map(function(s) {
+    return s.length;
+  })));
+  var mode = k > 1 ? o.stacked === "percent" ? "percent" : bool(o.stacked) ? "stack" : "" : "";
+  var notes = parseNotes(o, labels), multi = k > 1 || names.length > 0;
+  var nameOf = function(j2) {
+    return names[j2] || "Series " + (j2 + 1);
+  };
+  var val = function(j2, i2) {
+    return i2 < S[j2].length ? S[j2][i2] : 0;
+  };
+  var lows = S.map(function() {
+    return [];
+  }), highs = S.map(function() {
+    return [];
+  }), totals = [], pos = [];
+  for (var i = 0; i < n; i++) {
+    var up = 0, down = 0, t = 0, p = 0;
+    for (var j = 0; j < k; j++) {
+      t += val(j, i);
+      p += Math.max(0, val(j, i));
+    }
+    totals.push(t);
+    pos.push(p);
+    for (j = 0; j < k; j++) {
+      var v = mode === "percent" ? p ? Math.max(0, val(j, i)) / p * 100 : 0 : val(j, i);
+      if (!mode) {
+        lows[j].push(0);
+        highs[j].push(v);
+      } else if (v >= 0) {
+        lows[j].push(up);
+        up += v;
+        highs[j].push(up);
+      } else {
+        lows[j].push(down);
+        down += v;
+        highs[j].push(down);
+      }
+    }
+  }
+  var edges = [].concat.apply([], lows.concat(highs));
+  var dashOf = styleOf(o.dash, Object.keys(DASHES), "solid"), markOf = styleOf(o.markers, SHAPES, "none");
+  var patOf = k > 1 ? styleOf(o.patterns, PATTERNS, "solid") : null, bg = o.background || th.tile, defs = "", fills = [];
+  for (var q = 0; patOf && q < k; q++) {
+    if (patOf(q) === "solid") continue;
+    var pid = newId("g");
+    defs += pattern(pid, patOf(q), pal[q % pal.length], bg);
+    fills[q] = "url(#" + pid + ")";
+  }
+  var key = patOf ? function(j2, x, y) {
+    return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="10" height="10" rx="2" fill="' + (fills[j2] || pal[j2 % pal.length]) + '"/>';
+  } : (dashOf || markOf) && lineKey(pal, dashOf, markOf, bg);
+  var share = function(j2, i2) {
+    return pos[i2] ? Math.round(Math.max(0, val(j2, i2)) / pos[i2] * 100) : 0;
+  };
+  return tile(o, th, h, function(x0, y0, w, h2) {
+    if (!n) return emptyState(th, x0, y0, w, h2);
+    var f = xyFrame(o, th, {
+      n,
+      names: multi ? S.map(function(_, j2) {
+        return nameOf(j2);
+      }) : null,
+      pal,
+      key,
+      kw: key && (patOf ? 15 : 24),
+      lo: Math.min.apply(null, edges),
+      hi: Math.max.apply(null, edges),
+      zero: true,
+      labels,
+      notes,
+      tick: mode === "percent" ? function(t2) {
+        return fmt(t2, { lang: o.lang }, true) + "%";
+      } : function(t2) {
+        return fmt(t2, o, true);
+      }
+    }, x0, y0, w, h2);
+    var s = (defs ? "<defs>" + defs + "</defs>" : "") + f.svg, X = f.X, Y = f.Y;
+    var pts = function(ys) {
+      var P = ys.map(function(y, i2) {
+        return [X(i2), Y(y)];
+      });
+      return P.length === 1 ? [[f.px, P[0][1]], [f.px + f.pw, P[0][1]]] : P;
+    };
+    var straight = bool(o.straight), alpha = mode ? ".8" : ".22";
+    var shown = function(j2) {
+      return mode ? highs[j2] : S[j2];
+    };
+    S.forEach(function(_, j2) {
+      var top = pts(shown(j2)), base = pts(mode ? lows[j2] : shown(j2).map(function() {
+        return 0;
+      })).reverse();
+      s += '<path d="' + pathOf(top, straight) + pathOf(base, straight).replace(/^M/, "L") + 'Z" fill="' + (fills[j2] || pal[j2 % pal.length]) + '" fill-opacity="' + alpha + '"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(j2 * 0.1) + 's"' : "") + "/>";
+    });
+    S.forEach(function(_, j2) {
+      var c = pal[j2 % pal.length], ys = shown(j2), P = pts(ys), mk = markOf ? markOf(j2) : "none";
+      s += seriesLine(o, pathOf(P, straight), c, j2, dashOf ? DASHES[dashOf(j2)] : "");
+      if (mk !== "none") s += pointMarks(o, mk, ys, X, Y, c, bg, j2);
+      else if (!mode) s += '<circle cx="' + r2(P[P.length - 1][0]) + '" cy="' + r2(P[P.length - 1][1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      if (bool(o.showValues) && !mode) ys.forEach(function(y, i2) {
+        s += text(X(i2), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"'));
+      });
+    });
+    if (bool(o.showValues) && mode === "stack") {
+      totals.forEach(function(t2, i2) {
+        var top = Math.max.apply(null, highs.map(function(hs) {
+          return hs[i2];
+        }).concat([0]));
+        s += text(X(i2), Y(top) - 8, fmt(t2, o, true), small(th, 9, 'text-anchor="middle"'));
+      });
+    }
+    return s + xyFinish(o, th, f, n, function(i2) {
+      var tip = labels[i2] || "#" + (i2 + 1);
+      S.forEach(function(ser, j2) {
+        if (i2 < ser.length) tip += "\n" + (multi ? nameOf(j2) + ": " : "") + fmt(ser[i2], o) + (mode === "percent" ? " (" + share(j2, i2) + "%)" : "");
+      });
+      return tip + (mode ? "\nTotal: " + fmt(totals[i2], o) : "");
+    });
+  }, {
+    stat: statOf(mode ? totals : S[0] || [], o, ""),
+    summary: k + " series " + (mode === "percent" ? "as shares of each total" : mode ? "stacked" : "filled") + " over " + n + " points"
+  });
+}
+area.table = function(o) {
+  var S = series(o.values);
+  return seriesTable(o, S.length > 1 && (o.stacked === "percent" || bool(o.stacked)));
+};
+
+// src/entries/area.js
+register("area", area);
+define("area");
 
 // src/charts/bars.js
 var ANGLE = 40;
@@ -1478,7 +1647,7 @@ register("heatmap", heatmap);
 define("heatmap");
 
 // src/index.js
-var version = "1.3.0";
+var version = "1.4.0";
 var types = NAMES.slice();
 export {
   BezelChart,

@@ -16,6 +16,7 @@ const SAMPLES = [
 const CHARTS = [
   { id: 'spark', tag: 'spark', name: 'Sparkline', icon: 'M3 16c3 0 3-5 6-5s3 3 6 3 3-6 6-6' },
   { id: 'line', tag: 'line', name: 'Line', icon: 'M3 17l5-5 4 3 8-8M3 20h18' },
+  { id: 'area', tag: 'area', name: 'Area', icon: 'M3 15l5-5 4 3 8-8v15H3z' },
   { id: 'bars', tag: 'bars', name: 'Bars', icon: 'M6 20v-8M12 20V5M18 20v-11' },
   { id: 'grouped', tag: 'bars', name: 'Grouped bars', icon: 'M4 20v-8M8 20V8M14 20V9M18 20v-6' },
   { id: 'scatter', tag: 'scatter', name: 'Scatter', icon: 'M6 17h.01M9 12h.01M13 14h.01M17 8h.01M19 11h.01M8 7h.01' },
@@ -26,11 +27,12 @@ const CHARTS = [
   { id: 'heatmap', tag: 'heatmap', name: 'Heatmap', icon: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4zM4 16h4v4H4z' },
 ];
 const byId = Object.fromEntries(CHARTS.map((c) => [c.id, c]));
-const WIDE = new Set(['line', 'grouped', 'scatter', 'heatmap']);
+const WIDE = new Set(['line', 'area', 'grouped', 'scatter', 'heatmap']);
 
 const PRESETS = {
   spark: { heading: 'London · 7 day high', values: '17,16,15,15,13,12,14', labels: 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', suffix: '°C', 'delta-label': 'since Monday' },
   line: { heading: 'Site visitors', values: '420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640', series: '2026,2025', labels: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec', notes: 'Jun:Launch day', compact: '' },
+  area: { heading: 'Energy mix · GWh', values: '120,130,125,140,150,160|80,85,90,88,95,100|40,45,60,70,85,110', series: 'Gas,Nuclear,Wind', labels: '2021,2022,2023,2024,2025,2026', stacked: 'true' },
   bars: { heading: 'Commits this week', values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '' },
   grouped: { heading: 'Revenue by quarter', values: '182000,214000,236000,268000|151000,170000,198000,205000', series: '2026,2025', labels: 'Q1,Q2,Q3,Q4', prefix: '£', compact: '' },
   scatter: { heading: 'Study hours vs exam score', x: '2,3,3.5,4,5,5.5,6,6.5,7,8,8.5,9,10,11,12', y: '48,52,61,55,63,58,70,66,72,75,71,82,80,88,91', 'x-label': 'Hours studied', 'y-label': 'Score', suffix: '%', trend: '' },
@@ -40,7 +42,7 @@ const PRESETS = {
   progress: { heading: 'Sprint 14', values: '18,6,3', labels: 'Done,In review,Blocked', max: '34' },
   heatmap: { heading: 'Contributions', suffix: ' commits' },
 };
-const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
+const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
 const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
@@ -57,14 +59,14 @@ const effectiveStat = (ui, a) => a.stat || statDefault(ui);
 const FIELDS = [
   { tab: 'data', kind: 'import', only: all },
   { tab: 'data', key: 'heading', kind: 'text', label: 'Title', placeholder: 'e.g. Monthly sales', only: all },
-  { tab: 'data', kind: 'series', only: only('line', 'bars', 'grouped') },
+  { tab: 'data', kind: 'series', only: only('line', 'area', 'bars', 'grouped') },
   { tab: 'data', kind: 'groups', only: only('scatter') },
   { tab: 'data', key: 'values', kind: 'numbers', only: only('spark', 'ring', 'donut', 'progress', 'heatmap'),
     label: { spark: 'Values', ring: 'Values, one ring each', donut: 'Values, one slice each', progress: 'Values, one segment each', heatmap: 'Values, one per day' },
     hint: 'Separate with commas, spaces or new lines. You can paste two columns from a spreadsheet to fill the labels as well.' },
   { tab: 'data', key: 'values', kind: 'number', label: 'Reading', only: only('gauge') },
-  { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'bars', 'grouped', 'ring', 'donut', 'progress'),
-    hint: { spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
+  { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'area', 'bars', 'grouped', 'ring', 'donut', 'progress'),
+    hint: { spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', area: 'One per point, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
   { tab: 'data', key: 'labels', kind: 'text', label: 'Caption', placeholder: 'e.g. CPU', only: only('gauge') },
   { tab: 'data', key: 'labels', kind: 'list', label: 'Point names (optional)', hint: 'Shown in tooltips, in the same order as the points.', only: only('scatter') },
   { tab: 'data', kind: 'pair', only: only('gauge'), fields: [{ key: 'min', kind: 'number', label: 'Lowest', placeholder: '0' }, { key: 'max', kind: 'number', label: 'Highest', placeholder: '100' }] },
@@ -84,27 +86,29 @@ const FIELDS = [
   { tab: 'style', key: 'lang', kind: 'select', label: 'Language for numbers and dates', only: all,
     options: [['', 'English (UK)'], ['en-US', 'English (US)'], ['fr-FR', 'Français'], ['de-DE', 'Deutsch'], ['es-ES', 'Español'], ['it-IT', 'Italiano'], ['fa-IR', 'فارسی']] },
 
-  { tab: 'extras', key: 'stat', kind: 'stat', label: 'Headline number', only: only('spark', 'line', 'bars', 'grouped') },
-  { tab: 'extras', key: 'delta', kind: 'select', label: 'Change since the start', only: only('spark', 'line', 'bars', 'grouped'), when: (a, ui) => effectiveStat(ui, a) === 'last',
+  { tab: 'extras', key: 'stat', kind: 'stat', label: 'Headline number', only: only('spark', 'line', 'area', 'bars', 'grouped') },
+  { tab: 'extras', key: 'delta', kind: 'select', label: 'Change since the start', only: only('spark', 'line', 'area', 'bars', 'grouped'), when: (a, ui) => effectiveStat(ui, a) === 'last',
     options: [['', 'Show it, rising is good'], ['inverse', 'Show it, falling is good'], ['none', 'Hide it']] },
-  { tab: 'extras', key: 'delta-label', kind: 'text', label: 'Change wording', placeholder: 'since start', only: only('spark', 'line', 'bars', 'grouped'), when: (a, ui) => effectiveStat(ui, a) === 'last' && a.delta !== 'none' },
-  { tab: 'extras', kind: 'pair', only: only('spark', 'line', 'bars', 'grouped', 'scatter'), fields: [{ key: 'goal', kind: 'number', label: 'Goal line at', placeholder: 'e.g. 100' }, { key: 'goal-label', kind: 'text', label: 'Goal wording', placeholder: 'Goal' }] },
+  { tab: 'extras', key: 'delta-label', kind: 'text', label: 'Change wording', placeholder: 'since start', only: only('spark', 'line', 'area', 'bars', 'grouped'), when: (a, ui) => effectiveStat(ui, a) === 'last' && a.delta !== 'none' },
+  { tab: 'extras', kind: 'pair', only: only('spark', 'line', 'area', 'bars', 'grouped', 'scatter'), fields: [{ key: 'goal', kind: 'number', label: 'Goal line at', placeholder: 'e.g. 100' }, { key: 'goal-label', kind: 'text', label: 'Goal wording', placeholder: 'Goal' }] },
   { tab: 'extras', key: 'goal', kind: 'number', label: 'Goal marker at', placeholder: 'e.g. 80', only: only('gauge', 'progress') },
-  { tab: 'extras', kind: 'notes', only: only('spark', 'line', 'scatter') },
+  { tab: 'extras', kind: 'notes', only: only('spark', 'line', 'area', 'scatter') },
   { tab: 'extras', key: 'zones', kind: 'text', label: 'Zone breakpoints', placeholder: 'e.g. 60, 85', hint: 'The reading turns from green to amber to red as it passes each number.', only: only('gauge') },
   { tab: 'extras', key: 'center-label', kind: 'text', label: 'Centre wording', placeholder: 'Total', only: only('donut') },
-  { tab: 'extras', key: 'show-values', kind: 'toggle', label: 'Show values on the chart', only: only('spark', 'line', 'bars', 'grouped') },
+  { tab: 'extras', key: 'show-values', kind: 'toggle', label: 'Show values on the chart', only: only('spark', 'line', 'area', 'bars', 'grouped') },
   { tab: 'extras', key: 'horizontal', kind: 'toggle', label: 'Horizontal bars', only: only('bars', 'grouped') },
   { tab: 'extras', key: 'stacked', kind: 'toggle', label: 'Stack the series in one bar', only: only('grouped') },
+  { tab: 'extras', key: 'stacked', kind: 'seg', label: 'Several series', options: [['', 'Overlap'], ['true', 'Stack'], ['percent', 'Share of 100%']], only: only('area'),
+    when: (a) => String(a.values || '').includes('|'), hint: 'Stack piles the series so the top edge is the total. Share of 100% shows how the total splits.' },
   { tab: 'extras', key: 'angle-labels', kind: 'toggle', label: 'Slant labels so every one fits', only: only('bars', 'grouped'), when: (a) => !('horizontal' in a) },
   { tab: 'extras', key: 'highlight', kind: 'toggle', invert: 'none', label: 'Highlight the highest bar', only: only('bars') },
-  { tab: 'extras', key: 'straight', kind: 'toggle', label: 'Straight lines instead of curves', only: only('spark', 'line') },
+  { tab: 'extras', key: 'straight', kind: 'toggle', label: 'Straight lines instead of curves', only: only('spark', 'line', 'area') },
   { tab: 'extras', key: 'zero', kind: 'toggle', label: 'Start the axis at zero', only: only('line', 'scatter') },
   { tab: 'extras', key: 'trend', kind: 'toggle', label: 'Trend line with its r value', only: only('scatter') },
   // Ways to tell series apart without relying on colour. Each only shows once there is more than one series to tell apart.
-  { tab: 'extras', key: 'dash', kind: 'toggle', label: 'A different dash for each line', only: only('line'), when: (a) => String(a.values || '').includes('|') },
-  { tab: 'extras', key: 'markers', kind: 'toggle', label: 'Shapes on the points', only: only('line', 'scatter'), when: (a, ui) => ui === 'line' || String(a.x || '').includes('|') },
-  { tab: 'extras', key: 'patterns', kind: 'toggle', label: 'A different pattern for each series', only: only('grouped') },
+  { tab: 'extras', key: 'dash', kind: 'toggle', label: 'A different dash for each line', only: only('line', 'area'), when: (a) => String(a.values || '').includes('|') },
+  { tab: 'extras', key: 'markers', kind: 'toggle', label: 'Shapes on the points', only: only('line', 'area', 'scatter'), when: (a, ui) => ui !== 'scatter' || String(a.x || '').includes('|') },
+  { tab: 'extras', key: 'patterns', kind: 'toggle', label: 'A different pattern for each series', only: only('grouped', 'area'), when: (a, ui) => ui === 'grouped' || String(a.values || '').includes('|') },
   { tab: 'extras', key: 'no-tooltips', kind: 'toggle', invert: true, label: 'Exact values on hover and with the keyboard', only: all },
   { tab: 'extras', key: 'static', kind: 'toggle', invert: true, label: 'Animate when it first appears', only: all },
 ];
@@ -157,7 +161,8 @@ export function createStudio(root) {
     if (value === undefined || value === null || value === false || (value === '' && !isBoolean(key))) delete attrs[key];
     else attrs[key] = value === true ? '' : String(value);
   };
-  const isBoolean = (key) => FIELDS.some((f) => f.key === key && f.kind === 'toggle');
+  // A key can be a toggle on one chart and a choice on another (stacked), so this looks at the current chart.
+  const isBoolean = (key) => FIELDS.some((f) => f.key === key && f.kind === 'toggle' && f.only.includes(ui));
 
   /* picker */
   picker.innerHTML = CHARTS.map((c) => `
@@ -229,7 +234,9 @@ export function createStudio(root) {
     const label = pick(f.label);
     const hint = pick(f.hint);
     const hintHtml = hint ? `<p class="hint">${esc(hint)}</p>` : '';
-    const v = f.key ? attrs[f.key] ?? '' : '';
+    let v = f.key ? attrs[f.key] ?? '' : '';
+    // A bare attribute, such as stacked from pasted code, means the same as "true".
+    if (f.kind === 'seg' && f.key in attrs && v === '' && f.options.some(([val]) => val === 'true')) v = 'true';
     switch (f.kind) {
       case 'text':
         return `<label class="field" for="${id}"><span>${esc(label)}</span><input id="${id}" type="text" data-key="${f.key}" value="${esc(v)}" placeholder="${esc(f.placeholder || '')}" autocomplete="off">${hintHtml}</label>`;
@@ -316,7 +323,7 @@ export function createStudio(root) {
     if (labels.length) attrs.labels = labels.join(',');
 
     switch (ui) {
-      case 'line': case 'bars': case 'grouped': {
+      case 'line': case 'area': case 'bars': case 'grouped': {
         const use = N.slice(0, 6);
         attrs.values = use.map((c) => col(c).join(',')).join('|');
         if (use.length > 1) attrs.series = use.map((c, i) => (c.name || `Series ${i + 1}`).replace(/,/g, ' ')).join(',');
@@ -529,9 +536,9 @@ export function createStudio(root) {
     const labels = listOf(attrs.labels);
     const valuesCount = tokens(attrs.values).length;
     switch (ui) {
-      case 'line': case 'bars': case 'grouped': {
+      case 'line': case 'area': case 'bars': case 'grouped': {
         const rows = seriesRows();
-        return rows.length > 1 ? rows.map((r, i) => r.name || `Series ${i + 1}`) : [ui === 'line' ? 'Line' : 'Bars'];
+        return rows.length > 1 ? rows.map((r, i) => r.name || `Series ${i + 1}`) : [ui === 'line' ? 'Line' : ui === 'area' ? 'Area' : 'Bars'];
       }
       case 'scatter': {
         const rows = groupRows();

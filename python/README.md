@@ -59,12 +59,13 @@ Then in your README, with `chart.alt` as the alt text:
 ![Monthly revenue: latest £79k. £42k, £48k, £45k, £53k, £61k, £58k, £66k, £72k, £79k](docs/revenue.svg)
 ```
 
-## The ten charts
+## The eleven charts
 
 | Function | What it draws |
 | --- | --- |
 | `bc.spark(data)` | A sparkline with the latest value and the change since the start. |
 | `bc.line(data)` | A line chart with one or more series, a value axis, labels and a legend. |
+| `bc.area(data)` | Filled areas over time, overlapping, stacked (`stacked=True`) or as shares of 100% (`stacked="percent"`). |
 | `bc.bars(data)` | Bars, vertical or horizontal. Several columns or series become grouped bars side by side. |
 | `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
 | `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
@@ -73,7 +74,17 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
 | `bc.progress(data)` | A progress bar, single or stacked with a legend. |
 
-Grouped bars are `bc.bars()` with several series, which makes ten. They are the same ten as the web components, and `bc.types` lists them.
+Grouped bars are `bc.bars()` with several series, which makes eleven. They are the same eleven as the web components, and `bc.types` lists them.
+
+### Area
+
+```python
+energy = pd.DataFrame({"year": [2021, 2022, 2023, 2024], "Gas": [120, 130, 125, 140], "Wind": [40, 45, 60, 70]})
+bc.area(energy, x="year", stacked=True, heading="Energy mix · GWh")
+bc.area(energy, x="year", stacked="percent", heading="Share of supply")
+```
+
+The value axis always starts at zero, and the tooltip shows each series, the total and, in a percent stack, each share.
 
 ### Bars
 
@@ -194,7 +205,7 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `straight` | `straight=True` | Straight segments instead of curves. |
 | `zero` | `zero=True` | Start the axis at zero (line). |
 | `horizontal` | `horizontal=True` | Bars run sideways, good for long labels (bars). |
-| `stacked` | `stacked=True` | Pile several series into one bar per group, with the total in the tooltip (bars). |
+| `stacked` | `stacked=True` or `stacked="percent"` | Pile several series up, with the total in the tooltip (bars, area). `"percent"` scales each column to 100% (area). |
 | `angle_labels` | `angle_labels=True` | Slant labels under vertical bars when they don't fit, so every one shows (bars). |
 | `dash` | `dash=True` or `dash=["solid", "dashed"]` | A line style per series: `solid`, `dashed`, `dotted`, `dashdot` (line). |
 | `markers` | `markers=True` or `markers=["circle", "square"]` | A shape on each point: `circle`, `square`, `triangle`, `diamond`, `none` (line, scatter). |

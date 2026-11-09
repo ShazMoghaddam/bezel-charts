@@ -1,5 +1,6 @@
 """Chart renderers. Each one takes options and a theme and returns an SVG string."""
 
+from .area import area
 from .bars import bars
 from .donut import donut
 from .gauge import gauge
@@ -10,9 +11,9 @@ from .ring import ring
 from .scatter import scatter
 from .spark import spark
 
-# Same order as TYPES in src/render.js.
+# Same order as NAMES in src/render.js.
 TYPES = {
-    "spark": spark, "line": line, "bars": bars, "scatter": scatter, "ring": ring, "donut": donut,
+    "spark": spark, "line": line, "area": area, "bars": bars, "scatter": scatter, "ring": ring, "donut": donut,
     "gauge": gauge, "progress": progress, "heatmap": heatmap,
 }
 

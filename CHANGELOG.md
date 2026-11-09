@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.4.0 (2026-11-09)
+
+Area charts.
+
+- `<bezel-area>`: filled areas over time. Several series overlap as see-through fills; `stacked` piles them up so the top edge is the total, and `stacked="percent"` scales each column to 100% to show how it splits. The axis always starts at zero.
+- Tooltips list every series, plus the total when stacked and each share in a percent stack. `show-values` writes each value, or the total above each column of a stack. Negative values stack below zero, as on stacked bars.
+- Areas take `labels`, `series`, `notes`, `goal`, `straight`, `dash` and `markers` for the top edges, and `patterns` for the fills. Keyboard, screen reader announcements and the hidden data table work as on every chart, with a Total column when stacked.
+- In the Studio, with a stacking choice, in the Python package as `bc.area()`, and on its own as `bezel-charts/area` (10.3 kB).
+- Line and area charts now share their axis code. Line charts draw exactly as before, checked against the Python parity fixtures.
+
 ## 1.3.0 (2026-11-09)
 
 Load only the charts you use.

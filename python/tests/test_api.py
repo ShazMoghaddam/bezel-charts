@@ -239,8 +239,8 @@ def test_donut_from_a_dataframe():
         bc.donut(df)
 
 
-def test_all_ten_types_match_the_javascript_list():
-    assert bc.types == ["spark", "line", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
+def test_all_types_match_the_javascript_list():
+    assert bc.types == ["spark", "line", "area", "bars", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
     for t in bc.types:
         assert bc.to_svg(t).startswith("<svg")
 
@@ -281,3 +281,15 @@ def test_alt_text_names_the_chart_and_lists_its_values():
     assert bc.line([[1, 2], [3, 4]]).alt == "2 series over 2 points"
     assert bc.ring([72, 45], labels=["Move", "Focus"]).alt == "Move 72%, Focus 45%"
     assert bc.gauge().alt == "no data"
+
+
+def test_area_from_a_dataframe_stacked_and_as_shares():
+    df = pd.DataFrame({"year": [2024, 2025, 2026], "gas": [120, 130, 125], "wind": [40, 60, 85]})
+    stacked = bc.area(df, x="year", stacked=True, heading="Energy")
+    assert ids(stacked.svg) == ids(
+        bc.to_svg("area", values="120,130,125|40,60,85", series="gas,wind", labels="2024,2025,2026", stacked=True, heading="Energy")
+    )
+    assert "Energy: 2 series stacked over 3 points" == stacked.alt
+    shares = bc.area(df, x="year", stacked="percent")
+    assert "100%" in texts(shares.svg)
+    assert bc.area([1, 2, 3]).alt == "1 series filled over 3 points. 1, 2, 3"
