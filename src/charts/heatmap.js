@@ -1,11 +1,22 @@
 import { esc, r2, has, nums, sum, fmt, text, small, palette, emptyState, statOf } from '../core/util.js';
 import { tile, dims } from '../core/tile.js';
 
+var FULL = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
+
+/** The first day shown: the start option, or far enough back that the last value is today. */
+function startOf(o, len) {
+  if (has(o.start) && /^\d{4}-\d{2}-\d{2}$/.test(String(o.start))) return new Date(String(o.start) + 'T00:00:00Z');
+  var t = new Date();
+  return new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Math.max(0, len - 1) * 864e5);
+}
+
+function dates(lang, opt) {
+  try { return new Intl.DateTimeFormat(lang, Object.assign({ timeZone: 'UTC' }, opt)); } catch (e) { return new Intl.DateTimeFormat('en-GB', Object.assign({ timeZone: 'UTC' }, opt)); }
+}
+
 export default function heatmap(o, th) {
   var v = nums(o.values), c = palette(o, th)[0], lang = o.lang || 'en-GB';
-  var start;
-  if (has(o.start) && /^\d{4}-\d{2}-\d{2}$/.test(String(o.start))) start = new Date(String(o.start) + 'T00:00:00Z');
-  else { var t = new Date(); start = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Math.max(0, v.length - 1) * 864e5); }
+  var start = startOf(o, v.length);
   var offset = (start.getUTCDay() + 6) % 7, cols = Math.max(1, Math.ceil((offset + v.length) / 7));
   var d0 = dims(o), leftW = 28, maxCols = Math.max(1, Math.floor((d0.w - leftW) / 10));
   // On narrow screens keep the most recent weeks that fit, rather than shrinking cells until they are unreadable.
@@ -19,8 +30,8 @@ export default function heatmap(o, th) {
   var pitch = Math.min(18, (d0.w - leftW) / cols), gap = pitch < 8 ? 1 : 3, cell = pitch - gap;
   var h = 16 + 7 * pitch + 26;
   var max = v.length ? Math.max.apply(null, v) : 0;
-  var dfm = function (opt) { try { return new Intl.DateTimeFormat(lang, Object.assign({ timeZone: 'UTC' }, opt)); } catch (e) { return new Intl.DateTimeFormat('en-GB', Object.assign({ timeZone: 'UTC' }, opt)); } };
-  var monthF = dfm({ month: 'short' }), dayF = dfm({ weekday: 'short' }), fullF = dfm({ weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  var dfm = function (opt) { return dates(lang, opt); };
+  var monthF = dfm({ month: 'short' }), dayF = dfm({ weekday: 'short' }), fullF = dfm(FULL);
   var st = statOf(v, o, '');
   return tile(o, th, h, function (x0, y0, w, h) {
     if (!v.length) return emptyState(th, x0, y0, w, h);
@@ -51,3 +62,9 @@ export default function heatmap(o, th) {
     return s;
   }, { stat: st, summary: fmt(sum(v), o) + ' across ' + v.length + ' days' });
 }
+
+// Every day, including the early weeks a narrow chart leaves out.
+heatmap.table = function (o) {
+  var v = nums(o.values), start = startOf(o, v.length), f = dates(o.lang || 'en-GB', FULL);
+  return { head: ['Date', 'Value'], rows: v.map(function (n, i) { return [f.format(new Date(start.getTime() + i * 864e5)), fmt(n, o)]; }) };
+};

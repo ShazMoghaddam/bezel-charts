@@ -42,9 +42,17 @@ export default function donut(o, th) {
       if (len <= 0) return;
       s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="#000" stroke-opacity="0" stroke-width="' + r2(sw) +
         '" pathLength="100" stroke-dasharray="' + r2(len) + ' ' + r2(100 - len) + '" stroke-dashoffset="' + r2(-start) + '" transform="rotate(-90 ' + r2(cx) + ' ' + r2(cy) +
-        ')" class="bzc-hit" data-tip="' + esc((labels[i] || '#' + (i + 1)) + ': ' + fmt(n, o) + ' (' + Math.round(len) + '%)') + '"/>';
+        ')" class="bzc-hit" data-skip="" data-tip="' + esc((labels[i] || '#' + (i + 1)) + ': ' + fmt(n, o) + ' (' + Math.round(len) + '%)') + '"/>';
       start += len;
     });
     return s;
   }, { stat: st, summary: 'total ' + fmt(total, o) + ' across ' + v.length + ' parts' });
 }
+
+// Every part is listed, including the small ones the chart groups as "Other".
+donut.table = function (o) {
+  var v = nums(o.values).map(function (n) { return Math.max(0, n); }), labels = list(o.labels), total = sum(v);
+  return { head: ['Label', 'Value', 'Share'], rows: v.map(function (n, i) {
+    return [labels[i] || '#' + (i + 1), fmt(n, o), (total ? Math.round(n / total * 100) : 0) + '%'];
+  }) };
+};

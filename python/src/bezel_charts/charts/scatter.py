@@ -8,8 +8,8 @@ import re
 from .._js import to_fixed
 from .._tile import tile
 from .._util import (
-    N, Opts, R, bool_, clamp, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, nice_scale, num,
-    palette, parse_notes, series, small, text, to_number, to_string, truthy, tw,
+    SHAPES, N, Opts, R, bool_, clamp, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, marker,
+    nice_scale, num, palette, parse_notes, series, small, style_of, text, to_number, to_string, truthy, tw,
 )
 
 
@@ -61,6 +61,16 @@ def scatter(o, th) -> str:
         return names[j] if j < len(names) and names[j] else "Group " + str(j + 1)
 
     xo = Opts({"decimals": o.decimals, "compact": o.compact, "lang": o.lang})
+    # Each group can have its own point shape; "none" in the list keeps that group's circles.
+    mark_of = style_of(o.markers, SHAPES, "circle")
+
+    def shape_of(j):
+        m = mark_of(j) if mark_of else "circle"
+        return "circle" if m == "none" else m
+
+    def key(j, x, y):
+        return marker(shape_of(j), x + 4, y + 6, 4, ' fill="' + pal[j % len(pal)] + '"')
+
     notes = parse_notes(o, labels)
 
     def draw(x0, y0, w, h):
@@ -69,7 +79,7 @@ def scatter(o, th) -> str:
         s = ""
         top = y0
         if multi:
-            lg = legend([name_of(j) for j in range(len(groups))], pal, th, x0, top, w)
+            lg = legend([name_of(j) for j in range(len(groups))], pal, th, x0, top, w, key if mark_of else None)
             s += lg["svg"]
             top += lg["height"]
         ax = [x for gr in groups for x in gr["xs"]]
@@ -157,11 +167,10 @@ def scatter(o, th) -> str:
                     else name_of(j) + "\n" if multi else ""
                 )
                 tip = lead + x_name + ": " + fmt(xv, xo) + "\n" + y_name + ": " + fmt(gr["ys"][i], o)
-                s += (
-                    '<circle cx="' + R(cx) + '" cy="' + R(cy) + '" r="' + N(r) + '" fill="' + c
-                    + '" fill-opacity=".85" stroke="' + stroke + '" stroke-width="1.5"'
-                    + (' class="bzc-a" style="animation-delay:' + R(jmin(0.8, idx * 0.012)) + 's"' if o.animate else "")
-                    + "/>"
+                s += marker(
+                    shape_of(j), cx, cy, r,
+                    ' fill="' + c + '" fill-opacity=".85" stroke="' + stroke + '" stroke-width="1.5"'
+                    + (' class="bzc-a" style="animation-delay:' + R(jmin(0.8, idx * 0.012)) + 's"' if o.animate else ""),
                 )
                 s += hit(cx - 8, cy - 8, 16, 16, tip)
                 idx += 1

@@ -4,7 +4,7 @@ Run from the project folder after `npm run build`:
     pip install playwright && python3 -m playwright install chromium
     python3 test/browser/studio.py
 """
-import json, os, subprocess, sys, time
+import json, os, re, subprocess, sys, time
 from playwright.sync_api import sync_playwright
 
 PORT = 4199
@@ -185,7 +185,9 @@ with sync_playwright() as p:
     check('°C' not in c and 'since Monday' not in c and 'suffix=" km"' in c, 'sparkline drops the example units: ' + c[:200])
     pg.click('[data-ui="ring"]'); pg.wait_for_timeout(300)
     shadow = pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML")
-    check('max="10"' in code() and '%' not in shadow.split('</style>',1)[1], 'rings show km against a fitted scale, not percentages')
+    # Style blocks are left out: the entrance animation's CSS has percentages of its own.
+    visible = re.sub(r'<style>.*?</style>', '', shadow, flags=re.S)
+    check('max="10"' in code() and '%' not in visible, 'rings show km against a fitted scale, not percentages')
     check('<title>' not in shadow, 'no second browser tooltip')
     check('labels="1 Jan,3 Jan,6 Jan' in code(), 'date labels are shortened: ' + code()[:260])
     pg.click('#reset'); pg.wait_for_timeout(200)
@@ -198,6 +200,28 @@ with sync_playwright() as p:
       document.querySelector('#studio').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true })); }""", csv)
     pg.wait_for_timeout(500)
     check('Loaded dropped.csv' in note() and 'series="Sales,Costs,Profit"' in code(), 'drop a file onto the Studio')
+
+    # keyboard: real key presses on the example charts on the home page
+    pg.goto(URL); pg.wait_for_timeout(800)
+    bars = 'bezel-bars[heading="Commits this week"]'
+    inner = lambda q: pg.evaluate(f"(() => {{ const r = document.querySelector('{bars}').shadowRoot; {q} }})()")
+    pg.focus(bars + ' >> .c')
+    check(inner("return r.activeElement && r.activeElement.className") == 'c', 'a chart takes focus')
+    pg.keyboard.press('ArrowRight'); pg.keyboard.press('ArrowRight')
+    check(inner("return r.querySelector('[aria-live]').textContent") == 'T: 9. 2 of 7', 'arrow keys read the value out: ' + str(inner("return r.querySelector('[aria-live]').textContent")))
+    check(inner("return r.querySelector('.tip').classList.contains('on') && r.querySelector('.tip').textContent") == 'T: 9', 'the tooltip follows the keys')
+    check(inner("const k = r.querySelector('.k'); return !!k && getComputedStyle(k).strokeWidth") == '2px', 'the current value is outlined')
+    pg.evaluate(f"document.querySelector('{bars}').setAttribute('goal', '8')"); pg.wait_for_timeout(200)
+    check(inner("return r.activeElement && r.activeElement.className") == 'c' and inner("return r.querySelector('.k') && r.querySelector('.k').getAttribute('data-tip')") == 'T: 9', 'focus and place survive a redraw')
+    pg.keyboard.press('End')
+    check(inner("return r.querySelector('[aria-live]').textContent") == 'S: 3. 7 of 7', 'End jumps to the last value')
+    pg.keyboard.press('Escape')
+    check(not inner("return r.querySelector('.tip').classList.contains('on')"), 'Escape hides the tooltip')
+    check(inner("return getComputedStyle(r.querySelector('.c')).outlineStyle") == 'solid', 'focus ring shows for keyboard focus')
+    pg.keyboard.press('Tab')
+    check(inner("return r.activeElement") is None and not inner("return !!r.querySelector('.k')"), 'Tab moves on and clears the outline')
+    check(inner("return r.querySelectorAll('table tbody tr').length") == 7, 'hidden table has a row per bar')
+    check(inner("const t = r.querySelector('table').parentElement.getBoundingClientRect(); return t.width <= 1 && t.height <= 1 && getComputedStyle(r.querySelector('table').parentElement).overflow === 'hidden'"), 'the table is visually hidden')
 
     check(not errs, 'console errors: ' + json.dumps(errs[:5]))
     b.close()

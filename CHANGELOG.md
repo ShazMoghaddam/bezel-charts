@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.2.0 (2026-11-09)
+
+Accessibility. Every chart now works without a mouse and without seeing it.
+
+- Keyboard: Tab to a chart, then step through its values with the arrow keys, or jump with Home and End. The value you're on is outlined with its tooltip showing, and Escape hides it. On a heatmap, Left and Right move a week and Up and Down a day. Charts keep focus and their place when they redraw.
+- Screen readers hear the chart's name once, a hint about the arrow keys, and each value as you move ("Tue: 9. 2 of 7"). The tooltip is no longer read out as the mouse passes over a chart.
+- A hidden data table on every chart lists every value, including the small donut slices grouped as "Other" and the early weeks a narrow heatmap leaves out. Exported SVGs don't include it.
+- `dash` gives each line its own style (`solid`, `dashed`, `dotted`, `dashdot`) and `markers` puts a shape on each point (`circle`, `square`, `triangle`, `diamond`), on line charts and scatter groups. `patterns` fills grouped and stacked bars with stripes, dots or a grid. Use the attribute on its own to hand out styles in turn, or list one per series. Legends show each style. Dashed lines fade in rather than drawing in.
+- `no-tooltips` now also takes a chart out of the Tab order.
+- All three options are in the Studio, the Python package and the README. Charts that don't use them draw exactly as before.
+- The size budget is now 16 kB gzipped (the bundle is 15.8 kB). Version 1.3.0 adds per-chart imports, so pages can load only the charts they use.
+
 ## 1.1.1 (2026-11-09)
 
 No changes to the charts. This release puts the package on npm properly.

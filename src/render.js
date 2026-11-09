@@ -20,16 +20,29 @@ const camel = (k) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
  * @param {string} type one of TYPES
  * @param {object} [options] the same names as the HTML attributes, in kebab-case or camelCase
  */
-export function render(type, options = {}) {
+function prepare(type, options) {
   if (!TYPES[type]) {
     throw new Error(`Bezel Charts: unknown chart type "${type}". Choose one of: ${Object.keys(TYPES).join(', ')}.`);
   }
   const o = {};
   for (const [k, v] of Object.entries(options)) o[camel(k)] = v;
+  return o;
+}
+
+export function render(type, options = {}) {
+  const o = prepare(type, options);
   o.animate = bool(o.animate);
   o.frame = o.frame === 'none' ? 'none' : 'bezel';
   const mode = o.theme === 'light' || o.theme === 'dark' ? o.theme : o.autoTheme || 'dark';
   return TYPES[type](o, THEMES[mode]);
+}
+
+/**
+ * The chart's data as a table, for screen readers and anyone who wants the exact numbers:
+ * { head: [column names], rows: [[cells], ...] }, with numbers formatted the same way as the chart.
+ */
+export function table(type, options = {}) {
+  return TYPES[type].table(prepare(type, options));
 }
 
 /** Strips hover targets and tooltip data so the SVG is a clean static image. */

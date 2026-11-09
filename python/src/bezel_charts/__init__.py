@@ -14,6 +14,7 @@ Created by Shaz Moghaddam, London. https://shazmoghaddam.github.io
 
 from __future__ import annotations
 
+import html
 import re
 from os import PathLike
 from pathlib import Path
@@ -21,12 +22,14 @@ from collections.abc import Mapping
 from typing import Any
 
 from . import _data
+from ._render import _camel
 from ._render import render as _render
 from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
+from ._util import Opts, fmt, lst, series
 from .charts import TYPES
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 __all__ = [
     "Chart", "bars", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
     "to_svg", "types", "__version__",
@@ -68,6 +71,26 @@ class Chart:
 
     def _repr_svg_(self) -> str:
         return self.svg
+
+    @property
+    def alt(self) -> str:
+        """Alt text for the chart: its title and summary, then up to 12 values with their labels.
+
+        An exported SVG is an image, so screen readers only get what the page says about it::
+
+            chart.save("signups.svg")
+            print(f"![{chart.alt}](signups.svg)")
+        """
+        m = re.search(r'aria-label="([^"]*)"', self.svg)
+        out = html.unescape(m.group(1)) if m else f"{self.type} chart"
+        o = Opts({_camel(k): v for k, v in self.options.items()})
+        S = series(o.values) if self.type in ("spark", "line", "bars", "donut", "progress") else []
+        if len(S) == 1:
+            labels = lst(o.labels)
+            parts = [(labels[i] + " " if i < len(labels) and labels[i] else "") + fmt(v, o) for i, v in enumerate(S[0])]
+            more = len(parts) - 12
+            out += ". " + ", ".join(parts[:12]) + (f" and {more} more" if more > 0 else "")
+        return out
 
     def save(self, path: str | PathLike) -> Path:
         """Writes the chart as an .svg file and returns its path."""

@@ -30,9 +30,10 @@ npm run test:browser
 
 1. Create `src/charts/your-chart.js` exporting a function `(o, th) => svg string`. Use `tile()` from `src/core/tile.js` for the frame, heading and headline number, and the helpers in `src/core/util.js` for parsing, formatting and text.
 2. Register it in `TYPES` in `src/render.js`. That also defines `<bezel-your-chart>`.
-3. Add cases to `test/render.test.js`, including empty data, one value, negatives and very large numbers.
-4. If the chart exists in the Python package, add the same cases to `scripts/py-fixtures.mjs` and run `npm run fixtures`.
-5. Add it to `CHARTS`, `PRESETS` and the relevant `FIELDS` in `site/studio.js`, and add an example card to `site/index.html`.
+3. Give it a data table: set `yourChart.table = function (o) { ... }` returning `{ head, rows }`, with every value the chart shows, formatted the same way. Screen readers get it as a hidden table.
+4. Add cases to `test/render.test.js`, including empty data, one value, negatives and very large numbers.
+5. If the chart exists in the Python package, add the same cases to `scripts/py-fixtures.mjs` and run `npm run fixtures`.
+6. Add it to `CHARTS`, `PRESETS` and the relevant `FIELDS` in `site/studio.js`, and add an example card to `site/index.html`.
 
 ## The Python package
 
@@ -50,7 +51,8 @@ Change a chart in `src/charts/` and its port in `python/src/bezel_charts/charts/
 - No runtime dependencies.
 - Charts are pure: the same options and theme always give the same SVG.
 - Escape any text that comes from attributes with `esc()`.
-- Give every mark a `data-tip` or a `hit()` target so it has a tooltip, and a summary for screen readers.
+- Give every mark a `data-tip` or a `hit()` target so it has a tooltip, and a summary for screen readers. The arrow keys visit these in order, so add them in the order a reader would expect, and mark repeats with `data-skip`.
+- Where several series share a chart, let `dash`, `markers` or `patterns` tell them apart as well as colour.
 - Respect `prefers-reduced-motion`, and keep animation in the classes from `src/core/tile.js`.
 - Check new work at phone, tablet and desktop widths, in light and dark.
 - Keep the gzipped bundle within the budget in `scripts/size.mjs`.

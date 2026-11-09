@@ -93,7 +93,7 @@ def donut(o, th) -> str:
                 '<circle cx="' + R(cx) + '" cy="' + R(cy) + '" r="' + R(r) + '" fill="none" stroke="#000" stroke-opacity="0"'
                 + ' stroke-width="' + R(sw) + '" pathLength="100" stroke-dasharray="' + R(length) + " " + R(100 - length)
                 + '" stroke-dashoffset="' + R(-start) + '" transform="rotate(-90 ' + R(cx) + " " + R(cy)
-                + ')" class="bzc-hit" data-tip="' + esc(name(i) + ": " + fmt(n, o) + " (" + N(js_round(length)) + "%)")
+                + ')" class="bzc-hit" data-skip="" data-tip="' + esc(name(i) + ": " + fmt(n, o) + " (" + N(js_round(length)) + "%)")
                 + '"/>'
             )
             start += length

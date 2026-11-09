@@ -261,3 +261,23 @@ def test_progress_single_and_stacked():
         bc.to_svg("progress", values="30,20,10", labels="Done,Review,Blocked", max=100, goal=75)
     )
     assert "60 of 100" in texts(stacked.svg)
+
+
+def test_dash_markers_and_patterns_take_python_values():
+    # True is the same as the bare HTML attribute: every style in turn.
+    assert ids(bc.line([[1, 2], [3, 4]], dash=True, markers=True).svg) == ids(
+        bc.to_svg("line", values="1,2|3,4", dash="", markers="")
+    )
+    assert 'stroke-dasharray="1 5"' in bc.line([[1, 2], [3, 4]], dash=["dotted", "dashed"]).svg
+    assert "<pattern " in bc.bars(pd.DataFrame({"a": [1, 2], "b": [3, 4]}), patterns=True).svg
+    assert "<pattern " not in bc.bars([1, 2], patterns=True).svg
+    assert ids(bc.line([[1, 2], [3, 4]], dash=False).svg) == ids(bc.line([[1, 2], [3, 4]]).svg)
+
+
+def test_alt_text_names_the_chart_and_lists_its_values():
+    chart = bc.bars([4, 9, 6], labels=["Mon", "Tue", "Wed"], heading="Commits <&>")
+    assert chart.alt == "Commits <&>: highest Tue 9. Mon 4, Tue 9, Wed 6"
+    assert bc.spark(list(range(20))).alt.endswith("10, 11 and 8 more")
+    assert bc.line([[1, 2], [3, 4]]).alt == "2 series over 2 points"
+    assert bc.ring([72, 45], labels=["Move", "Focus"]).alt == "Move 72%, Focus 45%"
+    assert bc.gauge().alt == "no data"

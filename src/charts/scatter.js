@@ -1,4 +1,4 @@
-import { r2, clamp, num, has, list, series, bool, fmt, niceScale, text, small, hit, palette, emptyState, parseNotes, goalLine, legend, axisWidth, SANS } from '../core/util.js';
+import { r2, clamp, num, has, list, series, bool, fmt, niceScale, text, small, hit, palette, emptyState, parseNotes, goalLine, legend, axisWidth, styleOf, marker, SHAPES } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 /** Least-squares fit. Returns slope, intercept and Pearson's r, or null when x has no spread. */
@@ -32,12 +32,16 @@ export default function scatter(o, th) {
   var nameOf = function (j) { return names[j] || 'Group ' + (j + 1); };
   var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang };
   var notes = parseNotes(o, labels);
+  // Each group can have its own point shape; "none" in the list keeps that group's circles.
+  var markOf = styleOf(o.markers, SHAPES, 'circle'), bg = o.background || th.tile;
+  var shapeOf = function (j) { var m = markOf ? markOf(j) : 'circle'; return m === 'none' ? 'circle' : m; };
+  var key = markOf && function (j, x, y) { return marker(shapeOf(j), x + 4, y + 6, 4, ' fill="' + pal[j % pal.length] + '"'); };
 
   return tile(o, th, h, function (x0, y0, w, h) {
     if (!count) return emptyState(th, x0, y0, w, h);
     var s = '', top = y0;
     if (multi) {
-      var lg = legend(groups.map(function (_, j) { return nameOf(j); }), pal, th, x0, top, w);
+      var lg = legend(groups.map(function (_, j) { return nameOf(j); }), pal, th, x0, top, w, key);
       s += lg.svg;
       top += lg.height;
     }
@@ -94,8 +98,8 @@ export default function scatter(o, th) {
         var cx = PX(xv), cy = PY(gr.ys[i]);
         var tip = (labels[idx] ? labels[idx] + '\n' : multi ? nameOf(j) + '\n' : '') +
           (has(o.xLabel) ? o.xLabel : 'x') + ': ' + fmt(xv, xo) + '\n' + (has(o.yLabel) ? o.yLabel : 'y') + ': ' + fmt(gr.ys[i], o);
-        s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r + '" fill="' + c + '" fill-opacity=".85" stroke="' + (o.background || th.tile) + '" stroke-width="1.5"' +
-          (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : '') + '/>';
+        s += marker(shapeOf(j), cx, cy, r, ' fill="' + c + '" fill-opacity=".85" stroke="' + bg + '" stroke-width="1.5"' +
+          (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : ''));
         s += hit(cx - 8, cy - 8, 16, 16, tip);
         idx++;
       });
@@ -113,3 +117,15 @@ export default function scatter(o, th) {
     return s;
   }, { summary: count + ' points' + (multi ? ' in ' + groups.length + ' groups' : '') });
 }
+
+scatter.table = function (o) {
+  var X = series(o.x), Y = series(o.y), names = list(o.series), labels = list(o.labels), multi = X.length > 1 || names.length > 0;
+  var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang }, rows = [], idx = 0;
+  X.forEach(function (xs, g) {
+    var ys = Y[g] || [];
+    for (var i = 0; i < Math.min(xs.length, ys.length); i++, idx++) {
+      rows.push([labels[idx] || '#' + (idx + 1)].concat(multi ? [names[g] || 'Group ' + (g + 1)] : [], [fmt(xs[i], xo), fmt(ys[i], o)]));
+    }
+  });
+  return { head: ['Point'].concat(multi ? ['Group'] : [], [has(o.xLabel) ? o.xLabel : 'x', has(o.yLabel) ? o.yLabel : 'y']), rows: rows };
+};

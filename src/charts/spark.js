@@ -39,3 +39,8 @@ export default function spark(o, th) {
     return s;
   }, { stat: st, summary: v.length ? 'latest ' + fmt(v[v.length - 1], o) : 'no data' });
 }
+
+spark.table = function (o) {
+  var labels = list(o.labels);
+  return { head: ['Label', 'Value'], rows: nums(o.values).map(function (n, i) { return [labels[i] || '#' + (i + 1), fmt(n, o)]; }) };
+};

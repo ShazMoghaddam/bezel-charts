@@ -55,3 +55,12 @@ export default function progress(o, th) {
     return s;
   }, { stat: st, summary: single ? show(v[0]) + (auto ? '' : ' of ' + fmt(max, o)) : fmt(total, o) + ' of ' + fmt(max, o) });
 }
+
+progress.table = function (o) {
+  var v = nums(o.values).map(function (n) { return Math.max(0, n); }), labels = list(o.labels), single = v.length === 1;
+  var max = has(o.max) ? num(o.max, 100) : single ? 100 : sum(v);
+  if (!(max > 0)) max = 1;
+  var auto = !has(o.prefix) && !has(o.suffix) && max === 100 && single;
+  if (single) return { head: ['Label', 'Value'], rows: [[labels[0] || 'Progress', fmt(v[0], o) + (auto ? '%' : ' of ' + fmt(max, o))]] };
+  return { head: ['Label', 'Value', 'Share'], rows: v.map(function (n, i) { return [labels[i] || '#' + (i + 1), fmt(n, o), Math.round(n / max * 100) + '%']; }) };
+};

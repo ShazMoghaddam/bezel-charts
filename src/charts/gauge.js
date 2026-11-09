@@ -39,3 +39,11 @@ export default function gauge(o, th) {
     return s;
   }, { summary: isFinite(val) ? show(val) + ' on a scale of ' + fmt(mn, o) + ' to ' + fmt(mx, o) : 'no data' });
 }
+
+gauge.table = function (o) {
+  var v = nums(o.values), val = v.length ? v[0] : num(o.value, NaN), labels = list(o.labels);
+  var mn = num(o.min, 0), mx = num(o.max, 100), auto = !has(o.prefix) && !has(o.suffix) && mn === 0 && mx === 100;
+  if (!isFinite(val)) return { head: ['Label', 'Value'], rows: [] };
+  return { head: ['Label', 'Value'], rows: [[labels[0] || 'Reading', fmt(val, o) + (auto ? '%' : '')], ['Lowest', fmt(mn, o)], ['Highest', fmt(mx, o)]]
+    .concat(has(o.goal) ? [['Goal', fmt(+o.goal, o)]] : []) };
+};

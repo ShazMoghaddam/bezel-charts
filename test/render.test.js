@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { render, toSVG, types } from '../src/index.js';
+import { table } from '../src/render.js';
 import { fit } from '../src/charts/scatter.js';
 
 const year = Array.from({ length: 365 }, (_, i) => ((i * 7) % 11 > 6 ? i % 9 : 0)).join(',');
@@ -181,4 +182,76 @@ test('angled labels change nothing when the labels already fit', () => {
 test('angled labels shorten very long names', () => {
   const svg = render('bars', { values: Array(20).fill(1).join(','), labels: Array(20).fill('An extremely long label that goes on and on').join(','), 'angle-labels': '', width: 400 });
   assert.match(svg, />An extremely long label…</);
+});
+
+test('dash gives each line its own style, and the bare attribute hands them out in turn', () => {
+  const svg = render('line', { values: '1,2|2,1|3,3|1,1', series: 'A,B,C,D', dash: '' });
+  assert.match(svg, /stroke-dasharray="7 5"/);
+  assert.match(svg, /stroke-dasharray="1 5"/);
+  assert.match(svg, /stroke-dasharray="9 4 1 4"/);
+  const listed = render('line', { values: '1,2|2,1', dash: 'dotted,nonsense' });
+  assert.match(listed, /stroke-dasharray="1 5"/);
+  assert.doesNotMatch(listed, /stroke-dasharray="7 5"/, 'unknown styles are solid');
+});
+
+test('dashed lines fade in, because the draw-in animation is itself a dash', () => {
+  const svg = render('line', { values: '1,2', dash: 'dashed', animate: true });
+  assert.doesNotMatch(svg, /class="bzc-d"/);
+  assert.match(svg, /stroke-dasharray="7 5" class="bzc-a"/);
+});
+
+test('markers put a shape on each point and show in the legend', () => {
+  const svg = render('line', { values: '1,2,3|3,2,1', series: 'A,B', markers: '' });
+  assert.equal((svg.match(/<circle[^>]*r="3.5"/g) || []).length, 4, '3 points plus the legend sample');
+  assert.equal((svg.match(/<rect[^>]*rx="1"/g) || []).length, 4);
+  assert.match(svg, /<line x1="[^"]+" x2="[^"]+" y1="[^"]+" y2="[^"]+" stroke="[^"]+" stroke-width="2.5"/, 'a line sample in the legend');
+});
+
+test('markers thin out on long series but always mark the last point', () => {
+  // 101 points: every third point (0, 3 … 99) plus the last one, 100.
+  const values = Array.from({ length: 101 }, (_, i) => i).join(',');
+  const count = (render('line', { values, markers: 'square' }).match(/rx="1"/g) || []).length;
+  assert.equal(count, 35);
+});
+
+test('scatter groups take their own shapes', () => {
+  const svg = render('scatter', { x: '1,2|3,4', y: '1,2|3,4', series: 'A,B', markers: 'diamond,triangle' });
+  assert.equal((svg.match(/<path d="M[^"]*Z" fill/g) || []).length, 6, '4 points and 2 legend swatches');
+  assert.doesNotMatch(svg, /<circle[^>]*fill-opacity=".85"/);
+});
+
+test('patterns fill grouped and stacked bars, and their legend swatches', () => {
+  for (const extra of [{}, { stacked: '' }, { horizontal: '' }]) {
+    const svg = render('bars', { values: '4,9|3,7|2,5', series: 'A,B,C', patterns: '', ...extra });
+    assert.equal((svg.match(/<pattern /g) || []).length, 2, 'the first series stays solid');
+    assert.match(svg, /<rect x="[^"]+" y="[^"]+" width="10" height="10" rx="2" fill="url\(#/);
+  }
+});
+
+test('patterns are ignored on single series bars', () => {
+  assert.equal(render('bars', { values: '4,9', patterns: '', static: '' }), render('bars', { values: '4,9', static: '' }));
+});
+
+test('the new style options are off by default and turn off with none', () => {
+  const ids = (svg) => svg.replace(/bzc[gc][0-9a-z]+/g, 'id');
+  for (const [type, o] of [['line', { values: '1,2|3,4' }], ['scatter', { x: '1,2', y: '3,4' }], ['bars', { values: '1,2|3,4' }]]) {
+    const plain = ids(render(type, o));
+    assert.equal(ids(render(type, { ...o, dash: 'none', markers: 'none', patterns: 'none' })), plain, type);
+  }
+});
+
+test('every chart type has a data table', () => {
+  for (const t of types) {
+    const d = table(t, { values: '3,5,2', labels: 'a,b,c', x: '1,2', y: '3,4', start: '2026-01-01' });
+    assert.ok(d.head.length >= 2, t);
+    assert.ok(d.rows.length >= 1, t);
+    d.rows.forEach((r) => assert.equal(r.length, d.head.length, t));
+  }
+});
+
+test('data tables list every value, including ones the chart groups or drops', () => {
+  assert.equal(table('donut', { values: '1,2,3,4,5,6,7,8' }).rows.length, 8);
+  assert.equal(table('heatmap', { values: Array(365).fill(1).join(','), width: 200, start: '2026-01-01' }).rows.length, 365);
+  assert.deepEqual(table('bars', { values: '1,2|3,4', stacked: '' }).head, ['Label', 'Series 1', 'Series 2', 'Total']);
+  assert.deepEqual(table('scatter', { x: '1|2', y: '3|4', 'x-label': 'Hours' }).rows, [['#1', 'Group 1', '1', '3'], ['#2', 'Group 2', '2', '4']]);
 });

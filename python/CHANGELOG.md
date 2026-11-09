@@ -1,5 +1,11 @@
 # Changelog (Python package)
 
+## 1.2.0 (2026-11-09)
+
+- `dash`, `markers` and `patterns` tell series apart without relying on colour, matching the web components. Pass `True` to hand out styles in turn, or a list with one per series: `dash=["solid", "dashed"]`.
+- `chart.alt` gives ready-made alt text for a saved SVG: the title, the summary and up to 12 values with their labels.
+- 16 more parity cases against the JavaScript.
+
 ## 1.1.0 (2026-11-07)
 
 - `stacked=True` piles several series into one bar per group, matching the web components' new `stacked` option.
