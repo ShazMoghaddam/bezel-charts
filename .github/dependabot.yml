@@ -1,0 +1,39 @@
+# Weekly checks for out-of-date dependencies. Minor and patch updates are
+# grouped, so each ecosystem opens one pull request a week at most.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/London
+    groups:
+      npm-minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # esbuild is pinned because CI checks that dist/ matches a fresh build.
+      # Its 0.x minor releases can change the output, so upgrade it by hand:
+      # bump the version, run npm run check and commit the rebuilt dist/.
+      - dependency-name: esbuild
+        update-types: [version-update:semver-major, version-update:semver-minor]
+
+  - package-ecosystem: pip
+    directory: /python
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/London
+    groups:
+      pip-minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Europe/London
+    groups:
+      actions-minor-and-patch:
+        update-types: [minor, patch]

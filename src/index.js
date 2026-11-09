@@ -7,7 +7,7 @@ import { TYPES, render, toSVG } from './render.js';
 import { THEMES } from './core/themes.js';
 import { BezelChart } from './element.js';
 
-export const version = '1.1.0';
+export const version = '1.1.1';
 export const types = Object.keys(TYPES);
 export { render, toSVG, BezelChart, THEMES as themes };
 

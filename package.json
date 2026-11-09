@@ -1,6 +1,6 @@
 {
   "name": "bezel-charts",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, bars, rings, donuts, gauges, progress bars and heatmaps, with one-click static SVG export for READMEs.",
   "type": "module",
   "main": "dist/bezel-charts.js",
@@ -38,7 +38,7 @@
     "type": "git",
     "url": "git+https://github.com/ShazMoghaddam/bezel-charts.git"
   },
-  "homepage": "https://shazmoghaddam.github.io/bezel-charts/",
+  "homepage": "https://shazmoghaddam.github.io/bezel-charts/site/",
   "bugs": "https://github.com/ShazMoghaddam/bezel-charts/issues",
   "engines": {
     "node": ">=20"

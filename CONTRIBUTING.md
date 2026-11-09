@@ -55,3 +55,23 @@ Change a chart in `src/charts/` and its port in `python/src/bezel_charts/charts/
 - Check new work at phone, tablet and desktop widths, in light and dark.
 - Keep the gzipped bundle within the budget in `scripts/size.mjs`.
 - Run `npm run check` before opening a pull request.
+
+## Releasing
+
+The web components and the Python package are released separately, each from its own tag.
+
+**Web components (npm, jsDelivr and GitHub)**
+
+1. Bump `version` in `package.json` and `package-lock.json`, and move the changelog's "Unreleased" notes under the new version in `CHANGELOG.md`.
+2. Run `npm run check`, commit (including `dist/`), and merge the pull request.
+3. Tag the merge commit on `main` and push the tag: `git tag v1.2.0 && git push origin v1.2.0`.
+4. The **Publish npm package** workflow checks the tag matches `package.json`, runs the checks again and publishes to npm. jsDelivr picks up the tag on its own.
+5. Create the GitHub release from the tag, with the changelog notes.
+
+**Python package (PyPI)**
+
+1. Bump `__version__` in `python/src/bezel_charts/__init__.py` and update `python/CHANGELOG.md`.
+2. Merge, then tag with a `py-` prefix: `git tag py-v1.2.0 && git push origin py-v1.2.0`.
+3. The **Publish Python package** workflow tests, builds and publishes to PyPI.
+
+Keep the two packages on matching versions when a release changes both.
