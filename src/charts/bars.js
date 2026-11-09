@@ -1,4 +1,4 @@
-import { r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, statOf, legend, SANS, MONO } from '../core/util.js';
+import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, statOf, legend, seriesTable, styleOf, pattern, PATTERNS, SANS, MONO } from '../core/util.js';
 import { tile, dims } from '../core/tile.js';
 
 /** How far angled labels lean, and the longest label they show before shortening it. */
@@ -23,7 +23,16 @@ export default function bars(o, th) {
   var scale = stacked ? ups.concat(downs) : all;
   var top = scale.length ? Math.max.apply(null, scale) : 0;
   var nameOf = function (j) { return names[j] || 'Series ' + (j + 1); };
-  var colourOf = function (j, i) { return grouped ? pal[j % pal.length] : many ? pal[i % pal.length] : pal[0]; };
+  // Patterns tell grouped and stacked series apart without relying on colour alone.
+  var patOf = grouped ? styleOf(o.patterns, PATTERNS, 'solid') : null, defs = '', fills = [];
+  for (var p = 0; patOf && p < k; p++) {
+    if (patOf(p) === 'solid') continue;
+    var pid = newId('g');
+    defs += pattern(pid, patOf(p), pal[p % pal.length], o.background || th.tile);
+    fills[p] = 'url(#' + pid + ')';
+  }
+  var colourOf = function (j, i) { return grouped ? fills[j] || pal[j % pal.length] : many ? pal[i % pal.length] : pal[0]; };
+  var key = patOf && function (j, x, y) { return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="10" height="10" rx="2" fill="' + colourOf(j) + '"/>'; };
   var opac = function (val) { return grouped || many || o.highlight === 'none' || val === top ? 1 : 0.5; };
   var labelOf = function (i) { return labels[i] || '#' + (i + 1); };
   var tipOf = function (i) {
@@ -34,7 +43,7 @@ export default function bars(o, th) {
 
   // Horizontal rows need their height up front, and so does a legend that may wrap.
   var d0 = dims(o);
-  var legendH = grouped || names.length ? legend(S.map(function (_, j) { return nameOf(j); }), pal, th, 0, 0, d0.w).height : 0;
+  var legendH = grouped || names.length ? legend(S.map(function (_, j) { return nameOf(j); }), pal, th, 0, 0, d0.w, key, key && 15).height : 0;
   var rows = stacked ? 1 : k, thin = grouped && !stacked;
   var subH = thin ? 10 : 14, subGap = 3;
   var rowH = horiz ? rows * subH + (rows - 1) * subGap + (thin ? 14 : 16) : 0;
@@ -43,9 +52,9 @@ export default function bars(o, th) {
 
   return tile(o, th, h, function (x0, y0, w, h) {
     if (!n) return emptyState(th, x0, y0, w, h);
-    var s = '', top0 = y0;
+    var s = defs ? '<defs>' + defs + '</defs>' : '', top0 = y0;
     if (legendH) {
-      s += legend(S.map(function (_, j) { return nameOf(j); }), pal, th, x0, y0, w).svg;
+      s += legend(S.map(function (_, j) { return nameOf(j); }), pal, th, x0, y0, w, key, key && 15).svg;
       top0 += legendH;
     }
     var lo = Math.min(0, Math.min.apply(null, scale)), hi = Math.max(0, top);
@@ -178,3 +187,5 @@ export default function bars(o, th) {
     summary: !n ? 'no data' : stacked ? k + ' series stacked across ' + n + ' groups' : grouped ? k + ' series across ' + n + ' groups' : 'highest ' + (labels[best] || '') + ' ' + fmt(v0[best], o),
   });
 }
+
+bars.table = function (o) { return seriesTable(o, series(o.values).length > 1 && bool(o.stacked)); };

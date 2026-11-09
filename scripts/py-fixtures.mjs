@@ -56,6 +56,14 @@ export const CASES = {
     { values: '1,2|3', series: ',Named', goal: 10, 'goal-label': 'Target', background: '#101010' },
     { values: '1e-7,2e-7,3e-7' },
     { values: '1000000,2000000,1500000', labels: 'Jan 2026,Feb 2026,Mar 2026', compact: '', lang: 'en-GB' },
+    // Dashes and markers (1.2.0).
+    { values: '1,2,3|3,2,1|2,3,1|1,1,2', series: 'A,B,C,D', labels: 'Jan,Feb,Mar', dash: '', markers: '' },
+    { values: '4,6,5|2,3,4', series: 'Plan,Actual', dash: 'solid,dashed', animate: true },
+    { values: '1,3,2|2,2,2', dash: 'dotted,nonsense', markers: 'triangle,none', theme: 'light', background: '#fafafa' },
+    { values: long, markers: 'diamond', width: 640 },
+    { values: '5', markers: 'square', dash: 'dashdot' },
+    { values: '1,2|3,4', series: 'A,B', dash: 'none', markers: 'none' },
+    { values: [[1, 2], [3, 4]], series: ['A', 'B'], dash: ['dashed', 'dotted'], markers: 'auto', frame: 'none' },
   ],
   bars: [
     {},
@@ -87,6 +95,13 @@ export const CASES = {
     { values: long.slice(0, 33).join(',') + '|' + long.slice(33, 66).join(','), series: 'One,Two', labels: long.slice(0, 33).map((_, i) => `Place ${i + 1} with a very long name indeed`), stacked: '', 'angle-labels': '', width: 900, height: 340, theme: 'light' },
     { values: '1,2,3', labels: 'a,b,c', 'angle-labels': '' },
     { values: '-3,5,-8,2', labels: 'Negative one,Positive one,Negative two,Positive two', 'angle-labels': '', 'show-values': '', width: 120 },
+    // Patterns (1.2.0).
+    { values: '4,9,6|3,7,8|2,5,4|1,2,3|6,1,2', series: 'A,B,C,D,E', labels: 'Q1,Q2,Q3', patterns: '' },
+    { values: '4,9,6|3,7,8', series: '2026,2025', labels: 'Q1,Q2,Q3', stacked: '', patterns: 'dots,stripes', 'show-values': '' },
+    { values: '4,9|3,7|2,5', horizontal: '', patterns: 'grid', labels: 'North,South' },
+    { values: '4,9|-3,7', stacked: '', horizontal: '', patterns: 'auto', background: '#fff8e7', theme: 'light' },
+    { values: '4,9,6', patterns: '' },
+    { values: '1,2|3,4', patterns: 'none' },
   ],
   scatter: [
     {},
@@ -104,6 +119,10 @@ export const CASES = {
     { x: '1,2,3', y: '4,5,6', labels: '1976,1980,1984', notes: '1984:Last' },
     { x: '10000,20000,30000', y: '1,2,3', lang: 'en-US', trend: '' },
     { x: '1,2,3,4,5,6', y: '6,5,4,3,2,1|1,2', series: 'Down', trend: '' },
+    // Markers (1.2.0).
+    { x: '1,2,3|2,4|5,6', y: '5,7,6|3,8|1,2', series: 'A,B,C', markers: '', trend: '' },
+    { x: '1,2,3', y: '3,1,2', markers: 'square', animate: true },
+    { x: '1,2|3,4', y: '1,2|3,4', markers: 'diamond,none', theme: 'light' },
   ],
   ring: [
     {},

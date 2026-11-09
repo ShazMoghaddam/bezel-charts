@@ -1,4 +1,4 @@
-/*! Bezel Charts v1.1.1 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.2.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/themes.js
 var THEMES = {
@@ -180,23 +180,66 @@ function statOf(v, o, fallback) {
   if (k === "last" && v.length > 1 && o.delta !== "none") delta = v[v.length - 1] - v[0];
   return { val: map[k], delta };
 }
-function legend(names, pal, th, x0, y0, w) {
-  var x = x0, y = y0, s = "";
+function legend(names, pal, th, x0, y0, w, key, kw) {
+  var x = x0, y = y0, s = "", off = kw || 13;
   names.forEach(function(nm, k) {
-    var wd = 13 + tw(nm, 12) + 16;
+    var wd = off + tw(nm, 12) + 16;
     if (x > x0 && x + wd - 16 > x0 + w) {
       x = x0;
       y += 20;
     }
-    s += '<circle cx="' + r2(x + 4) + '" cy="' + r2(y + 6) + '" r="4" fill="' + pal[k % pal.length] + '"/>' + text(x + 13, y + 10, nm, 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
+    s += (key ? key(k, x, y) : '<circle cx="' + r2(x + 4) + '" cy="' + r2(y + 6) + '" r="4" fill="' + pal[k % pal.length] + '"/>') + text(x + off, y + 10, nm, 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
     x += wd;
   });
   return { svg: s, height: y - y0 + 24 };
+}
+var DASHES = { solid: "", dashed: "7 5", dotted: "1 5", dashdot: "9 4 1 4" };
+var SHAPES = ["circle", "square", "triangle", "diamond"];
+var PATTERNS = ["solid", "stripes", "dots", "grid"];
+function styleOf(v, names, off) {
+  if (v == null || v === false || v === "none" || v === "false") return null;
+  var l = v === true || v === "" || v === "auto" ? names : list(v).map(function(s) {
+    return names.indexOf(s) < 0 ? off : s;
+  });
+  if (!l.length) return null;
+  return function(k) {
+    return l[k % l.length];
+  };
+}
+function marker(kind, x, y, r, attrs) {
+  var a = r * 1.15, b = r * 0.85;
+  if (kind === "square") return '<rect x="' + r2(x - b) + '" y="' + r2(y - b) + '" width="' + r2(2 * b) + '" height="' + r2(2 * b) + '" rx="1"' + attrs + "/>";
+  if (kind === "triangle") return '<path d="M' + r2(x) + "," + r2(y - a) + "L" + r2(x + a) + "," + r2(y + b) + "L" + r2(x - a) + "," + r2(y + b) + 'Z"' + attrs + "/>";
+  if (kind === "diamond") return '<path d="M' + r2(x) + "," + r2(y - a * 1.1) + "L" + r2(x + a) + "," + r2(y) + "L" + r2(x) + "," + r2(y + a * 1.1) + "L" + r2(x - a) + "," + r2(y) + 'Z"' + attrs + "/>";
+  return '<circle cx="' + r2(x) + '" cy="' + r2(y) + '" r="' + r2(r) + '"' + attrs + "/>";
+}
+function pattern(id, kind, c, bg) {
+  var ink = ' stroke="' + bg + '" stroke-opacity=".55" stroke-width="1.5"';
+  return '<pattern id="' + id + '" width="6" height="6" patternUnits="userSpaceOnUse"' + (kind === "dots" ? "" : ' patternTransform="rotate(45)"') + '><rect width="6" height="6" fill="' + c + '"/>' + (kind === "dots" ? '<circle cx="3" cy="3" r="1.3" fill="' + bg + '" fill-opacity=".55"/>' : '<path d="M3,0V6' + (kind === "grid" ? "M0,3H6" : "") + '"' + ink + "/>") + "</pattern>";
 }
 function axisWidth(ticks) {
   return Math.max.apply(null, ticks.map(function(t) {
     return tw(t, 10, true);
   })) + 10;
+}
+function seriesTable(o, total) {
+  var S = series(o.values), names = list(o.series), labels = list(o.labels), rows = [];
+  var n = Math.max.apply(null, [0].concat(S.map(function(s) {
+    return s.length;
+  })));
+  for (var i = 0; i < n; i++) {
+    var row = [labels[i] || "#" + (i + 1)], t = 0;
+    S.forEach(function(s) {
+      row.push(i < s.length ? fmt(s[i], o) : "");
+      t += i < s.length ? s[i] : 0;
+    });
+    if (total) row.push(fmt(t, o));
+    rows.push(row);
+  }
+  var head = S.length > 1 || names.length ? S.map(function(_, k) {
+    return names[k] || "Series " + (k + 1);
+  }) : ["Value"];
+  return { head: ["Label"].concat(head, total ? ["Total"] : []), rows };
 }
 
 // src/core/tile.js
@@ -295,6 +338,12 @@ function spark(o, th) {
     return s;
   }, { stat: st, summary: v.length ? "latest " + fmt(v[v.length - 1], o) : "no data" });
 }
+spark.table = function(o) {
+  var labels = list(o.labels);
+  return { head: ["Label", "Value"], rows: nums(o.values).map(function(n, i) {
+    return [labels[i] || "#" + (i + 1), fmt(n, o)];
+  }) };
+};
 
 // src/charts/line.js
 function line(o, th) {
@@ -304,13 +353,19 @@ function line(o, th) {
   })));
   var notes = parseNotes(o, labels), multi = S.length > 1 || names.length > 0;
   var st = statOf(S[0] || [], o, "");
+  var dashOf = styleOf(o.dash, Object.keys(DASHES), "solid"), markOf = styleOf(o.markers, SHAPES, "none");
+  var bg = o.background || th.tile;
+  var key = (dashOf || markOf) && function(k, x, y) {
+    var c = pal[k % pal.length], dk = dashOf ? DASHES[dashOf(k)] : "", mk = markOf ? markOf(k) : "none";
+    return '<line x1="' + r2(x) + '" x2="' + r2(x + 18) + '" y1="' + r2(y + 6) + '" y2="' + r2(y + 6) + '" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round"' + (dk ? ' stroke-dasharray="' + dk + '"' : "") + "/>" + (mk !== "none" ? marker(mk, x + 9, y + 6, 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"') : "");
+  };
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!n) return emptyState(th, x0, y0, w, h2);
     var s = "", top = y0;
     if (multi) {
       var lg = legend(S.map(function(_, k) {
         return names[k] || "Series " + (k + 1);
-      }), pal, th, x0, top, w);
+      }), pal, th, x0, top, w, key, key && 24);
       s += lg.svg;
       top += lg.height;
     }
@@ -369,9 +424,17 @@ function line(o, th) {
         var g = newId("g"), last = P[P.length - 1];
         s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".26"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs><path d="' + d + "L" + r2(last[0]) + "," + r2(top + ph) + "L" + r2(P[0][0]) + "," + r2(top + ph) + 'Z" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
       }
-      s += '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1' + (o.animate ? ";animation-delay:" + k * 0.15 + "s" : "") + '"' + (o.animate ? ' class="bzc-d"' : "") + "/>";
-      var e = P[P.length - 1];
-      s += '<circle cx="' + r2(e[0]) + '" cy="' + r2(e[1]) + '" r="4" fill="' + c + '" stroke="' + (o.background || th.tile) + '" stroke-width="2"/>';
+      var dk = dashOf ? DASHES[dashOf(k)] : "", mk = markOf ? markOf(k) : "none";
+      s += dk ? '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="' + dk + '"' + anim(o, "bzc-a", k * 0.15) + "/>" : '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1' + (o.animate ? ";animation-delay:" + k * 0.15 + "s" : "") + '"' + (o.animate ? ' class="bzc-d"' : "") + "/>";
+      if (mk !== "none") {
+        var every2 = Math.ceil(v.length / 40);
+        v.forEach(function(y, i2) {
+          if (i2 % every2 === 0 || i2 === v.length - 1) s += marker(mk, X(i2), Y(y), 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"' + anim(o, "bzc-a", 0.6 + k * 0.15));
+        });
+      } else {
+        var e = P[P.length - 1];
+        s += '<circle cx="' + r2(e[0]) + '" cy="' + r2(e[1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      }
       if (bool(o.showValues)) v.forEach(function(y, i2) {
         s += text(X(i2), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"'));
       });
@@ -388,6 +451,9 @@ function line(o, th) {
     return s;
   }, { stat: st, summary: S.length + " series over " + n + " points" });
 }
+line.table = function(o) {
+  return seriesTable(o);
+};
 
 // src/charts/bars.js
 var ANGLE = 40;
@@ -416,8 +482,18 @@ function bars(o, th) {
   var nameOf = function(j) {
     return names[j] || "Series " + (j + 1);
   };
+  var patOf = grouped ? styleOf(o.patterns, PATTERNS, "solid") : null, defs = "", fills = [];
+  for (var p = 0; patOf && p < k; p++) {
+    if (patOf(p) === "solid") continue;
+    var pid = newId("g");
+    defs += pattern(pid, patOf(p), pal[p % pal.length], o.background || th.tile);
+    fills[p] = "url(#" + pid + ")";
+  }
   var colourOf = function(j, i) {
-    return grouped ? pal[j % pal.length] : many ? pal[i % pal.length] : pal[0];
+    return grouped ? fills[j] || pal[j % pal.length] : many ? pal[i % pal.length] : pal[0];
+  };
+  var key = patOf && function(j, x, y) {
+    return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="10" height="10" rx="2" fill="' + colourOf(j) + '"/>';
   };
   var opac = function(val) {
     return grouped || many || o.highlight === "none" || val === top ? 1 : 0.5;
@@ -434,7 +510,7 @@ function bars(o, th) {
   var d0 = dims(o);
   var legendH = grouped || names.length ? legend(S.map(function(_, j) {
     return nameOf(j);
-  }), pal, th, 0, 0, d0.w).height : 0;
+  }), pal, th, 0, 0, d0.w, key, key && 15).height : 0;
   var rows = stacked ? 1 : k, thin = grouped && !stacked;
   var subH = thin ? 10 : 14, subGap = 3;
   var rowH = horiz ? rows * subH + (rows - 1) * subGap + (thin ? 14 : 16) : 0;
@@ -442,11 +518,11 @@ function bars(o, th) {
   var best = v0.indexOf(Math.max.apply(null, v0.length ? v0 : [0]));
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!n) return emptyState(th, x0, y0, w, h2);
-    var s = "", top0 = y0;
+    var s = defs ? "<defs>" + defs + "</defs>" : "", top0 = y0;
     if (legendH) {
       s += legend(S.map(function(_, j) {
         return nameOf(j);
-      }), pal, th, x0, y0, w).svg;
+      }), pal, th, x0, y0, w, key, key && 15).svg;
       top0 += legendH;
     }
     var lo = Math.min(0, Math.min.apply(null, scale)), hi = Math.max(0, top);
@@ -597,6 +673,9 @@ function bars(o, th) {
     summary: !n ? "no data" : stacked ? k + " series stacked across " + n + " groups" : grouped ? k + " series across " + n + " groups" : "highest " + (labels[best] || "") + " " + fmt(v0[best], o)
   });
 }
+bars.table = function(o) {
+  return seriesTable(o, series(o.values).length > 1 && bool(o.stacked));
+};
 
 // src/charts/ring.js
 function ring(o, th) {
@@ -636,6 +715,12 @@ function ring(o, th) {
     return (labels[i] ? labels[i] + " " : "") + show(n);
   }).join(", ") });
 }
+ring.table = function(o) {
+  var labels = list(o.labels), max = num(o.max, 100) || 100, auto = !has(o.prefix) && !has(o.suffix) && max === 100;
+  return { head: ["Label", "Value"], rows: nums(o.values).map(function(n, i) {
+    return [labels[i] || "#" + (i + 1), fmt(n, o) + (auto ? "%" : " of " + fmt(max, o))];
+  }) };
+};
 
 // src/charts/donut.js
 function donut(o, th) {
@@ -688,12 +773,20 @@ function donut(o, th) {
     v.forEach(function(n, i) {
       var len = n / total * 100;
       if (len <= 0) return;
-      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="#000" stroke-opacity="0" stroke-width="' + r2(sw) + '" pathLength="100" stroke-dasharray="' + r2(len) + " " + r2(100 - len) + '" stroke-dashoffset="' + r2(-start) + '" transform="rotate(-90 ' + r2(cx) + " " + r2(cy) + ')" class="bzc-hit" data-tip="' + esc((labels[i] || "#" + (i + 1)) + ": " + fmt(n, o) + " (" + Math.round(len) + "%)") + '"/>';
+      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="#000" stroke-opacity="0" stroke-width="' + r2(sw) + '" pathLength="100" stroke-dasharray="' + r2(len) + " " + r2(100 - len) + '" stroke-dashoffset="' + r2(-start) + '" transform="rotate(-90 ' + r2(cx) + " " + r2(cy) + ')" class="bzc-hit" data-skip="" data-tip="' + esc((labels[i] || "#" + (i + 1)) + ": " + fmt(n, o) + " (" + Math.round(len) + "%)") + '"/>';
       start += len;
     });
     return s;
   }, { stat: st, summary: "total " + fmt(total, o) + " across " + v.length + " parts" });
 }
+donut.table = function(o) {
+  var v = nums(o.values).map(function(n) {
+    return Math.max(0, n);
+  }), labels = list(o.labels), total = sum(v);
+  return { head: ["Label", "Value", "Share"], rows: v.map(function(n, i) {
+    return [labels[i] || "#" + (i + 1), fmt(n, o), (total ? Math.round(n / total * 100) : 0) + "%"];
+  }) };
+};
 
 // src/charts/gauge.js
 function gauge(o, th) {
@@ -740,6 +833,12 @@ function gauge(o, th) {
     return s;
   }, { summary: isFinite(val) ? show(val) + " on a scale of " + fmt(mn, o) + " to " + fmt(mx, o) : "no data" });
 }
+gauge.table = function(o) {
+  var v = nums(o.values), val = v.length ? v[0] : num(o.value, NaN), labels = list(o.labels);
+  var mn = num(o.min, 0), mx = num(o.max, 100), auto = !has(o.prefix) && !has(o.suffix) && mn === 0 && mx === 100;
+  if (!isFinite(val)) return { head: ["Label", "Value"], rows: [] };
+  return { head: ["Label", "Value"], rows: [[labels[0] || "Reading", fmt(val, o) + (auto ? "%" : "")], ["Lowest", fmt(mn, o)], ["Highest", fmt(mx, o)]].concat(has(o.goal) ? [["Goal", fmt(+o.goal, o)]] : []) };
+};
 
 // src/charts/progress.js
 function progress(o, th) {
@@ -802,16 +901,36 @@ function progress(o, th) {
     return s;
   }, { stat: st, summary: single ? show(v[0]) + (auto ? "" : " of " + fmt(max, o)) : fmt(total, o) + " of " + fmt(max, o) });
 }
+progress.table = function(o) {
+  var v = nums(o.values).map(function(n) {
+    return Math.max(0, n);
+  }), labels = list(o.labels), single = v.length === 1;
+  var max = has(o.max) ? num(o.max, 100) : single ? 100 : sum(v);
+  if (!(max > 0)) max = 1;
+  var auto = !has(o.prefix) && !has(o.suffix) && max === 100 && single;
+  if (single) return { head: ["Label", "Value"], rows: [[labels[0] || "Progress", fmt(v[0], o) + (auto ? "%" : " of " + fmt(max, o))]] };
+  return { head: ["Label", "Value", "Share"], rows: v.map(function(n, i) {
+    return [labels[i] || "#" + (i + 1), fmt(n, o), Math.round(n / max * 100) + "%"];
+  }) };
+};
 
 // src/charts/heatmap.js
+var FULL = { weekday: "short", day: "numeric", month: "short", year: "numeric" };
+function startOf(o, len) {
+  if (has(o.start) && /^\d{4}-\d{2}-\d{2}$/.test(String(o.start))) return /* @__PURE__ */ new Date(String(o.start) + "T00:00:00Z");
+  var t = /* @__PURE__ */ new Date();
+  return new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Math.max(0, len - 1) * 864e5);
+}
+function dates(lang, opt) {
+  try {
+    return new Intl.DateTimeFormat(lang, Object.assign({ timeZone: "UTC" }, opt));
+  } catch (e) {
+    return new Intl.DateTimeFormat("en-GB", Object.assign({ timeZone: "UTC" }, opt));
+  }
+}
 function heatmap(o, th) {
   var v = nums(o.values), c = palette(o, th)[0], lang = o.lang || "en-GB";
-  var start;
-  if (has(o.start) && /^\d{4}-\d{2}-\d{2}$/.test(String(o.start))) start = /* @__PURE__ */ new Date(String(o.start) + "T00:00:00Z");
-  else {
-    var t = /* @__PURE__ */ new Date();
-    start = new Date(Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()) - Math.max(0, v.length - 1) * 864e5);
-  }
+  var start = startOf(o, v.length);
   var offset = (start.getUTCDay() + 6) % 7, cols = Math.max(1, Math.ceil((offset + v.length) / 7));
   var d0 = dims(o), leftW = 28, maxCols = Math.max(1, Math.floor((d0.w - leftW) / 10));
   if (cols > maxCols) {
@@ -825,13 +944,9 @@ function heatmap(o, th) {
   var h = 16 + 7 * pitch + 26;
   var max = v.length ? Math.max.apply(null, v) : 0;
   var dfm = function(opt) {
-    try {
-      return new Intl.DateTimeFormat(lang, Object.assign({ timeZone: "UTC" }, opt));
-    } catch (e) {
-      return new Intl.DateTimeFormat("en-GB", Object.assign({ timeZone: "UTC" }, opt));
-    }
+    return dates(lang, opt);
   };
-  var monthF = dfm({ month: "short" }), dayF = dfm({ weekday: "short" }), fullF = dfm({ weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  var monthF = dfm({ month: "short" }), dayF = dfm({ weekday: "short" }), fullF = dfm(FULL);
   var st = statOf(v, o, "");
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!v.length) return emptyState(th, x0, y0, w, h2);
@@ -861,6 +976,12 @@ function heatmap(o, th) {
     return s;
   }, { stat: st, summary: fmt(sum(v), o) + " across " + v.length + " days" });
 }
+heatmap.table = function(o) {
+  var v = nums(o.values), start = startOf(o, v.length), f = dates(o.lang || "en-GB", FULL);
+  return { head: ["Date", "Value"], rows: v.map(function(n, i) {
+    return [f.format(new Date(start.getTime() + i * 864e5)), fmt(n, o)];
+  }) };
+};
 
 // src/charts/scatter.js
 function fit(xs, ys) {
@@ -902,13 +1023,21 @@ function scatter(o, th) {
   };
   var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang };
   var notes = parseNotes(o, labels);
+  var markOf = styleOf(o.markers, SHAPES, "circle"), bg = o.background || th.tile;
+  var shapeOf = function(j) {
+    var m2 = markOf ? markOf(j) : "circle";
+    return m2 === "none" ? "circle" : m2;
+  };
+  var key = markOf && function(j, x, y) {
+    return marker(shapeOf(j), x + 4, y + 6, 4, ' fill="' + pal[j % pal.length] + '"');
+  };
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!count) return emptyState(th, x0, y0, w, h2);
     var s = "", top = y0;
     if (multi) {
       var lg = legend(groups.map(function(_, j) {
         return nameOf(j);
-      }), pal, th, x0, top, w);
+      }), pal, th, x0, top, w, key);
       s += lg.svg;
       top += lg.height;
     }
@@ -975,7 +1104,7 @@ function scatter(o, th) {
       gr.xs.forEach(function(xv, i) {
         var cx = PX(xv), cy2 = PY(gr.ys[i]);
         var tip = (labels[idx] ? labels[idx] + "\n" : multi ? nameOf(j) + "\n" : "") + (has(o.xLabel) ? o.xLabel : "x") + ": " + fmt(xv, xo) + "\n" + (has(o.yLabel) ? o.yLabel : "y") + ": " + fmt(gr.ys[i], o);
-        s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy2) + '" r="' + r + '" fill="' + c + '" fill-opacity=".85" stroke="' + (o.background || th.tile) + '" stroke-width="1.5"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : "") + "/>";
+        s += marker(shapeOf(j), cx, cy2, r, ' fill="' + c + '" fill-opacity=".85" stroke="' + bg + '" stroke-width="1.5"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : ""));
         s += hit(cx - 8, cy2 - 8, 16, 16, tip);
         idx++;
       });
@@ -994,20 +1123,38 @@ function scatter(o, th) {
     return s;
   }, { summary: count + " points" + (multi ? " in " + groups.length + " groups" : "") });
 }
+scatter.table = function(o) {
+  var X = series(o.x), Y = series(o.y), names = list(o.series), labels = list(o.labels), multi = X.length > 1 || names.length > 0;
+  var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang }, rows = [], idx = 0;
+  X.forEach(function(xs, g) {
+    var ys = Y[g] || [];
+    for (var i = 0; i < Math.min(xs.length, ys.length); i++, idx++) {
+      rows.push([labels[idx] || "#" + (idx + 1)].concat(multi ? [names[g] || "Group " + (g + 1)] : [], [fmt(xs[i], xo), fmt(ys[i], o)]));
+    }
+  });
+  return { head: ["Point"].concat(multi ? ["Group"] : [], [has(o.xLabel) ? o.xLabel : "x", has(o.yLabel) ? o.yLabel : "y"]), rows };
+};
 
 // src/render.js
 var TYPES = { spark, line, bars, scatter, ring, donut, gauge, progress, heatmap };
 var camel = (k) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
-function render(type, options = {}) {
+function prepare(type, options) {
   if (!TYPES[type]) {
     throw new Error(`Bezel Charts: unknown chart type "${type}". Choose one of: ${Object.keys(TYPES).join(", ")}.`);
   }
   const o = {};
   for (const [k, v] of Object.entries(options)) o[camel(k)] = v;
+  return o;
+}
+function render(type, options = {}) {
+  const o = prepare(type, options);
   o.animate = bool(o.animate);
   o.frame = o.frame === "none" ? "none" : "bezel";
   const mode = o.theme === "light" || o.theme === "dark" ? o.theme : o.autoTheme || "dark";
   return TYPES[type](o, THEMES[mode]);
+}
+function table(type, options = {}) {
+  return TYPES[type].table(prepare(type, options));
 }
 function toStatic(svg) {
   return svg.replace(/<rect class="bzc-hit"[^>]*\/>/g, "").replace(/<circle[^>]* class="bzc-hit"[^>]*\/>/g, "").replace(/ data-tip="[^"]*"/g, "");
@@ -1060,9 +1207,13 @@ var ATTRIBUTES = [
   "static",
   "no-tooltips",
   "stacked",
-  "angle-labels"
+  "angle-labels",
+  "dash",
+  "markers",
+  "patterns"
 ];
-var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}`;
+var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}.c{outline:none}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}`;
+var STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
 var darkQuery = () => typeof matchMedia === "function" ? matchMedia("(prefers-color-scheme: dark)") : null;
 var pageTheme = () => {
   const t = typeof document !== "undefined" && document.documentElement?.getAttribute?.("data-theme");
@@ -1093,10 +1244,13 @@ var BezelChart = class extends Base {
   }
   connectedCallback() {
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" });
+      this.attachShadow({ mode: "open" }).innerHTML = `<style>${HOST_CSS}</style><div class="c" role="group" aria-roledescription="chart"></div><p class="sr" id="h">Use the arrow keys to step through the values.</p><div class="tip" aria-hidden="true"></div><div class="sr" aria-live="polite"></div><div class="sr"></div>`;
+      [, this.#box, , this.#tipEl, this.#live, this.#table] = this.shadowRoot.children;
       this.shadowRoot.addEventListener("pointermove", (e) => this.#tip(e));
       this.shadowRoot.addEventListener("pointerdown", (e) => this.#tip(e));
-      this.addEventListener("pointerleave", () => this.shadowRoot.querySelector(".tip")?.classList.remove("on"));
+      this.addEventListener("pointerleave", () => this.#tipEl.classList.remove("on"));
+      this.#box.addEventListener("keydown", (e) => this.#key(e));
+      this.#box.addEventListener("blur", () => this.#clear());
     }
     live.add(this);
     this.#dark = darkQuery();
@@ -1153,6 +1307,11 @@ var BezelChart = class extends Base {
     setTimeout(() => URL.revokeObjectURL(url), 1e3);
   }
   #ro = null;
+  #box = null;
+  #tipEl = null;
+  #live = null;
+  #table = null;
+  #at = -1;
   #dark = null;
   #width = 0;
   #rendered = false;
@@ -1167,36 +1326,105 @@ var BezelChart = class extends Base {
     this.#width = w > 0 ? w : 360;
     const o = this.options;
     o.animate = !this.#rendered && !this.hasAttribute("static");
-    let svg;
+    let svg, data = null;
     try {
       svg = render(this.chartType, o);
+      data = table(this.chartType, o);
     } catch (err) {
       svg = `<p style="font:13px ${SANS};color:#d63f7c">${esc(err.message)}</p>`;
     }
-    svg = svg.replace(/<title>[\s\S]*?<\/title>/, "");
-    this.shadowRoot.innerHTML = `<style>${HOST_CSS}</style>${svg}<div class="tip" role="status"></div>`;
+    const box = this.#box;
+    box.innerHTML = svg.replace(/<title>[\s\S]*?<\/title>/, "");
+    const img = box.querySelector("svg");
+    if (img) {
+      box.setAttribute("aria-label", img.getAttribute("aria-label"));
+      img.removeAttribute("role");
+      img.removeAttribute("aria-label");
+      img.setAttribute("aria-hidden", "true");
+    } else {
+      box.removeAttribute("aria-label");
+    }
+    const keys = !!img && !this.hasAttribute("no-tooltips");
+    if (keys) {
+      box.setAttribute("tabindex", "0");
+      box.setAttribute("aria-describedby", "h");
+    } else {
+      box.removeAttribute("tabindex");
+      box.removeAttribute("aria-describedby");
+    }
+    box.style.color = THEMES[o.theme === "light" || o.theme === "dark" ? o.theme : o.autoTheme].fg;
+    box.style.borderRadius = `${o.frame === "none" ? 4 : clamp(+o.corners || 22, 0, 60)}px`;
+    this.#table.innerHTML = data && data.rows.length ? tableHTML(o.heading, data) : "";
+    if (this.#at >= 0 && keys && this.shadowRoot.activeElement === box) this.#show(this.#at);
+    else this.#at = -1;
     this.#rendered = true;
     this.dispatchEvent(new CustomEvent("bezel-render", { bubbles: true }));
   }
   #tip(e) {
-    const tip = this.shadowRoot.querySelector(".tip");
-    if (!tip || this.hasAttribute("no-tooltips")) return;
+    if (this.hasAttribute("no-tooltips")) return;
     const target = e.target?.closest?.("[data-tip]");
     if (!target) {
-      tip.classList.remove("on");
+      this.#tipEl.classList.remove("on");
       return;
     }
-    tip.textContent = target.getAttribute("data-tip");
-    const box = this.getBoundingClientRect();
+    this.#place(target, e.clientX, e.clientY);
+  }
+  /** Shows the tooltip for a mark at a point on screen. */
+  #place(mark, x, y) {
+    const tip = this.#tipEl;
+    tip.textContent = mark.getAttribute("data-tip");
+    const box = this.getBoundingClientRect?.() || { left: 0, top: 0, width: 0 };
     const half = tip.offsetWidth / 2;
-    tip.style.left = `${clamp(e.clientX - box.left, half, Math.max(half, box.width - half))}px`;
-    tip.style.top = `${e.clientY - box.top}px`;
+    tip.style.left = `${clamp(x - box.left, half, Math.max(half, box.width - half))}px`;
+    tip.style.top = `${y - box.top}px`;
     tip.classList.add("on");
   }
+  /** Every value the arrow keys visit, in order. Donuts mark their slices data-skip, as the legend rows repeat them. */
+  #marks() {
+    return [...this.#box.querySelectorAll("[data-tip]:not([data-skip])")];
+  }
+  #key(e) {
+    const marks = this.#marks(), n = marks.length;
+    if (!n) return;
+    let i = this.#at, step = STEPS[e.key];
+    if (step) {
+      if (this.chartType === "heatmap" && /Left|Right/.test(e.key)) step *= 7;
+      i = i < 0 ? step > 0 ? 0 : n - 1 : clamp(i + step, 0, n - 1);
+    } else if (e.key === "Home" || e.key === "End") {
+      i = e.key === "Home" ? 0 : n - 1;
+    } else {
+      if (e.key === "Escape") this.#clear();
+      return;
+    }
+    e.preventDefault();
+    this.#show(i, true);
+  }
+  /** Outlines value i, shows its tooltip and, when say is set, reads it out. */
+  #show(i, say) {
+    const marks = this.#marks();
+    if (!marks.length) return;
+    i = clamp(i, 0, marks.length - 1);
+    this.#box.querySelector(".k")?.classList.remove("k");
+    const mark = marks[i], r = mark.getBoundingClientRect?.() || { left: 0, top: 0, width: 0 };
+    mark.classList.add("k");
+    this.#at = i;
+    this.#place(mark, r.left + r.width / 2, r.top);
+    if (say) this.#live.textContent = `${mark.getAttribute("data-tip").replace(/\n/g, ", ")}. ${i + 1} of ${marks.length}`;
+  }
+  #clear() {
+    this.#box.querySelector(".k")?.classList.remove("k");
+    this.#tipEl.classList.remove("on");
+    this.#live.textContent = "";
+    this.#at = -1;
+  }
 };
+function tableHTML(caption, { head, rows }) {
+  const cells = (row) => row.map((c, i) => i ? `<td>${esc(c)}</td>` : `<th scope="row">${esc(c)}</th>`).join("");
+  return `<table><caption>${esc(caption || "Chart data")}</caption><thead><tr>${head.map((h) => `<th scope="col">${esc(h)}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr>${cells(r)}</tr>`).join("")}</tbody></table>`;
+}
 
 // src/index.js
-var version = "1.1.1";
+var version = "1.2.0";
 var types = Object.keys(TYPES);
 if (typeof customElements !== "undefined" && typeof HTMLElement !== "undefined") {
   for (const type of types) {

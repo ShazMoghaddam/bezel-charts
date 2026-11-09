@@ -20,8 +20,8 @@ Bezel Charts is a set of free, open-source web components: ten chart tiles drawn
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
 - **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, grouped series, goal lines and notes on key points.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 12 kB gzipped with no dependencies and no build step.
-- **Accessible.** Every chart describes itself to screen readers, shows exact values on hover or tap, and respects reduced-motion settings.
+- **Light.** About 16 kB gzipped for all ten charts, with no dependencies and no build step.
+- **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
 A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calendar and weather tiles.
@@ -33,6 +33,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 - [The charts](#the-charts)
 - [Options for every chart](#options-for-every-chart)
 - [Colours and dark mode](#colours-and-dark-mode)
+- [Accessibility](#accessibility)
 - [Charts in a README](#charts-in-a-readme)
 - [JavaScript API](#javascript-api)
 - [Python](#python)
@@ -47,7 +48,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.1.1` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.2.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -135,6 +136,8 @@ One or more lines over time, with an axis, a legend and notes on key moments. Se
 | `height`      | chart height in px                          | `170`   |
 | `zero`        | boolean, start the axis at zero             | off     |
 | `straight`    | boolean, straight lines instead of curves   | off     |
+| `dash`        | a line style per series: `solid`, `dashed`, `dotted`, `dashdot`. On its own, gives each series the next style | off |
+| `markers`     | a shape on each point, per series: `circle`, `square`, `triangle`, `diamond`, `none`. On its own, gives each series the next shape | off |
 
 ### `<bezel-bars>`
 
@@ -153,6 +156,7 @@ Bars, vertical or horizontal. Give it more than one series and you get **grouped
 | `horizontal`  | boolean, bars run left to right with labels beside them  | off     |
 | `stacked`     | boolean, with several series, piles them into one bar per group | off |
 | `angle-labels` | boolean, slants labels under vertical bars when they don't fit side by side, so every one shows | off |
+| `patterns`    | with several series, a fill per series: `solid`, `stripes`, `dots`, `grid`. On its own, gives each series the next pattern | off |
 | `highlight`   | `none` to stop the highest bar standing out              | on      |
 | `height`      | chart height in px (vertical bars)                       | `140`   |
 
@@ -185,6 +189,7 @@ How two measures move together. Pass matching `x` and `y` lists; separate groups
 | `labels`      | point names, shown in tooltips                                 |         |
 | `x-label`, `y-label` | axis titles                                             |         |
 | `trend`       | boolean, a least-squares line per group with Pearson's r      | off     |
+| `markers`     | a point shape per group: `circle`, `square`, `triangle`, `diamond`. On its own, gives each group the next shape | circles |
 | `zero`        | boolean, start the y axis at zero                              | off     |
 | `height`      | chart height in px                                             | `210`   |
 
@@ -298,7 +303,7 @@ Any of the above, picked with `type`: `<bezel-chart type="donut" values="3,2,1">
 | `notes`         | `point:text` pairs separated by `;`, e.g. `Jun:Launch;9:Peak`. A point is a label or, if no label matches, a position counted from 0 | |
 | `show-values`   | boolean, writes each value on the chart                         | off           |
 | `width`         | a fixed width in px instead of filling the container            |               |
-| `no-tooltips`   | boolean, turns off hover and tap values                         | off           |
+| `no-tooltips`   | boolean, turns off hover, tap and keyboard values, and leaves the chart out of the Tab order | off |
 | `static`        | boolean, skips the entrance animation                           | off           |
 
 Not every option suits every chart: `notes` works on spark, line and scatter; `show-values` on spark, line and bars; `goal-label` on spark, line, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
@@ -314,6 +319,36 @@ With `theme="auto"` (the default) a chart follows the viewer's light or dark set
 
 Set `color` to use your own. Colours you set stay the same in both themes, so choose ones with enough contrast against both tile colours, or set `theme` to fix one.
 
+## Accessibility
+
+Every chart works without a mouse and without seeing it.
+
+**Keyboard.** Press Tab to reach a chart. A focus ring shows where you are, then:
+
+| Key | Does |
+| --- | --- |
+| Right or Down | The next value |
+| Left or Up | The previous value |
+| Home, End | The first or last value |
+| Escape | Hides the tooltip |
+
+The value you're on is outlined, with its tooltip showing. On a heatmap, Left and Right move a week and Up and Down move a day, following the grid. A chart keeps its place when it redraws, for example when the window resizes.
+
+**Screen readers** hear the chart's name and summary, a hint about the arrow keys, and each value as you move, such as "Tue: 9. 2 of 7". Each chart also carries a hidden table of its data, with every value, including the small donut slices grouped as "Other" and the early weeks a narrow heatmap leaves out.
+
+**Telling series apart.** Colour alone isn't enough for everyone, so lines can have their own dash, points their own shape, and grouped or stacked bars their own pattern. Use the attribute on its own to hand out styles in turn, or list one per series, in the same order as `color`:
+
+```html
+<bezel-line values="420,460,510|380,400,430" series="2026,2025" dash markers></bezel-line>
+<bezel-bars values="4,9,6|3,7,8" series="2026,2025" labels="Q1,Q2,Q3" patterns="solid,stripes"></bezel-bars>
+```
+
+The legend shows each style, so it still matches the chart in black and white.
+
+**Fewer tab stops.** A page with many charts gets a tab stop for each. Add `no-tooltips` to a chart that doesn't need exact values, such as a decorative sparkline: it drops the tooltips and the tab stop, and keeps the name and the hidden table.
+
+**Images.** An exported SVG is a picture, so give it alt text that says what it shows: `![Commits this week: highest Tue 9](docs/commits.svg)`. The Python package writes this for you with `chart.alt`.
+
 ## Charts in a README
 
 GitHub doesn't run scripts in a README, but it shows SVG images. So:
@@ -323,8 +358,10 @@ GitHub doesn't run scripts in a README, but it shows SVG images. So:
 3. Add it to your README:
 
 ```md
-![Commits this week](docs/commits.svg)
+![Commits this week: highest Tue 9](docs/commits.svg)
 ```
+
+Make the alt text say what the chart shows, since that's all a screen reader gets from an image.
 
 The SVG is self-contained: no scripts, no fonts to load, no tooltips. It uses the system font, so it looks at home on GitHub, in Notion and in slides.
 
@@ -363,7 +400,7 @@ bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
 bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
 ```
 
-All ten charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. See the [Python README](python/README.md).
+All ten charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
 
 ## Frameworks
 
@@ -406,7 +443,7 @@ docs/          the README image and social preview, with the pages that render t
 test/          node:test suites, plus a Playwright browser test
 ```
 
-Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The bundle has a 14 kB gzip budget, checked in CI. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The bundle has a 16 kB gzip budget, checked in CI. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 

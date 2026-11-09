@@ -38,3 +38,10 @@ export default function ring(o, th) {
     return s;
   }, { stat: st, summary: v.map(function (n, i) { return (labels[i] ? labels[i] + ' ' : '') + show(n); }).join(', ') });
 }
+
+ring.table = function (o) {
+  var labels = list(o.labels), max = num(o.max, 100) || 100, auto = !has(o.prefix) && !has(o.suffix) && max === 100;
+  return { head: ['Label', 'Value'], rows: nums(o.values).map(function (n, i) {
+    return [labels[i] || '#' + (i + 1), fmt(n, o) + (auto ? '%' : ' of ' + fmt(max, o))];
+  }) };
+};

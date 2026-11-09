@@ -316,25 +316,79 @@ def stat_of(v, o, fallback=None):
     return {"val": table[k], "delta": delta}
 
 
-def legend(names, pal, th, x0, y0, w):
-    """A wrapping row of coloured dots and series names. Returns the SVG and the height it used."""
+def legend(names, pal, th, x0, y0, w, key=None, kw=None):
+    """A wrapping row of coloured dots and series names. Returns the SVG and the height it used.
+
+    key(k, x, y) draws a different swatch, such as a dashed line, and kw is the room it takes before the name.
+    """
     x, y, s = x0, y0, ""
+    off = kw or 13
     for k, nm in enumerate(names):
-        wd = 13 + tw(nm, 12) + 16
+        wd = off + tw(nm, 12) + 16
         if x > x0 and x + wd - 16 > x0 + w:
             x = x0
             y += 20
         s += (
-            '<circle cx="' + R(x + 4) + '" cy="' + R(y + 6) + '" r="4" fill="' + pal[k % len(pal)] + '"/>'
-            + text(x + 13, y + 10, nm, 'fill="' + th["fg"] + '" font-family="' + SANS + '" font-size="12"')
+            (key(k, x, y) if key else '<circle cx="' + R(x + 4) + '" cy="' + R(y + 6) + '" r="4" fill="' + pal[k % len(pal)] + '"/>')
+            + text(x + off, y + 10, nm, 'fill="' + th["fg"] + '" font-family="' + SANS + '" font-size="12"')
         )
         x += wd
     return {"svg": s, "height": y - y0 + 24}
 
 
+#: Line dashes, marker shapes and bar patterns, so series differ by more than colour. "auto" hands them out in this order.
+DASHES = {"solid": "", "dashed": "7 5", "dotted": "1 5", "dashdot": "9 4 1 4"}
+SHAPES = ["circle", "square", "triangle", "diamond"]
+PATTERNS = ["solid", "stripes", "dots", "grid"]
+
+
+def style_of(v, names, off):
+    """Reads dash, markers or patterns. True, "" or "auto" hands out every style in turn; a list sets one per series,
+    repeating like colours do. Returns a function from series index to style name, or None when the option is off."""
+    if v is None or v is False or v == "none" or v == "false":
+        return None
+    styles = list(names) if v is True or v == "" or v == "auto" else [x if x in names else off for x in lst(v)]
+    if not styles:
+        return None
+    return lambda k: styles[k % len(styles)]
+
+
+def marker(kind, x, y, r, attrs) -> str:
+    """A point marker centred on x, y. attrs carries the fill and stroke."""
+    a, b = r * 1.15, r * 0.85
+    if kind == "square":
+        return '<rect x="' + R(x - b) + '" y="' + R(y - b) + '" width="' + R(2 * b) + '" height="' + R(2 * b) + '" rx="1"' + attrs + "/>"
+    if kind == "triangle":
+        return (
+            '<path d="M' + R(x) + "," + R(y - a) + "L" + R(x + a) + "," + R(y + b) + "L" + R(x - a) + "," + R(y + b)
+            + 'Z"' + attrs + "/>"
+        )
+    if kind == "diamond":
+        return (
+            '<path d="M' + R(x) + "," + R(y - a * 1.1) + "L" + R(x + a) + "," + R(y) + "L" + R(x) + "," + R(y + a * 1.1)
+            + "L" + R(x - a) + "," + R(y) + 'Z"' + attrs + "/>"
+        )
+    return '<circle cx="' + R(x) + '" cy="' + R(y) + '" r="' + R(r) + '"' + attrs + "/>"
+
+
+def pattern(pid, kind, c, bg) -> str:
+    """A fill pattern in colour c, with stripes, dots or a grid drawn in the tile colour so they show on any colour."""
+    ink = ' stroke="' + bg + '" stroke-opacity=".55" stroke-width="1.5"'
+    return (
+        '<pattern id="' + pid + '" width="6" height="6" patternUnits="userSpaceOnUse"'
+        + ("" if kind == "dots" else ' patternTransform="rotate(45)"')
+        + '><rect width="6" height="6" fill="' + c + '"/>'
+        + (
+            '<circle cx="3" cy="3" r="1.3" fill="' + bg + '" fill-opacity=".55"/>' if kind == "dots"
+            else '<path d="M3,0V6' + ("M0,3H6" if kind == "grid" else "") + '"' + ink + "/>"
+        )
+        + "</pattern>"
+    )
+
+
 __all__ = [
-    "INF", "NAN", "MONO", "SANS", "N", "Opts", "R", "anim", "bool_", "clamp", "empty_state", "esc", "finite",
-    "fmt", "goal_line", "has", "hit", "is_num", "jmax", "jmin", "legend", "lst", "new_id", "nice_scale", "num",
-    "nums", "palette", "parse_notes", "path_of", "r2", "series", "small", "stat_of", "text", "to_number",
+    "DASHES", "INF", "NAN", "MONO", "PATTERNS", "SANS", "SHAPES", "N", "Opts", "R", "anim", "bool_", "clamp", "empty_state", "esc", "finite",
+    "fmt", "goal_line", "has", "hit", "is_num", "jmax", "jmin", "legend", "lst", "marker", "new_id", "nice_scale", "num",
+    "nums", "palette", "parse_notes", "path_of", "pattern", "r2", "series", "small", "stat_of", "style_of", "text", "to_number",
     "to_string", "total", "trunc", "truthy", "tw",
 ]

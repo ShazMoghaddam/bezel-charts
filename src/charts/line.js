@@ -1,4 +1,4 @@
-import { newId, r2, clamp, num, has, list, series, tw, bool, fmt, niceScale, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf, legend, SANS } from '../core/util.js';
+import { newId, r2, clamp, num, has, list, series, tw, bool, fmt, niceScale, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf, legend, seriesTable, styleOf, marker, DASHES, SHAPES } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 export default function line(o, th) {
@@ -6,11 +6,19 @@ export default function line(o, th) {
   var h = num(o.height, 170), n = Math.max.apply(null, [0].concat(S.map(function (s) { return s.length; })));
   var notes = parseNotes(o, labels), multi = S.length > 1 || names.length > 0;
   var st = statOf(S[0] || [], o, '');
+  var dashOf = styleOf(o.dash, Object.keys(DASHES), 'solid'), markOf = styleOf(o.markers, SHAPES, 'none');
+  var bg = o.background || th.tile;
+  // With dashes or markers, the legend shows a short sample of each line instead of a dot.
+  var key = (dashOf || markOf) && function (k, x, y) {
+    var c = pal[k % pal.length], dk = dashOf ? DASHES[dashOf(k)] : '', mk = markOf ? markOf(k) : 'none';
+    return '<line x1="' + r2(x) + '" x2="' + r2(x + 18) + '" y1="' + r2(y + 6) + '" y2="' + r2(y + 6) + '" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round"' +
+      (dk ? ' stroke-dasharray="' + dk + '"' : '') + '/>' + (mk !== 'none' ? marker(mk, x + 9, y + 6, 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"') : '');
+  };
   return tile(o, th, h, function (x0, y0, w, h) {
     if (!n) return emptyState(th, x0, y0, w, h);
     var s = '', top = y0;
     if (multi) {
-      var lg = legend(S.map(function (_, k) { return names[k] || 'Series ' + (k + 1); }), pal, th, x0, top, w);
+      var lg = legend(S.map(function (_, k) { return names[k] || 'Series ' + (k + 1); }), pal, th, x0, top, w, key, key && 24);
       s += lg.svg;
       top += lg.height;
     }
@@ -54,9 +62,21 @@ export default function line(o, th) {
         s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".26"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>' +
           '<path d="' + d + 'L' + r2(last[0]) + ',' + r2(top + ph) + 'L' + r2(P[0][0]) + ',' + r2(top + ph) + 'Z" fill="url(#' + g + ')"' + anim(o, 'bzc-a') + '/>';
       }
-      s += '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1' + (o.animate ? ';animation-delay:' + k * 0.15 + 's' : '') + '"' + (o.animate ? ' class="bzc-d"' : '') + '/>';
-      var e = P[P.length - 1];
-      s += '<circle cx="' + r2(e[0]) + '" cy="' + r2(e[1]) + '" r="4" fill="' + c + '" stroke="' + (o.background || th.tile) + '" stroke-width="2"/>';
+      var dk = dashOf ? DASHES[dashOf(k)] : '', mk = markOf ? markOf(k) : 'none';
+      // The draw-in animation is itself a dash, so dashed lines fade in instead.
+      s += dk
+        ? '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="' + dk + '"' + anim(o, 'bzc-a', k * 0.15) + '/>'
+        : '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1' + (o.animate ? ';animation-delay:' + k * 0.15 + 's' : '') + '"' + (o.animate ? ' class="bzc-d"' : '') + '/>';
+      if (mk !== 'none') {
+        // Long series get a marker on every few points, and always on the last.
+        var every = Math.ceil(v.length / 40);
+        v.forEach(function (y, i) {
+          if (i % every === 0 || i === v.length - 1) s += marker(mk, X(i), Y(y), 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"' + anim(o, 'bzc-a', 0.6 + k * 0.15));
+        });
+      } else {
+        var e = P[P.length - 1];
+        s += '<circle cx="' + r2(e[0]) + '" cy="' + r2(e[1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      }
       if (bool(o.showValues)) v.forEach(function (y, i) { s += text(X(i), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"')); });
     });
     if (has(o.goal)) s += goalLine(o, th, px, px + pw, Y(+o.goal));
@@ -69,3 +89,5 @@ export default function line(o, th) {
     return s;
   }, { stat: st, summary: S.length + ' series over ' + n + ' points' });
 }
+
+line.table = function (o) { return seriesTable(o); };

@@ -49,13 +49,14 @@ In a notebook the chart appears as the cell's output. Anywhere else:
 ```python
 chart = bc.spark(df["Revenue"], heading="Monthly revenue", prefix="£", suffix="k")
 chart.save("docs/revenue.svg")   # write an .svg file
+chart.alt                        # "Monthly revenue: latest £79k. £42k, £48k, £45k, …"
 svg = str(chart)                 # or use the SVG string directly
 ```
 
-Then in your README:
+Then in your README, with `chart.alt` as the alt text:
 
 ```md
-![Monthly revenue](docs/revenue.svg)
+![Monthly revenue: latest £79k. £42k, £48k, £45k, £53k, £61k, £58k, £66k, £72k, £79k](docs/revenue.svg)
 ```
 
 ## The ten charts
@@ -149,6 +150,20 @@ bc.progress({"Done": 46, "In review": 18, "Blocked": 6}, max=100, goal=75, headi
 
 `zones=[60, 85]` turns the gauge green below 60, amber up to 85 and red above; pass three colours with `color=` to use your own. One progress value is a percentage unless you set `max`; several stack up and fill to their total unless you set `max`.
 
+## Alt text
+
+A saved SVG is an image, so a screen reader only gets the alt text you give it. `chart.alt` writes it for you: the title, the summary, and up to 12 values with their labels.
+
+```python
+commits = pd.Series([4, 9, 6, 3, 8, 5, 3], index=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+chart = bc.bars(commits, heading="Commits this week")
+chart.save("docs/commits.svg")
+print(f"![{chart.alt}](docs/commits.svg)")
+# ![Commits this week: highest Tue 9. Mon 4, Tue 9, Wed 6, Thu 3, Fri 8, Sat 5, Sun 3](docs/commits.svg)
+```
+
+`dash`, `markers` and `patterns` help too: they tell series apart without relying on colour, and the legend shows each style.
+
 ## Your data
 
 | You pass | You get |
@@ -181,6 +196,9 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `horizontal` | `horizontal=True` | Bars run sideways, good for long labels (bars). |
 | `stacked` | `stacked=True` | Pile several series into one bar per group, with the total in the tooltip (bars). |
 | `angle_labels` | `angle_labels=True` | Slant labels under vertical bars when they don't fit, so every one shows (bars). |
+| `dash` | `dash=True` or `dash=["solid", "dashed"]` | A line style per series: `solid`, `dashed`, `dotted`, `dashdot` (line). |
+| `markers` | `markers=True` or `markers=["circle", "square"]` | A shape on each point: `circle`, `square`, `triangle`, `diamond`, `none` (line, scatter). |
+| `patterns` | `patterns=True` or `patterns=["solid", "stripes"]` | A fill per series: `solid`, `stripes`, `dots`, `grid` (grouped and stacked bars). |
 | `highlight` | `highlight="none"` | Stop the highest bar standing out (bars). |
 | `trend` | `trend=True` | Least-squares trend line with Pearson's r (scatter). |
 | `x_label`, `y_label` | `x_label="Hours"` | Axis titles (scatter). |

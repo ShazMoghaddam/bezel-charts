@@ -44,7 +44,7 @@ const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], bars: [90, 320, 1
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
 const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
-  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'zones',
+  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'dash', 'markers', 'patterns', 'zones',
   'center-label', 'theme', 'frame', 'corners', 'height', 'color', 'background', 'no-tooltips', 'static'];
 
 const all = CHARTS.map((c) => c.id);
@@ -101,7 +101,11 @@ const FIELDS = [
   { tab: 'extras', key: 'straight', kind: 'toggle', label: 'Straight lines instead of curves', only: only('spark', 'line') },
   { tab: 'extras', key: 'zero', kind: 'toggle', label: 'Start the axis at zero', only: only('line', 'scatter') },
   { tab: 'extras', key: 'trend', kind: 'toggle', label: 'Trend line with its r value', only: only('scatter') },
-  { tab: 'extras', key: 'no-tooltips', kind: 'toggle', invert: true, label: 'Exact values on hover', only: all },
+  // Ways to tell series apart without relying on colour. Each only shows once there is more than one series to tell apart.
+  { tab: 'extras', key: 'dash', kind: 'toggle', label: 'A different dash for each line', only: only('line'), when: (a) => String(a.values || '').includes('|') },
+  { tab: 'extras', key: 'markers', kind: 'toggle', label: 'Shapes on the points', only: only('line', 'scatter'), when: (a, ui) => ui === 'line' || String(a.x || '').includes('|') },
+  { tab: 'extras', key: 'patterns', kind: 'toggle', label: 'A different pattern for each series', only: only('grouped') },
+  { tab: 'extras', key: 'no-tooltips', kind: 'toggle', invert: true, label: 'Exact values on hover and with the keyboard', only: all },
   { tab: 'extras', key: 'static', kind: 'toggle', invert: true, label: 'Animate when it first appears', only: all },
 ];
 

@@ -6,8 +6,8 @@ import math
 
 from .._tile import dims, tile
 from .._util import (
-    MONO, SANS, N, R, anim, bool_, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, num, palette,
-    series, small, stat_of, text, to_number, trunc, truthy, tw,
+    MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, new_id,
+    num, palette, pattern, series, small, stat_of, style_of, text, to_number, to_string, trunc, truthy, tw,
 )
 
 # How far angled labels lean, and the longest label they show before shortening it.
@@ -46,8 +46,25 @@ def bars(o, th) -> str:
     def name_of(j):
         return names[j] if j < len(names) and names[j] else "Series " + str(j + 1)
 
-    def colour_of(j, i):
-        return pal[j % len(pal)] if grouped else pal[i % len(pal)] if many else pal[0]
+    # Patterns tell grouped and stacked series apart without relying on colour alone.
+    pat_of = style_of(o.patterns, PATTERNS, "solid") if grouped else None
+    defs = ""
+    fills = {}
+    bg = to_string(o.background if truthy(o.background) else th["tile"])
+    for p in range(k if pat_of else 0):
+        if pat_of(p) == "solid":
+            continue
+        pid = new_id("g")
+        defs += pattern(pid, pat_of(p), pal[p % len(pal)], bg)
+        fills[p] = "url(#" + pid + ")"
+
+    def colour_of(j, i=0):
+        return fills.get(j) or pal[j % len(pal)] if grouped else pal[i % len(pal)] if many else pal[0]
+
+    def key(j, x, y):
+        return '<rect x="' + R(x) + '" y="' + R(y + 1) + '" width="10" height="10" rx="2" fill="' + colour_of(j) + '"/>'
+
+    lkey, lkw = (key, 15) if pat_of else (None, None)
 
     def opac(val):
         return 1 if grouped or many or o.highlight == "none" or val == top else 0.5
@@ -64,7 +81,7 @@ def bars(o, th) -> str:
 
     # Horizontal rows need their height up front, and so does a legend that may wrap.
     d0 = dims(o)
-    legend_h = legend([name_of(j) for j in range(k)], pal, th, 0, 0, d0["w"])["height"] if grouped or names else 0
+    legend_h = legend([name_of(j) for j in range(k)], pal, th, 0, 0, d0["w"], lkey, lkw)["height"] if grouped or names else 0
     rows = 1 if stacked else k
     thin = grouped and not stacked
     sub_h = 10 if thin else 14
@@ -77,10 +94,10 @@ def bars(o, th) -> str:
     def draw(x0, y0, w, h):
         if not n:
             return empty_state(th, x0, y0, w, h)
-        s = ""
+        s = "<defs>" + defs + "</defs>" if defs else ""
         top0 = y0
         if legend_h:
-            s += legend([name_of(j) for j in range(k)], pal, th, x0, y0, w)["svg"]
+            s += legend([name_of(j) for j in range(k)], pal, th, x0, y0, w, lkey, lkw)["svg"]
             top0 += legend_h
         lo = jmin(0, jmin(*scale))
         hi = jmax(0, top)

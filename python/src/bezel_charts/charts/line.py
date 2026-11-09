@@ -6,8 +6,9 @@ import math
 
 from .._tile import tile
 from .._util import (
-    N, R, bool_, clamp, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, new_id, nice_scale, num,
-    palette, parse_notes, path_of, series, small, stat_of, text, to_number, to_string, truthy, tw,
+    DASHES, SHAPES, N, R, anim, bool_, clamp, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, marker,
+    new_id, nice_scale, num, palette, parse_notes, path_of, series, small, stat_of, style_of, text, to_number,
+    to_string, truthy, tw,
 )
 
 
@@ -22,6 +23,23 @@ def line(o, th) -> str:
     multi = len(S) > 1 or len(names) > 0
     st = stat_of(S[0] if S else [], o, "")
 
+    dash_of = style_of(o.dash, list(DASHES), "solid")
+    mark_of = style_of(o.markers, SHAPES, "none")
+    bg = to_string(o.background if truthy(o.background) else th["tile"])
+
+    # With dashes or markers, the legend shows a short sample of each line instead of a dot.
+    def key(k, x, y):
+        c = pal[k % len(pal)]
+        dk = DASHES[dash_of(k)] if dash_of else ""
+        mk = mark_of(k) if mark_of else "none"
+        return (
+            '<line x1="' + R(x) + '" x2="' + R(x + 18) + '" y1="' + R(y + 6) + '" y2="' + R(y + 6) + '" stroke="' + c
+            + '" stroke-width="2.5" stroke-linecap="round"' + (' stroke-dasharray="' + dk + '"' if dk else "") + "/>"
+            + (marker(mk, x + 9, y + 6, 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"') if mk != "none" else "")
+        )
+
+    styled = bool(dash_of or mark_of)
+
     def series_name(k):
         return names[k] if k < len(names) and names[k] else "Series " + str(k + 1)
 
@@ -31,7 +49,7 @@ def line(o, th) -> str:
         s = ""
         top = y0
         if multi:
-            lg = legend([series_name(k) for k in range(len(S))], pal, th, x0, top, w)
+            lg = legend([series_name(k) for k in range(len(S))], pal, th, x0, top, w, key if styled else None, 24 if styled else None)
             s += lg["svg"]
             top += lg["height"]
         flat = [x for v in S for x in v]
@@ -97,17 +115,36 @@ def line(o, th) -> str:
                     + '<path d="' + d + "L" + R(last[0]) + "," + R(top + ph) + "L" + R(P[0][0]) + "," + R(top + ph)
                     + 'Z" fill="url(#' + g + ')"' + (' class="bzc-a"' if o.animate else "") + "/>"
                 )
-            s += (
-                '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" '
-                'stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1'
-                + (";animation-delay:" + N(k * 0.15) + "s" if o.animate else "") + '"'
-                + (' class="bzc-d"' if o.animate else "") + "/>"
-            )
-            e = P[-1]
-            s += (
-                '<circle cx="' + R(e[0]) + '" cy="' + R(e[1]) + '" r="4" fill="' + c + '" stroke="' + to_string(tile_bg)
-                + '" stroke-width="2"/>'
-            )
+            dk = DASHES[dash_of(k)] if dash_of else ""
+            mk = mark_of(k) if mark_of else "none"
+            # The draw-in animation is itself a dash, so dashed lines fade in instead.
+            if dk:
+                s += (
+                    '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" '
+                    'stroke-linejoin="round" stroke-dasharray="' + dk + '"' + anim(o, "bzc-a", k * 0.15) + "/>"
+                )
+            else:
+                s += (
+                    '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" '
+                    'stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1'
+                    + (";animation-delay:" + N(k * 0.15) + "s" if o.animate else "") + '"'
+                    + (' class="bzc-d"' if o.animate else "") + "/>"
+                )
+            if mk != "none":
+                # Long series get a marker on every few points, and always on the last.
+                every = math.ceil(len(v) / 40)
+                for i, y in enumerate(v):
+                    if i % every == 0 or i == len(v) - 1:
+                        s += marker(
+                            mk, X(i), Y(y), 3.5,
+                            ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"' + anim(o, "bzc-a", 0.6 + k * 0.15),
+                        )
+            else:
+                e = P[-1]
+                s += (
+                    '<circle cx="' + R(e[0]) + '" cy="' + R(e[1]) + '" r="4" fill="' + c + '" stroke="' + to_string(tile_bg)
+                    + '" stroke-width="2"/>'
+                )
             if bool_(o.showValues):
                 for i, y in enumerate(v):
                     s += text(X(i), Y(y) - 8, fmt(y, o, True), small(th, 9, 'text-anchor="middle"'))
