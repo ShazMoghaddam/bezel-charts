@@ -265,3 +265,16 @@ function tableHTML(caption, { head, rows }) {
   return `<table><caption>${esc(caption || 'Chart data')}</caption><thead><tr>${head.map((h) => `<th scope="col">${esc(h)}</th>`).join('')}</tr></thead>` +
     `<tbody>${rows.map((r) => `<tr>${cells(r)}</tr>`).join('')}</tbody></table>`;
 }
+
+/** Defines <bezel-type>, plus <bezel-chart> if no chart has yet. Safe to call twice, and does nothing outside a browser. */
+export function define(type) {
+  if (typeof customElements === 'undefined' || typeof HTMLElement === 'undefined') return;
+  if (!customElements.get(`bezel-${type}`)) {
+    customElements.define(`bezel-${type}`, class extends BezelChart {
+      get chartType() {
+        return type;
+      }
+    });
+  }
+  if (!customElements.get('bezel-chart')) customElements.define('bezel-chart', class extends BezelChart {});
+}

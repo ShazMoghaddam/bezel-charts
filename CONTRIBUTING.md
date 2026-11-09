@@ -29,7 +29,7 @@ npm run test:browser
 ## Adding a chart type
 
 1. Create `src/charts/your-chart.js` exporting a function `(o, th) => svg string`. Use `tile()` from `src/core/tile.js` for the frame, heading and headline number, and the helpers in `src/core/util.js` for parsing, formatting and text.
-2. Register it in `TYPES` in `src/render.js`. That also defines `<bezel-your-chart>`.
+2. Add its name to `NAMES` in `src/render.js`, create `src/entries/your-chart.js` like the others (it registers the chart and defines `<bezel-your-chart>`), import that entry in `src/index.js`, and add `./your-chart` to `exports` in `package.json`. Give it a budget in `scripts/size.mjs`.
 3. Give it a data table: set `yourChart.table = function (o) { ... }` returning `{ head, rows }`, with every value the chart shows, formatted the same way. Screen readers get it as a hidden table.
 4. Add cases to `test/render.test.js`, including empty data, one value, negatives and very large numbers.
 5. If the chart exists in the Python package, add the same cases to `scripts/py-fixtures.mjs` and run `npm run fixtures`.
@@ -55,7 +55,7 @@ Change a chart in `src/charts/` and its port in `python/src/bezel_charts/charts/
 - Where several series share a chart, let `dash`, `markers` or `patterns` tell them apart as well as colour.
 - Respect `prefers-reduced-motion`, and keep animation in the classes from `src/core/tile.js`.
 - Check new work at phone, tablet and desktop widths, in light and dark.
-- Keep the gzipped bundle within the budget in `scripts/size.mjs`.
+- Keep the full bundle and each chart file within their budgets in `scripts/size.mjs`. Helpers only some charts use belong in their own module, like `src/core/series.js`, so the other charts' files don't load them.
 - Run `npm run check` before opening a pull request.
 
 ## Releasing

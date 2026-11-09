@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.3.0 (2026-11-09)
+
+Load only the charts you use.
+
+- Every chart comes as its own file: `dist/charts/line.js` from the CDN, or `import 'bezel-charts/line'` with npm. A page with one chart loads 7.2 to 10.1 kB instead of 15.9 kB. The chart files share one common file, so a page with a line and a bar chart loads 12.0 kB.
+- `<bezel-chart type="…">` works with whichever charts are loaded, and says which file to add when a type isn't loaded.
+- The full bundle, the `@1` script line and `import 'bezel-charts'` work exactly as before. The classic `iife.js` script still has every chart.
+- Size budgets: 20 kB for the full bundle, and one per chart file, counting the shared file it loads.
+- No change to how charts draw, and no new Python release: the Python package stays at 1.2.0.
+
 ## 1.2.0 (2026-11-09)
 
 Accessibility. Every chart now works without a mouse and without seeing it.

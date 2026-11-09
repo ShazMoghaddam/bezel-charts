@@ -1,17 +1,16 @@
 /** Pure rendering: options in, SVG string out. No DOM needed, so it runs in browsers, Node and build scripts. */
 import { THEMES } from './core/themes.js';
 import { bool } from './core/util.js';
-import spark from './charts/spark.js';
-import line from './charts/line.js';
-import bars from './charts/bars.js';
-import ring from './charts/ring.js';
-import donut from './charts/donut.js';
-import gauge from './charts/gauge.js';
-import progress from './charts/progress.js';
-import heatmap from './charts/heatmap.js';
-import scatter from './charts/scatter.js';
+/** Every chart type, in the order the full bundle loads them. */
+export const NAMES = ['spark', 'line', 'bars', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'heatmap'];
 
-export const TYPES = { spark, line, bars, scatter, ring, donut, gauge, progress, heatmap };
+/** The renderers loaded so far. Each chart's entry file adds its own, so a page only loads the charts it uses. */
+export const TYPES = {};
+
+/** Makes a chart type available to render(), toSVG() and the elements. */
+export function register(type, fn) {
+  TYPES[type] = fn;
+}
 
 const camel = (k) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
 
@@ -22,7 +21,9 @@ const camel = (k) => k.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
  */
 function prepare(type, options) {
   if (!TYPES[type]) {
-    throw new Error(`Bezel Charts: unknown chart type "${type}". Choose one of: ${Object.keys(TYPES).join(', ')}.`);
+    throw new Error(NAMES.includes(type)
+      ? `Bezel Charts: the ${type} chart isn't loaded. Add import 'bezel-charts/${type}', or load dist/charts/${type}.js.`
+      : `Bezel Charts: unknown chart type "${type}". Choose one of: ${NAMES.join(', ')}.`);
   }
   const o = {};
   for (const [k, v] of Object.entries(options)) o[camel(k)] = v;

@@ -34,7 +34,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - name: Check dist is up to date
-        run: git diff --exit-code -- dist || (echo "Run npm run build and commit dist/" && exit 1)
+        run: test -z "$(git status --porcelain -- dist)" || (git status --short -- dist && echo "Run npm run build and commit dist/" && exit 1)
       # Trusted publishing needs npm 11.5.1 or later; Node 22 ships with npm 10.
       - run: npm install -g npm@11
       - run: npm publish

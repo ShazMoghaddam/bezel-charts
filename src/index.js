@@ -3,24 +3,20 @@
  * Small, polished charts as web components. Zero dependencies, pure SVG.
  * Created by Shaz Moghaddam, London · https://shazmoghaddam.github.io
  */
-import { TYPES, render, toSVG } from './render.js';
+// Each entry registers its chart and defines its tag. Pages that only need a few charts can import those entries instead.
+import './entries/spark.js';
+import './entries/line.js';
+import './entries/bars.js';
+import './entries/scatter.js';
+import './entries/ring.js';
+import './entries/donut.js';
+import './entries/gauge.js';
+import './entries/progress.js';
+import './entries/heatmap.js';
+import { NAMES, render, toSVG } from './render.js';
 import { THEMES } from './core/themes.js';
 import { BezelChart } from './element.js';
 
-export const version = '1.2.0';
-export const types = Object.keys(TYPES);
+export const version = '1.3.0';
+export const types = NAMES.slice();
 export { render, toSVG, BezelChart, THEMES as themes };
-
-if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined') {
-  for (const type of types) {
-    const tag = `bezel-${type}`;
-    if (!customElements.get(tag)) {
-      customElements.define(tag, class extends BezelChart {
-        get chartType() {
-          return type;
-        }
-      });
-    }
-  }
-  if (!customElements.get('bezel-chart')) customElements.define('bezel-chart', class extends BezelChart {});
-}

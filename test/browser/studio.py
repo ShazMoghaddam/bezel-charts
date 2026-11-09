@@ -223,6 +223,18 @@ with sync_playwright() as p:
     check(inner("return r.querySelectorAll('table tbody tr').length") == 7, 'hidden table has a row per bar')
     check(inner("const t = r.querySelector('table').parentElement.getBoundingClientRect(); return t.width <= 1 && t.height <= 1 && getComputedStyle(r.querySelector('table').parentElement).overflow === 'hidden'"), 'the table is visually hidden')
 
+    # per-chart imports: a page that loads only the line and bar chart files
+    requested = []
+    pg.on('request', lambda r: requested.append(r.url))
+    pg.goto(f'http://localhost:{PORT}/test/browser/per-chart.html'); pg.wait_for_timeout(800)
+    drawn = pg.evaluate("[...document.querySelectorAll('bezel-line, bezel-bars')].every((el) => el.shadowRoot && el.shadowRoot.querySelector('svg'))")
+    check(drawn, 'line and bars draw from their own files')
+    check(pg.evaluate("!customElements.get('bezel-donut')"), 'charts that were not loaded stay undefined')
+    shared = [u for u in requested if '/dist/charts/shared-' in u]
+    check(shared and len(shared) == len(set(shared)), 'each shared file loads once: ' + json.dumps(shared))
+    check(not any(u.endswith('bezel-charts.min.js') or '/dist/charts/donut' in u for u in requested), 'nothing else loads')
+    check('7 5' in pg.evaluate("document.querySelector('bezel-line').shadowRoot.innerHTML"), 'options work from a chart file')
+
     check(not errs, 'console errors: ' + json.dumps(errs[:5]))
     b.close()
 server.terminate()

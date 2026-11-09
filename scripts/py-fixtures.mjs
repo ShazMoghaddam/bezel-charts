@@ -3,7 +3,8 @@
 // Run with `npm run fixtures` after changing a chart, and commit python/tests/fixtures.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { render, toSVG } from '../src/index.js';
-import { fmt, niceScale } from '../src/core/util.js';
+import { fmt } from '../src/core/util.js';
+import { niceScale } from '../src/core/series.js';
 
 const out = new URL('../python/tests/fixtures/', import.meta.url);
 mkdirSync(out, { recursive: true });
