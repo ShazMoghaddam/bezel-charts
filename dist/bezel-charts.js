@@ -1,4 +1,4 @@
-/*! Bezel Charts v1.8.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.9.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/util.js
 var SANS = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -268,7 +268,7 @@ var THEMES = {
 };
 
 // src/render.js
-var NAMES = ["spark", "line", "area", "bars", "combo", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "heatmap"];
+var NAMES = ["spark", "line", "area", "bars", "combo", "waterfall", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "bullet", "heatmap"];
 var TYPES = {};
 function register(type, fn) {
   TYPES[type] = fn;
@@ -360,7 +360,10 @@ var ATTRIBUTES = [
   "line-label",
   "line-zero",
   "dates",
-  "log"
+  "log",
+  "targets",
+  "zone-labels",
+  "totals"
 ];
 var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}.c{outline:none}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}`;
 var STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
@@ -1586,6 +1589,113 @@ function matched(min, max, n) {
 register("combo", combo);
 define("combo");
 
+// src/charts/waterfall.js
+function waterfall(o, th) {
+  var v = nums(o.values), n = v.length, labels = list(o.labels), names = list(o.series), c = list(o.color);
+  var steps = walk(v, labels, o.totals);
+  var cols = { up: c[0] || th.up, down: c[1] || th.down, total: c[2] || th.palette[0] };
+  var kinds = ["up", "down", "total"].filter(function(k) {
+    return steps.some(function(st) {
+      return st.kind === k;
+    });
+  });
+  var keyNames = kinds.map(function(k) {
+    return names[["up", "down", "total"].indexOf(k)] || { up: "Rise", down: "Fall", total: "Total" }[k];
+  });
+  var keyPal = kinds.map(function(k) {
+    return cols[k];
+  });
+  var key = function(j, x, y) {
+    return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="10" height="10" rx="2" fill="' + keyPal[j] + '"/>';
+  };
+  var legendH = n ? legend(keyNames, keyPal, th, 0, 0, dims(o).w, key, 15).height : 0;
+  var h = num(o.height, 200) + legendH;
+  var end = n ? steps[n - 1].to : 0;
+  return tile(o, th, h, function(x0, y0, w, h2) {
+    if (!n) return emptyState(th, x0, y0, w, h2);
+    var s = legend(keyNames, keyPal, th, x0, y0, w, key, 15).svg, top0 = y0 + legendH;
+    var levels = [0];
+    steps.forEach(function(st) {
+      levels.push(st.from, st.to);
+    });
+    var lo = Math.min.apply(null, levels), hi = Math.max.apply(null, levels);
+    if (has(o.goal)) {
+      lo = Math.min(lo, +o.goal);
+      hi = Math.max(hi, +o.goal);
+    }
+    var sc = niceScale(lo, hi, 4), tl = sc.ticks.map(function(t) {
+      return fmt(t, o, true);
+    });
+    var axisW = Math.max.apply(null, tl.map(function(t) {
+      return tw(t, 10, true);
+    })) + 10;
+    var px = x0 + axisW, pw = w - axisW, slot = pw / n, bwid = Math.min(slot * 0.62, 56);
+    var tags = steps.map(function(st) {
+      return st.kind === "total" ? fmt(st.to, o, true) : (st.change > 0 ? "+" : "") + fmt(st.change, o, true);
+    });
+    var showTags = Math.max.apply(null, tags.map(function(t) {
+      return tw(t, 10, true);
+    })) <= slot - 2;
+    var labMax = labels.length ? Math.max.apply(null, labels.map(function(l) {
+      return tw(l, 10, true);
+    })) : 0;
+    var every = labels.length ? Math.max(1, Math.ceil(n * (labMax + 8) / pw)) : 1;
+    var negTag = showTags && sc.lo < 0 ? 14 : 0, topPad = showTags ? 16 : 4;
+    var py = top0 + topPad, ph = h2 - (top0 - y0) - topPad - (labels.length ? 20 : 2) - negTag;
+    var Y = function(x) {
+      return py + ph - (x - sc.lo) / (sc.hi - sc.lo) * ph;
+    };
+    sc.ticks.forEach(function(t, i) {
+      s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(Y(t)) + '" y2="' + r2(Y(t)) + '" stroke="' + th.grid + '"' + (t === 0 ? "" : ' stroke-dasharray="2 4"') + "/>" + text(px - 8, Y(t) + 3.5, tl[i], small(th, 10, 'text-anchor="end"'));
+    });
+    steps.forEach(function(st, i) {
+      var x = px + i * slot + (slot - bwid) / 2, yA = Y(Math.max(st.from, st.to)), yB = Y(Math.min(st.from, st.to));
+      var bh = Math.max(1, yB - yA);
+      s += '<rect x="' + r2(x) + '" y="' + r2(yA) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(3, bwid / 2, bh / 2)) + '" fill="' + cols[st.kind] + '"' + anim(o, "bzc-a", Math.min(0.6, i * 0.05)) + "/>";
+      if (i < n - 1) {
+        s += '<line x1="' + r2(x + bwid) + '" x2="' + r2(x + slot) + '" y1="' + r2(Y(st.to)) + '" y2="' + r2(Y(st.to)) + '" stroke="' + th.muted + '" stroke-dasharray="2 2"/>';
+      }
+      if (showTags) {
+        var below = Math.max(st.from, st.to) <= 0 && Math.min(st.from, st.to) < 0;
+        s += text(x + bwid / 2, below ? yB + 12 : yA - 5, tags[i], small(th, 10, 'text-anchor="middle" font-weight="600"', th.fg));
+      }
+      if (labels[i] != null && i % every === 0) s += text(x + bwid / 2, py + ph + negTag + 15, labels[i], small(th, 10, 'text-anchor="middle"'));
+    });
+    if (has(o.goal)) s += goalLine(o, th, px, px + pw, Y(+o.goal));
+    steps.forEach(function(st, i) {
+      s += hit(px + i * slot, top0, slot, h2 - (top0 - y0), tipOf(st));
+    });
+    return s;
+  }, { summary: n ? "ends at " + fmt(end, o) + " after " + n + (n === 1 ? " step" : " steps") : "no data" });
+  function tipOf(st) {
+    return st.name + (st.kind === "total" ? "\nTotal " + fmt(st.to, o) : "\nChange " + (st.change > 0 ? "+" : "") + fmt(st.change, o) + "\nRunning total " + fmt(st.to, o));
+  }
+}
+function walk(v, labels, totals) {
+  var at = list(totals).map(function(m) {
+    var i = labels.indexOf(m);
+    return i < 0 && String(parseInt(m, 10)) === m ? parseInt(m, 10) : i;
+  }), run = 0;
+  return v.map(function(x, i) {
+    var name = labels[i] || "Step " + (i + 1), from = run, total2 = at.indexOf(i) >= 0;
+    run += x;
+    return total2 ? { name, kind: "total", change: x, from: 0, to: run } : { name, kind: x < 0 ? "down" : "up", change: x, from, to: run };
+  });
+}
+waterfall.table = function(o) {
+  var v = nums(o.values), labels = list(o.labels);
+  return {
+    head: ["Step", "Change", "Running total"],
+    rows: walk(v, labels, o.totals).map(function(st) {
+      return [st.name, st.kind === "total" ? "Total" : (st.change > 0 ? "+" : "") + fmt(st.change, o), fmt(st.to, o)];
+    })
+  };
+};
+
+// src/entries/waterfall.js
+register("waterfall", waterfall);
+define("waterfall");
+
 // src/charts/histogram.js
 function histogram(o, th) {
   var b = binned(o), names = list(o.series), pal = palette(o, th), h = num(o.height, 190);
@@ -2335,6 +2445,108 @@ progress.table = function(o) {
 register("progress", progress);
 define("progress");
 
+// src/charts/bullet.js
+function bullet(o, th) {
+  var v = nums(o.values), n = v.length, labels = list(o.labels), names = list(o.series), pal = palette(o, th);
+  var T = nums(o.targets), Z = series(o.zones), zoneNames = list(o.zoneLabels), many = list(o.color).length > 1;
+  var targetOf = function(i) {
+    return T.length === 1 ? T[0] : T[i];
+  };
+  var zonesOf = function(i) {
+    return (Z.length > 1 ? Z[i] || [] : Z[0] || []).slice().sort(function(a, b) {
+      return a - b;
+    });
+  };
+  var hasT = function(i) {
+    return isFinite(targetOf(i));
+  };
+  var anyT = v.some(function(_, i) {
+    return hasT(i);
+  });
+  var nameOf = function(i) {
+    return labels[i] || "Measure " + (i + 1);
+  };
+  var keyNames = [names[0] || "Actual", names[1] || "Target"];
+  var key = function(j, x, y) {
+    return j ? '<line x1="' + r2(x + 5) + '" x2="' + r2(x + 5) + '" y1="' + r2(y) + '" y2="' + r2(y + 12) + '" stroke="' + th.fg + '" stroke-width="2.5"/>' : '<rect x="' + r2(x) + '" y="' + r2(y + 3) + '" width="10" height="6" rx="1.5" fill="' + pal[0] + '"/>';
+  };
+  var d0 = dims(o), rowH = 32;
+  var legendH = anyT && n ? legend(keyNames, pal, th, 0, 0, d0.w, key, 15).height : 0;
+  var h = legendH + Math.max(1, n) * rowH - 8;
+  var met = v.filter(function(x, i) {
+    return hasT(i) && x >= targetOf(i);
+  }).length;
+  return tile(o, th, h, function(x0, y0, w, h2) {
+    if (!n) return emptyState(th, x0, y0, w, h2);
+    var s = "", top0 = y0;
+    if (legendH) {
+      s += legend(keyNames, pal, th, x0, y0, w, key, 15).svg;
+      top0 += legendH;
+    }
+    var labW = labels.length ? Math.min(w * 0.4, Math.max.apply(null, labels.map(function(l) {
+      return tw(l, 12);
+    })) + 12) : 0;
+    var valW = Math.max.apply(null, v.map(function(x) {
+      return tw(fmt(x, o), 11, true);
+    })) + 10;
+    var bx = x0 + labW, bw = Math.max(1, w - labW - valW);
+    for (var i = 0; i < n; i++) {
+      var val = v[i], t = targetOf(i), zs = zonesOf(i), ry = top0 + i * rowH, cy = ry + 12;
+      var lo = Math.min.apply(null, [0, val].concat(zs, hasT(i) ? [t] : []));
+      var hi = has(o.max) ? num(o.max, 1) : Math.max.apply(null, [0, val].concat(zs, hasT(i) ? [t] : [])) * 1.08;
+      if (hi <= lo) hi = lo + 1;
+      var X = function(x) {
+        return bx + (Math.min(hi, Math.max(lo, x)) - lo) / (hi - lo) * bw;
+      };
+      var edges = [lo].concat(zs.filter(function(z) {
+        return z > lo && z < hi;
+      }), [hi]), nb = edges.length - 1;
+      for (var b = 0; b < nb; b++) {
+        s += '<rect x="' + r2(X(edges[b])) + '" y="' + r2(cy - 10) + '" width="' + r2(X(edges[b + 1]) - X(edges[b])) + '" height="20" fill="' + th.muted + '" fill-opacity="' + r2(nb > 1 ? 0.1 + 0.3 * (nb - 1 - b) / (nb - 1) : 0.14) + '"/>';
+      }
+      var a = X(Math.min(0, val)), len = X(Math.max(0, val)) - a;
+      if (len > 0) {
+        s += '<rect x="' + r2(a) + '" y="' + r2(cy - 4) + '" width="' + r2(len) + '" height="8" rx="1.5" fill="' + (many ? pal[i % pal.length] : pal[0]) + '"' + anim(o, "bzc-gx", i * 0.06) + "/>";
+      }
+      if (hasT(i)) {
+        s += '<line x1="' + r2(X(t)) + '" x2="' + r2(X(t)) + '" y1="' + r2(cy - 8) + '" y2="' + r2(cy + 8) + '" stroke="' + th.fg + '" stroke-width="2.5"/>';
+      }
+      if (labels[i] != null) s += text(x0, cy + 4, trunc(labels[i], Math.floor(labW / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
+      s += text(x0 + w, cy + 4, fmt(val, o), 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="11" font-weight="600"');
+      s += hit(x0, ry, w, rowH - 8, tipOf(i));
+    }
+    return s;
+  }, { summary: !n ? "no data" : anyT ? met + " of " + n + (n === 1 ? " measure" : " measures") + " at or above target" : n + (n === 1 ? " measure" : " measures") });
+  function tipOf(i) {
+    var row = rowOf(o, i, v[i], targetOf(i), zonesOf(i), zoneNames);
+    return nameOf(i) + "\n" + keyNames[0] + " " + row[0] + (hasT(i) ? "\n" + keyNames[1] + " " + row[1] + "\nDifference " + row[2] : "") + (row[3] ? "\nBand " + row[3] : "");
+  }
+}
+function rowOf(o, i, val, t, zs, zoneNames) {
+  var j = 0, nb = zs.length + 1;
+  while (j < zs.length && val >= zs[j]) j++;
+  var d = val - t;
+  return [fmt(val, o), fmt(t, o), isFinite(d) ? (d > 0 ? "+" : "") + fmt(d, o) : "\u2013", zs.length ? zoneNames[j] || j + 1 + " of " + nb : ""];
+}
+bullet.table = function(o) {
+  var v = nums(o.values), labels = list(o.labels), T = nums(o.targets), Z = series(o.zones), zoneNames = list(o.zoneLabels), names = list(o.series);
+  var anyT = T.length > 0, anyZ = Z.length > 0;
+  return {
+    head: ["Measure", names[0] || "Actual"].concat(anyT ? [names[1] || "Target", "Difference"] : [], anyZ ? ["Band"] : []),
+    rows: v.map(function(val, i) {
+      var zs = (Z.length > 1 ? Z[i] || [] : Z[0] || []).slice().sort(function(a, b) {
+        return a - b;
+      });
+      var row = rowOf(o, i, val, T.length === 1 ? T[0] : T[i], zs, zoneNames);
+      return [labels[i] || "Measure " + (i + 1), row[0]].concat(anyT ? [row[1], row[2]] : [], anyZ ? [row[3] || "\u2013"] : []);
+    })
+  };
+};
+
+// src/entries/bullet.js
+register("bullet", bullet);
+define("bullet");
+
 // src/charts/heatmap.js
 var FULL = { weekday: "short", day: "numeric", month: "short", year: "numeric" };
 function startOf(o, len) {
@@ -2409,7 +2621,7 @@ register("heatmap", heatmap);
 define("heatmap");
 
 // src/index.js
-var version = "1.8.0";
+var version = "1.9.0";
 var types = NAMES.slice();
 export {
   BezelChart,

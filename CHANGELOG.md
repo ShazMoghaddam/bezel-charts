@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.9.0 (2026-11-10)
+
+Waterfall and bullet charts.
+
+- `<bezel-waterfall>`: the changes from a starting value to where it ends up. Rises and falls float from the previous level, joined by thin step lines, and `totals` names the bars that show the running total from zero, by label or position. A total adds its own value first, so a start bar takes the opening amount and a subtotal takes `0`.
+- Rises, falls and totals use the theme's up, down and first colours, with a legend, and `color="rise,fall,total"` changes them. Every bar carries a signed label (`+£85k`, `−£160k`) so the chart reads without relying on colour; when any label would overlap, they all hide. Tooltips and the data table give each change and the running total.
+- `<bezel-bullet>`: one row per measure, with the actual value as a bar, the target as an upright line (`targets`, one per row or one for all) and grey bands behind from `zones`, the same as the gauge. `zone-labels` names the bands, and each row can have its own with `|`.
+- Each bullet row has its own scale, so measures in different units sit together; `max` sets one end for every row. The summary counts the measures at or above target, and the tooltip and data table give the actual, target, difference and band.
+- In the Studio (with presets, totals, targets, band edges and names, and CSV import), the Python package as `bc.waterfall()` and `bc.bullet()`, and on their own as `bezel-charts/waterfall` (9.0 kB) and `bezel-charts/bullet` (9.1 kB).
+- A test now fails if the npm package, the Python package, the library's `version` and the built files disagree on the version number. The 1.8.0 npm release needed a second tag because of exactly that.
+- Size: the full bundle is 25.9 kB, and its budget is now 28 kB. Pages that load only some charts are unchanged.
+
 ## 1.8.0 (2026-11-10)
 
 Line and area axes: real dates, fixed ranges and log scales.
