@@ -29,7 +29,7 @@ from ._tile import THEMES as themes
 from ._util import Opts, fmt, lst, series
 from .charts import TYPES
 
-__version__ = "1.7.0"
+__version__ = "1.8.0"
 __all__ = [
     "Chart", "area", "bars", "boxplot", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
     "to_svg", "types", "__version__",
@@ -114,6 +114,19 @@ def _options(options: dict, values, names, lbls) -> dict:
     return out
 
 
+def _dated(options: dict, data, x, x_format, lbls) -> dict:
+    """Adds dates= when the x column or the index holds real dates, so points sit where they fall in time."""
+    if "dates" in options:
+        return options
+    iso = _data.iso_dates(data, x)
+    return {**options, "dates": iso} if iso else options
+
+
+def _undated(options: dict, data, x, x_format) -> bool:
+    """Whether automatic dates replace the labels: they do unless x_format asks for labels of its own."""
+    return "dates" not in options and not x_format and _data.iso_dates(data, x) is not None
+
+
 def spark(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
     """A sparkline: one series, its latest value and the change since the start.
 
@@ -131,12 +144,13 @@ def line(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None
 
     ``data`` can be a DataFrame (``x=`` for labels, ``y=`` for one column or a list of them; by default
     every numeric column), a Series, a dict of name to values, a list of lists, or a single list.
-    Dates are written as YYYY-MM-DD unless you pass ``x_format`` (for example ``"%b %Y"``).
+    When ``x=`` (or the index) holds real dates, points sit where they fall in time and the axis picks its own
+    date steps. ``x_format`` (for example ``"%b %Y"``) still names the points in tooltips.
     """
     if data is None:
         return Chart("line", _options(options, None, None, None))
     values, names, lbls = _data.prepare(data, x, y, x_format)
-    return Chart("line", _options(options, values, names, lbls))
+    return Chart("line", _options(_dated(options, data, x, x_format, lbls), values, names, None if _undated(options, data, x, x_format) else lbls))
 
 
 def area(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
@@ -148,7 +162,7 @@ def area(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None
     if data is None:
         return Chart("area", _options(options, None, None, None))
     values, names, lbls = _data.prepare(data, x, y, x_format)
-    return Chart("area", _options(options, values, names, lbls))
+    return Chart("area", _options(_dated(options, data, x, x_format, lbls), values, names, None if _undated(options, data, x, x_format) else lbls))
 
 
 def bars(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:

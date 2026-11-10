@@ -20,7 +20,7 @@ Bezel Charts is a set of free, open-source web components: fourteen chart tiles 
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
 - **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, grouped series, goal lines and notes on key points.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 22 kB gzipped for all fourteen charts, or 7 to 11 kB for a page that loads just one. No dependencies and no build step.
+- **Light.** About 24 kB gzipped for all fourteen charts, or 7 to 12 kB for a page that loads just one. No dependencies and no build step.
 - **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
@@ -49,7 +49,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.7.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.8.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -84,10 +84,10 @@ import { toSVG } from 'bezel-charts/line'; // render and toSVG work for every ch
 | Page | Gzipped |
 | --- | --- |
 | One sparkline, ring, donut, gauge, progress bar or heatmap | 7.2 to 7.4 kB |
-| One line, area, histogram, box plot, scatter or bar chart | 9.4 to 10.4 kB |
-| One bars-and-line combo | 11.1 kB |
-| A line and a bar chart | 12.6 kB |
-| Every chart: the full bundle | 22.1 kB |
+| One histogram, box plot, scatter, bar or bars-and-line chart | 9.4 to 10.5 kB |
+| One line or area chart | 12.0 to 12.3 kB |
+| A line and a bar chart | 14.8 kB |
+| Every chart: the full bundle | 23.8 kB |
 
 Once a page needs four or five different charts, load the full bundle instead. `<bezel-chart type="…">` works with whichever charts are loaded, and tells you which file to add if its type isn't one of them. The classic `iife.js` script always has every chart, because a classic script can't load the shared file.
 
@@ -164,6 +164,13 @@ One or more lines over time, with an axis, a legend and notes on key moments. Se
 | `straight`    | boolean, straight lines instead of curves   | off     |
 | `dash`        | a line style per series: `solid`, `dashed`, `dotted`, `dashdot`. On its own, gives each series the next style | off |
 | `markers`     | a shape on each point, per series: `circle`, `square`, `triangle`, `diamond`, `none`. On its own, gives each series the next shape | off |
+| `dates`       | one date per point, `2026-01-05` or `2026-01-05T14:30`: points sit where they fall in time | evenly spaced |
+| `min`, `max`  | fix the value axis; anything beyond is clipped at the edge, and the tooltip keeps the true value | from the data |
+| `log`         | boolean, a log scale: each power of ten gets the same height | off |
+
+**Dates.** With `dates`, a reading on 1 January, one on 2 January and one on 1 March sit where they fall, instead of evenly spaced. The axis picks its own step for the span and the width: hours (`14:00`), days or weeks (`5 Jan`), months (`Jan 2026`, then `Feb`, `Mar`), or years. Tooltips and the data table show the full date, and `labels`, if you give them, still name the points. Dates are read as written, with no time zone conversion.
+
+**Log scale.** `log` suits values that grow fast, like users or prices over years: 100, 1,000, 10k and 100k sit evenly apart. Zero and negative values have no place on a log scale, so the line leaves a gap there, and the tooltip and data table still show them.
 
 ### `<bezel-area>`
 
@@ -184,6 +191,8 @@ Filled areas over time. Several series overlap as see-through fills, or add `sta
 | `straight`    | boolean, straight edges instead of curves                | off     |
 | `dash`, `markers` | styles for each series' top edge, as on line charts  | off     |
 | `patterns`    | a fill per series, as on bars                            | off     |
+| `dates`       | one date per point, as on line charts                    | evenly spaced |
+| `max`, `min`  | fix the value axis, as on line charts; `min` only at or below zero, so areas keep their base | from the data |
 
 The tooltip lists every series, plus the total when stacked, and each series' share in a percent stack. `show-values` writes each value, or the total above each column of a stack. Negative values stack below zero, as stacked bars do, but stacks read best when every value is positive: bands that swing between positive and negative cross over each other.
 
@@ -558,7 +567,7 @@ docs/          the README image and social preview, with the pages that render t
 test/          node:test suites, plus a Playwright browser test
 ```
 
-Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The full bundle has a 24 kB gzip budget and each chart file its own, checked in CI by `npm run size`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The full bundle has a 26 kB gzip budget and each chart file its own, checked in CI by `npm run size`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 

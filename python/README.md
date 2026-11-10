@@ -79,6 +79,17 @@ Then in your README, with `chart.alt` as the alt text:
 
 Grouped bars are `bc.bars()` with several series, which makes fourteen. They are the same fourteen as the web components, and `bc.types` lists them.
 
+### Dates
+
+When `x=` (or the index) holds real dates, such as a pandas `datetime64` column or `datetime.date` values, line and area charts space the points in time and the axis picks its own steps:
+
+```python
+bc.line(readings, x="taken_at", heading="Weight")   # irregular readings sit where they fall
+bc.line(df.set_index("date")["users"], log=True)     # a date index works too
+```
+
+Tooltips show the full date. Pass `x_format` to name the points your way instead, and the axis keeps its date steps. Text that only looks like a date stays a label.
+
 ### Area
 
 ```python
@@ -241,6 +252,9 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `bin_width` | `bin_width=5` | An exact width for each range (histogram). |
 | `mark` | `mark="mean,median"` | Labelled lines at the mean, the median or both (histogram), or a diamond at the mean (box plot). |
 | `percent` | `percent=True` | Shares instead of counts (histogram). |
+| `min`, `max` | `min=0, max=100` | Fix the value axis; values beyond it are clipped (line, area). |
+| `log` | `log=True` | A log scale, for values that grow fast (line). |
+| `dates` | `dates=["2026-01-05", ...]` | Space points in time (line, area). Set for you when `x=` or the index holds real dates. |
 | `whiskers` | `whiskers="range"` | Whiskers reach the lowest and highest values, with no outlier dots (box plot). |
 | `dash` | `dash=True` or `dash=["solid", "dashed"]` | A line style per series: `solid`, `dashed`, `dotted`, `dashdot` (line). |
 | `markers` | `markers=True` or `markers=["circle", "square"]` | A shape on each point: `circle`, `square`, `triangle`, `diamond`, `none` (line, scatter). |

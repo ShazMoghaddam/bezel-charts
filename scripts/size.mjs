@@ -4,8 +4,8 @@ import { readFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import { NAMES } from '../src/render.js';
 
-const FULL_KB = 24;
-const CHART_KB = { spark: 8, line: 10, area: 11, bars: 11, combo: 12, histogram: 10, boxplot: 10, scatter: 10, ring: 8, donut: 8, gauge: 8, progress: 8, heatmap: 8 };
+const FULL_KB = 26;
+const CHART_KB = { spark: 8, line: 13, area: 13, bars: 11, combo: 12, histogram: 10, boxplot: 10, scatter: 10, ring: 8, donut: 8, gauge: 8, progress: 8, heatmap: 8 };
 
 const gz = async (f) => gzipSync(await readFile(f), { level: 9 }).length / 1024;
 

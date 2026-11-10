@@ -198,9 +198,9 @@ function spark(o, th) {
       mn = Math.min(mn, +o.goal);
       mx = Math.max(mx, +o.goal);
     }
-    var pad = (mx - mn || Math.abs(mx) || 1) * 0.12;
-    mn -= pad;
-    mx += pad;
+    var pad2 = (mx - mn || Math.abs(mx) || 1) * 0.12;
+    mn -= pad2;
+    mx += pad2;
     var X = function(i) {
       return x0 + i * w / (pts.length - 1);
     };
@@ -358,7 +358,9 @@ var ATTRIBUTES = [
   "line-suffix",
   "line-decimals",
   "line-label",
-  "line-zero"
+  "line-zero",
+  "dates",
+  "log"
 ];
 var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}.c{outline:none}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}`;
 var STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
@@ -667,9 +669,122 @@ function seriesTable(o, total2) {
   return { head: ["Label"].concat(head, total2 ? ["Total"] : []), rows };
 }
 
+// src/core/time.js
+var HOUR = 36e5;
+var DAY = 864e5;
+function parseDates(o, n) {
+  var d = list(o.dates);
+  if (!n || d.length < n) return null;
+  var out = [];
+  for (var i = 0; i < n; i++) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(String(d[i]).trim());
+    if (!m) return null;
+    out.push(Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0), +(m[6] || 0)));
+  }
+  return out;
+}
+function fmt2(lang, opt) {
+  try {
+    return new Intl.DateTimeFormat(lang, Object.assign({ timeZone: "UTC" }, opt));
+  } catch (e) {
+    return new Intl.DateTimeFormat("en-GB", Object.assign({ timeZone: "UTC" }, opt));
+  }
+}
+var pad = function(n) {
+  return (n < 10 ? "0" : "") + n;
+};
+var clock = function(t) {
+  var d = new Date(t);
+  return pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes());
+};
+function dateText(t, lang, withTime) {
+  return fmt2(lang, { day: "numeric", month: "short", year: "numeric" }).format(new Date(t)) + (withTime ? " " + clock(t) : "");
+}
+function hasTimes(T) {
+  return T.some(function(t) {
+    return t % DAY !== 0;
+  });
+}
+var STEPS2 = [
+  ["h", 1],
+  ["h", 3],
+  ["h", 6],
+  ["h", 12],
+  ["d", 1],
+  ["d", 2],
+  ["w", 1],
+  ["w", 2],
+  ["m", 1],
+  ["m", 2],
+  ["m", 3],
+  ["m", 6],
+  ["y", 1],
+  ["y", 2],
+  ["y", 5],
+  ["y", 10],
+  ["y", 20],
+  ["y", 50],
+  ["y", 100]
+];
+var ROUGH = { h: HOUR, d: DAY, w: 7 * DAY, m: 30.44 * DAY, y: 365.25 * DAY };
+function ticksFor(t0, t1, unit, k) {
+  var out = [], t;
+  if (unit === "h" || unit === "d" || unit === "w") {
+    var size = unit === "h" ? HOUR * k : DAY * (unit === "w" ? 7 * k : k);
+    var from = unit === "w" ? 4 * DAY : 0;
+    for (t = Math.ceil((t0 - from) / size) * size + from; t <= t1; t += size) out.push(t);
+    return out;
+  }
+  var d = new Date(t0), y = d.getUTCFullYear(), mo = unit === "m" ? d.getUTCMonth() : 0;
+  for (; ; ) {
+    t = Date.UTC(y, mo, 1);
+    if (t > t1) return out;
+    if (t >= t0 && (unit === "m" ? mo % k === 0 : y % k === 0)) out.push(t);
+    if (unit === "m") {
+      mo++;
+      if (mo === 12) {
+        mo = 0;
+        y++;
+      }
+    } else y++;
+  }
+}
+function dateTicks(t0, t1, room, lang) {
+  var most = Math.max(2, Math.floor(room / 64)), span = t1 - t0;
+  for (var i = 0; i < STEPS2.length; i++) {
+    var unit = STEPS2[i][0], k = STEPS2[i][1];
+    if (span / (ROUGH[unit] * k) > most + 2) continue;
+    var ticks = ticksFor(t0, t1, unit, k);
+    if (ticks.length > most) continue;
+    var dm = fmt2(lang, { day: "numeric", month: "short" }), my = fmt2(lang, { month: "short", year: "numeric" }), mm = fmt2(lang, { month: "short" });
+    return ticks.map(function(t, j) {
+      var d = new Date(t), text2;
+      if (unit === "h") text2 = t % DAY === 0 ? dm.format(d) : clock(t);
+      else if (unit === "d" || unit === "w") text2 = dm.format(d);
+      else if (unit === "m") text2 = d.getUTCMonth() === 0 || j === 0 ? my.format(d) : mm.format(d);
+      else text2 = String(d.getUTCFullYear());
+      return { t, text: text2 };
+    });
+  }
+  return [];
+}
+function pointName(labels, T, i, lang, timed) {
+  return labels[i] || (T ? dateText(T[i], lang, timed) : "#" + (i + 1));
+}
+function datedTable(t, o, n) {
+  var T = parseDates(o, n), labels = list(o.labels);
+  if (!T) return t;
+  var timed = hasTimes(T);
+  t.head[0] = "Date";
+  t.rows.forEach(function(r, i) {
+    if (!labels[i]) r[0] = dateText(T[i], o.lang || "en-GB", timed);
+  });
+  return t;
+}
+
 // src/core/xy.js
 function xyFrame(o, th, c, x0, y0, w, h) {
-  var s = "", top = y0, n = c.n, labels = c.labels;
+  var s = "", top = y0, n = c.n, labels = c.labels, T = c.dates;
   if (c.names) {
     var lg = legend(c.names, c.pal, th, x0, top, w, c.key, c.kw);
     s += lg.svg;
@@ -684,24 +799,42 @@ function xyFrame(o, th, c, x0, y0, w, h) {
     mn = Math.min(0, mn);
     mx = Math.max(0, mx);
   }
-  var sc = niceScale(mn, mx, 4);
+  var hasMin = isFinite(c.min), hasMax = isFinite(c.max);
+  if (hasMin && hasMax && c.min >= c.max) hasMin = hasMax = false;
+  var sc = c.log ? logScale(hasMin && c.min > 0 ? c.min : c.posLo, hasMax && c.max > 0 ? c.max : c.posHi) : hasMin || hasMax ? fixedScale(hasMin ? c.min : mn, hasMax ? c.max : mx, hasMin, hasMax) : niceScale(mn, mx, 4);
   var tl = sc.ticks.map(c.tick);
   var axisW = Math.max.apply(null, tl.map(function(t) {
     return tw(t, 10, true);
   })) + 10;
-  var bottom = labels.length ? 20 : 4;
+  var bottom = labels.length || T ? 20 : 4;
   var px = x0 + axisW, pw = w - axisW, ph = h - (top - y0) - bottom;
-  var X = function(i2) {
+  var t0 = T ? Math.min.apply(null, T) : 0, span = T ? Math.max.apply(null, T) - t0 : 0;
+  var X = T ? function(i2) {
+    return span ? px + (T[i2] - t0) / span * pw : px + pw / 2;
+  } : function(i2) {
     return n === 1 ? px + pw / 2 : px + i2 * pw / (n - 1);
   };
-  var Y = function(v) {
+  var Y = sc.log ? function(v) {
+    return top + ph - (Math.log10(v) - sc.a) / (sc.b - sc.a) * ph;
+  } : function(v) {
     return top + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph;
   };
+  var clip = "";
+  if (hasMin || hasMax) {
+    var cid = newId("c");
+    s += '<defs><clipPath id="' + cid + '"><rect x="' + r2(px - 4) + '" y="' + r2(top - 4) + '" width="' + r2(pw + 8) + '" height="' + r2(ph + 8) + '"/></clipPath></defs>';
+    clip = ' clip-path="url(#' + cid + ')"';
+  }
   sc.ticks.forEach(function(t, i2) {
     var y = Y(t);
     s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '"' + (t === 0 ? "" : ' stroke-dasharray="2 4"') + "/>" + text(px - 8, y + 3.5, tl[i2], small(th, 10, 'text-anchor="end"'));
   });
-  if (labels.length) {
+  if (T) {
+    dateTicks(t0, t0 + span, pw, o.lang || "en-GB").forEach(function(d) {
+      var half = tw(d.text, 10, true) / 2, x = span ? px + (d.t - t0) / span * pw : px + pw / 2;
+      s += text(clamp(x, px + half, px + pw - half), top + ph + 15, d.text, small(th, 10, 'text-anchor="middle"'));
+    });
+  } else if (labels.length) {
     var every = Math.max(1, Math.ceil(n * (Math.max.apply(null, labels.map(function(l) {
       return tw(l, 10, true);
     })) + 10) / pw));
@@ -716,14 +849,44 @@ function xyFrame(o, th, c, x0, y0, w, h) {
     var x = X(nt.i);
     s += '<line x1="' + r2(x) + '" x2="' + r2(x) + '" y1="' + r2(top + 12) + '" y2="' + r2(top + ph) + '" stroke="' + th.fg + '" stroke-opacity=".4" stroke-dasharray="3 3"/>' + text(clamp(x, px + 30, px + pw - 30), top + 8, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
   });
-  return { svg: s, X, Y, px, pw, top, ph };
+  return { svg: s, X, Y, px, pw, top, ph, clip, uneven: !!T };
+}
+function fixedScale(lo, hi, hasMin, hasMax) {
+  var nice = niceScale(lo, hi, 4), a = hasMin ? lo : nice.lo, b = hasMax ? hi : nice.hi, step = nice.ticks[1] - nice.ticks[0];
+  var ticks = nice.ticks.filter(function(t) {
+    return t >= a - step * 1e-9 && t <= b + step * 1e-9;
+  });
+  if (hasMin && (!ticks.length || ticks[0] - a > step * 0.4)) ticks.unshift(a);
+  if (hasMax && (!ticks.length || b - ticks[ticks.length - 1] > step * 0.4)) ticks.push(b);
+  return { lo: a, hi: b, ticks };
+}
+function logScale(lo, hi) {
+  var a = Math.floor(Math.log10(lo)), b = Math.ceil(Math.log10(hi)), ticks = [];
+  if (b === a) b++;
+  for (var e = a; e <= b; e++) {
+    var p = Number("1e" + e);
+    ticks.push(p);
+    if (b - a <= 2 && e < b) ticks.push(2 * p, 5 * p);
+  }
+  return { log: true, a, b, lo: ticks[0], hi: ticks[ticks.length - 1], ticks };
 }
 function xyFinish(o, th, f, n, tip) {
-  var s = has(o.goal) ? goalLine(o, th, f.px, f.px + f.pw, f.Y(+o.goal)) : "";
-  var step = n > 1 ? f.pw / (n - 1) : f.pw;
-  for (var j = 0; j < n; j++) s += hit(f.X(j) - step / 2, f.top, step, f.ph, tip(j));
+  var g = has(o.goal) ? f.Y(+o.goal) : NaN;
+  var s = isFinite(g) ? goalLine(o, th, f.px, f.px + f.pw, g) : "";
+  var step = n > 1 ? f.pw / (n - 1) : f.pw, X = f.X;
+  for (var j = 0; j < n; j++) {
+    if (!f.uneven) {
+      s += hit(X(j) - step / 2, f.top, step, f.ph, tip(j));
+      continue;
+    }
+    var l = j ? (X(j - 1) + X(j)) / 2 : X(0) - (n > 1 ? (X(1) - X(0)) / 2 : f.pw / 2);
+    var r = j < n - 1 ? (X(j) + X(j + 1)) / 2 : X(j) + (n > 1 ? (X(j) - X(j - 1)) / 2 : f.pw / 2);
+    s += hit(l, f.top, Math.max(1, r - l), f.ph, tip(j));
+  }
   return s;
 }
+
+// src/core/lines.js
 function lineKey(pal, dashOf, markOf, bg) {
   return function(k, x, y) {
     var c = pal[k % pal.length], dk = dashOf ? DASHES[dashOf(k)] : "", mk = markOf ? markOf(k) : "none";
@@ -736,6 +899,7 @@ function seriesLine(o, d, c, k, dk) {
 function pointMarks(o, mk, ys, X, Y, c, bg, k) {
   var s = "", every = Math.ceil(ys.length / 40);
   ys.forEach(function(y, i) {
+    if (!isFinite(Y(y))) return;
     if (i % every === 0 || i === ys.length - 1) s += marker(mk, X(i), Y(y), 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"' + anim(o, "bzc-a", 0.6 + k * 0.15));
   });
   return s;
@@ -755,9 +919,14 @@ function line(o, th) {
   var nameOf = function(k) {
     return names[k] || "Series " + (k + 1);
   };
+  var T = parseDates(o, n), timed = T && hasTimes(T), lang = o.lang || "en-GB";
+  var all = [].concat.apply([], S), pos = all.filter(function(v) {
+    return v > 0;
+  });
+  if (has(o.goal) && +o.goal > 0) pos.push(+o.goal);
+  var log = bool(o.log) && pos.length > 0;
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!n) return emptyState(th, x0, y0, w, h2);
-    var all = [].concat.apply([], S);
     var f = xyFrame(o, th, {
       n,
       names: multi ? S.map(function(_, k) {
@@ -773,17 +942,34 @@ function line(o, th) {
       notes,
       tick: function(t) {
         return fmt(t, o, true);
-      }
+      },
+      dates: T,
+      min: has(o.min) ? +o.min : NaN,
+      max: has(o.max) ? +o.max : NaN,
+      log,
+      posLo: log ? Math.min.apply(null, pos) : 0,
+      posHi: log ? Math.max.apply(null, pos) : 0
     }, x0, y0, w, h2);
-    var s = f.svg, X = f.X, Y = f.Y, px = f.px, pw = f.pw, top = f.top, ph = f.ph;
+    var s = f.svg + (f.clip ? "<g" + f.clip + ">" : ""), X = f.X, Y = f.Y, px = f.px, pw = f.pw, top = f.top, ph = f.ph;
     S.forEach(function(v, k) {
       var c = pal[k % pal.length];
       var P = v.map(function(y, i) {
         return [X(i), Y(y)];
       });
       if (P.length === 1) P = [[px, P[0][1]], [px + pw, P[0][1]]];
-      var d = pathOf(P, bool(o.straight));
-      if (k === 0) {
+      var runs = log ? P.reduce(function(r, p) {
+        if (isFinite(p[1])) r[r.length - 1].push(p);
+        else if (r[r.length - 1].length) r.push([]);
+        return r;
+      }, [[]]).filter(function(r) {
+        return r.length;
+      }) : [P];
+      if (!runs.length) return;
+      var d = runs.map(function(r) {
+        return pathOf(r, bool(o.straight));
+      }).join("");
+      P = [].concat.apply([], runs);
+      if (k === 0 && !log) {
         var g = newId("g"), last = P[P.length - 1];
         s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".26"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs><path d="' + d + "L" + r2(last[0]) + "," + r2(top + ph) + "L" + r2(P[0][0]) + "," + r2(top + ph) + 'Z" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
       }
@@ -796,11 +982,11 @@ function line(o, th) {
         s += '<circle cx="' + r2(e[0]) + '" cy="' + r2(e[1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
       }
       if (bool(o.showValues)) v.forEach(function(y, i) {
-        s += text(X(i), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"'));
+        if (isFinite(Y(y))) s += text(X(i), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"'));
       });
     });
-    return s + xyFinish(o, th, f, n, function(j) {
-      var tip = labels[j] || "#" + (j + 1);
+    return s + (f.clip ? "</g>" : "") + xyFinish(o, th, f, n, function(j) {
+      var tip = pointName(labels, T, j, lang, timed);
       S.forEach(function(v, k) {
         if (j < v.length) tip += "\n" + (multi ? nameOf(k) + ": " : "") + fmt(v[j], o);
       });
@@ -809,7 +995,8 @@ function line(o, th) {
   }, { stat: st, summary: S.length + " series over " + n + " points" });
 }
 line.table = function(o) {
-  return seriesTable(o);
+  var t = seriesTable(o);
+  return datedTable(t, o, t.rows.length);
 };
 
 // src/entries/line.js
@@ -871,6 +1058,7 @@ function area(o, th) {
   var key = patOf ? function(j2, x, y) {
     return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="10" height="10" rx="2" fill="' + (fills[j2] || pal[j2 % pal.length]) + '"/>';
   } : (dashOf || markOf) && lineKey(pal, dashOf, markOf, bg);
+  var T = parseDates(o, n), timed = T && hasTimes(T), lang = o.lang || "en-GB";
   var share = function(j2, i2) {
     return pos[i2] ? Math.round(Math.max(0, val(j2, i2)) / pos[i2] * 100) : 0;
   };
@@ -889,13 +1077,17 @@ function area(o, th) {
       zero: true,
       labels,
       notes,
+      dates: T,
+      // Areas are measured from zero, so a min above zero would cut off their base: only max and a min at or below zero apply.
+      min: has(o.min) && +o.min <= 0 ? +o.min : NaN,
+      max: has(o.max) ? +o.max : NaN,
       tick: mode === "percent" ? function(t2) {
         return fmt(t2, { lang: o.lang }, true) + "%";
       } : function(t2) {
         return fmt(t2, o, true);
       }
     }, x0, y0, w, h2);
-    var s = (defs ? "<defs>" + defs + "</defs>" : "") + f.svg, X = f.X, Y = f.Y;
+    var s = (defs ? "<defs>" + defs + "</defs>" : "") + f.svg + (f.clip ? "<g" + f.clip + ">" : ""), X = f.X, Y = f.Y;
     var pts = function(ys) {
       var P = ys.map(function(y, i2) {
         return [X(i2), Y(y)];
@@ -929,8 +1121,8 @@ function area(o, th) {
         s += text(X(i2), Y(top) - 8, fmt(t2, o, true), small(th, 9, 'text-anchor="middle"'));
       });
     }
-    return s + xyFinish(o, th, f, n, function(i2) {
-      var tip = labels[i2] || "#" + (i2 + 1);
+    return s + (f.clip ? "</g>" : "") + xyFinish(o, th, f, n, function(i2) {
+      var tip = pointName(labels, T, i2, lang, timed);
       S.forEach(function(ser, j2) {
         if (i2 < ser.length) tip += "\n" + (multi ? nameOf(j2) + ": " : "") + fmt(ser[i2], o) + (mode === "percent" ? " (" + share(j2, i2) + "%)" : "");
       });
@@ -942,8 +1134,8 @@ function area(o, th) {
   });
 }
 area.table = function(o) {
-  var S = series(o.values);
-  return seriesTable(o, S.length > 1 && (o.stacked === "percent" || bool(o.stacked)));
+  var S = series(o.values), t = seriesTable(o, S.length > 1 && (o.stacked === "percent" || bool(o.stacked)));
+  return datedTable(t, o, t.rows.length);
 };
 
 // src/entries/area.js

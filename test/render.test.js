@@ -10,7 +10,8 @@ const year = Array.from({ length: 365 }, (_, i) => ((i * 7) % 11 > 6 ? i % 9 : 0
 const CASES = {
   spark: [{}, { values: '5' }, { values: '17,16,15,15,13,12,14', heading: 'London', suffix: '°C', goal: 15, notes: '3:Dip', 'show-values': '' },
     { values: '-5,-3,0,4,-2', prefix: '£' }, { values: '1200000,1500000,1900000', compact: '' }, { values: [3, 3, 3], theme: 'light', frame: 'none' }],
-  line: [{}, { values: '1,2,3|3,2,1', series: 'A,B', labels: 'Jan,Feb,Mar', goal: 2.5, notes: 'Feb:Launch day', prefix: '£' },
+  line: [{ values: '1,2,3', dates: '2026-01-01,2026-01-02,2026-03-01' }, { values: '1,10,100', log: '' }, { values: '0,-1,5', log: '' }, { values: '1,2', min: 5, max: 1 },
+    { values: '1,5,9', min: 2, max: 8, labels: 'a,b,c' }, { values: '3', dates: '2026-01-01T14:30' }, { values: '1,2', dates: 'nope,2026-01-01' }, {}, { values: '1,2,3|3,2,1', series: 'A,B', labels: 'Jan,Feb,Mar', goal: 2.5, notes: 'Feb:Launch day', prefix: '£' },
     { values: '4' }, { values: '-10,5,-3,8', straight: '' }, { values: '1,2,3', labels: 'a,b,c', zero: '', stat: 'last' }],
   area: [{}, { values: '5' }, { values: '1,3,2|2,2,4', series: 'A,B', labels: 'a,b,c', notes: 'b:Mid', goal: 3 }, { values: '1,3,2|2,2,4', stacked: '', 'show-values': '' },
     { values: '1,3,2|2,2,4', stacked: 'percent', patterns: '' }, { values: '-1,3,-2|2,-2,4', stacked: '', straight: '' }, { values: '0,0,0|0,0,0', stacked: 'percent' }],
@@ -442,4 +443,69 @@ test('combo tables list the bars, the total and the lines', () => {
   const t = table('combo', { values: '1,2|3,4', line: '0.5,0.6', stacked: '', 'line-suffix': '%' });
   assert.deepEqual(t.head, ['Label', 'Bars 1', 'Bars 2', 'Total', 'Line']);
   assert.deepEqual(t.rows[0], ['#1', '1', '3', '4', '0.5%']);
+});
+
+const lineTicks = (svg) => [...svg.matchAll(/text-anchor="middle"[^>]*>([^<]*)</g)].map((m) => m[1]);
+
+test('dates space points in time', () => {
+  const svg = render('line', { values: '1,2,3', dates: '2026-01-01,2026-01-02,2026-03-01', straight: '', static: '' });
+  const xs = [...svg.match(/<path d="M([\d.]+),[\d.]+L([\d.]+),[\d.]+L([\d.]+),/).slice(1, 4)].map(Number);
+  assert.ok(xs[1] - xs[0] < (xs[2] - xs[1]) / 20, `one day is a sliver of two months: ${xs}`);
+});
+
+test('date ticks choose their own step and label it to suit', () => {
+  const months = lineTicks(render('line', { values: '1,2,3,4', dates: '2026-01-01,2026-02-10,2026-04-20,2026-06-30', width: 700 }));
+  assert.deepEqual(lineTicks(render('line', { values: '1,2,3,4', dates: '2026-01-01,2026-02-10,2026-04-20,2026-06-30' })), ['Jan 2026', 'Mar', 'May'], 'narrower charts take bigger steps');
+  assert.deepEqual(months.slice(0, 3), ['Jan 2026', 'Feb', 'Mar']);
+  const years = lineTicks(render('line', { values: '1,2', dates: '2010-01-01,2026-01-01', width: 400 }));
+  assert.ok(years.every((t) => /^\d{4}$/.test(t)), years.join(' '));
+  const hours = lineTicks(render('line', { values: '1,2', dates: '2026-11-10T06:00,2026-11-10T18:00' }));
+  assert.ok(hours.includes('12:00'), hours.join(' '));
+  const days = lineTicks(render('line', { values: '1,2', dates: '2026-11-02,2026-11-09', width: 700 }));
+  assert.ok(days.includes('5 Nov'), days.join(' '));
+  assert.ok(lineTicks(render('line', { values: '1,2', dates: '2026-11-02,2026-11-09', width: 700, lang: 'en-US' })).includes('Nov 5'));
+});
+
+test('dated tooltips and tables give the date, with the time when there is one', () => {
+  const svg = render('line', { values: '1,2', dates: '2026-01-05,2026-01-06' });
+  assert.deepEqual(tips(svg), ['5 Jan 2026|1', '6 Jan 2026|2']);
+  assert.deepEqual(tips(render('line', { values: '1,2', dates: '2026-01-05T09:30,2026-01-05T10:00' })), ['5 Jan 2026 09:30|1', '5 Jan 2026 10:00|2']);
+  assert.deepEqual(table('line', { values: '1,2', dates: '2026-01-05,2026-01-06', labels: 'Launch' }).rows, [['Launch', '1'], ['6 Jan 2026', '2']]);
+  assert.equal(table('area', { values: '1,2', dates: '2026-01-05,2026-01-06' }).head[0], 'Date');
+});
+
+test('invalid or too few dates leave the points evenly spaced', () => {
+  const plain = render('line', { values: '1,2,3' }).replace(/bzc[gc][0-9a-z]+/g, 'id');
+  for (const dates of ['nope,2026-01-01,2026-01-02', '2026-01-01,2026-01-02']) {
+    assert.equal(render('line', { values: '1,2,3', dates }).replace(/bzc[gc][0-9a-z]+/g, 'id'), plain, dates);
+  }
+});
+
+test('min and max fix the value axis, and the series is clipped to it', () => {
+  const svg = render('line', { values: '40,90,60', min: 50, max: 80 });
+  const ticks = ticksOf(svg, 'end');
+  assert.equal(ticks[0], '50');
+  assert.equal(ticks[ticks.length - 1], '80');
+  assert.match(svg, /<clipPath id="[^"]+"><rect/);
+  assert.match(svg, /<g clip-path="url\(#/);
+  assert.match(tips(svg)[1], /90/, 'the tooltip keeps the true value');
+  assert.doesNotMatch(render('line', { values: '1,2', min: 5, max: 1 }), /clipPath/, 'a min above the max is ignored');
+});
+
+test('areas take max, and a min at or below zero, but never cut their base', () => {
+  assert.match(render('area', { values: '62,104,77', max: 100 }), /clipPath/);
+  assert.doesNotMatch(render('area', { values: '62,77', min: 50 }), /clipPath/);
+});
+
+test('log scales step in powers of ten, with 2 and 5 between when the range is short', () => {
+  assert.deepEqual(ticksOf(render('line', { values: '120,2400000', log: '' }), 'end'), ['100', '1,000', '10k', '100k', '1m', '10m']);
+  assert.deepEqual(ticksOf(render('line', { values: '3,40', log: '' }), 'end'), ['1', '2', '5', '10', '20', '50', '100']);
+});
+
+test('zero and negative values leave gaps on a log scale, but keep their tooltips', () => {
+  const svg = render('line', { values: '5,0,12,-1,44', log: '', static: '' });
+  assert.equal((svg.match(/<path d="[^"]*"/)[0].match(/M/g) || []).length, 3, 'three separate runs');
+  const live = render('line', { values: '5,0,12', log: '' });
+  assert.deepEqual(tips(live), ['#1|5', '#2|0', '#3|12']);
+  assert.doesNotMatch(render('line', { values: '0,-2', log: '' }), /NaN/, 'with nothing positive, the axis stays linear');
 });

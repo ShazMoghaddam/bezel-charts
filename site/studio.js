@@ -52,7 +52,7 @@ const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
 const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
-  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dash', 'markers', 'patterns', 'zones',
+  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'dash', 'markers', 'patterns', 'zones',
   'center-label', 'theme', 'frame', 'corners', 'height', 'color', 'background', 'no-tooltips', 'static'];
 
 const all = CHARTS.map((c) => c.id);
@@ -66,6 +66,8 @@ const FIELDS = [
   { tab: 'data', kind: 'import', only: all },
   { tab: 'data', key: 'heading', kind: 'text', label: 'Title', placeholder: 'e.g. Monthly sales', only: all },
   { tab: 'data', kind: 'series', only: only('line', 'area', 'bars', 'grouped', 'histogram', 'boxplot', 'combo') },
+  { tab: 'data', key: 'dates', kind: 'text', label: 'Dates', placeholder: 'e.g. 2026-01-01, 2026-01-08, 2026-03-01', only: only('line', 'area'),
+    hint: 'One per point, as YYYY-MM-DD. Points then sit where they fall in time, and the axis picks its own steps.' },
   { tab: 'data', key: 'line', kind: 'text', label: 'Line values', placeholder: 'e.g. 3.1, 3.4, 3.6', only: only('combo'),
     hint: 'Read against the right-hand axis. Separate several lines with |.' },
   { tab: 'data', key: 'line-series', kind: 'text', label: 'Line names', placeholder: 'e.g. Conversion', only: only('combo') },
@@ -119,6 +121,8 @@ const FIELDS = [
   { tab: 'extras', key: 'highlight', kind: 'toggle', invert: 'none', label: 'Highlight the highest bar', only: only('bars') },
   { tab: 'extras', key: 'straight', kind: 'toggle', label: 'Straight lines instead of curves', only: only('spark', 'line', 'area') },
   { tab: 'extras', key: 'zero', kind: 'toggle', label: 'Start the axis at zero', only: only('line', 'scatter') },
+  { tab: 'extras', kind: 'pair', only: only('line', 'area'), fields: [{ key: 'min', kind: 'number', label: 'Axis from', placeholder: 'Auto' }, { key: 'max', kind: 'number', label: 'Axis to', placeholder: 'Auto' }] },
+  { tab: 'extras', key: 'log', kind: 'toggle', label: 'Log scale, for values that grow fast', only: only('line') },
   { tab: 'extras', key: 'trend', kind: 'toggle', label: 'Trend line with its r value', only: only('scatter') },
   { tab: 'extras', kind: 'pair', only: only('histogram'), fields: [{ key: 'bins', kind: 'number', label: 'About how many ranges', placeholder: 'Auto' }, { key: 'bin-width', kind: 'number', label: 'Or each range’s width', placeholder: 'Auto' }] },
   { tab: 'extras', key: 'mark', kind: 'select', label: 'Lines for', only: only('histogram'),
@@ -356,6 +360,11 @@ export function createStudio(root) {
       }
       case 'line': case 'area': case 'bars': case 'grouped': case 'histogram': case 'boxplot': {
         if (ui === 'histogram' || ui === 'boxplot') delete attrs.labels;
+        // A date column spaces line and area points in time.
+        if ((ui === 'line' || ui === 'area') && shortDate) {
+          const days = B.map((r) => parseDate(t.cell(r, L)));
+          if (days.every(Boolean)) { attrs.dates = days.join(','); delete attrs.labels; }
+        }
         const use = N.slice(0, 6);
         attrs.values = use.map((c) => col(c).join(',')).join('|');
         if (use.length > 1) attrs.series = use.map((c, i) => (c.name || `Series ${i + 1}`).replace(/,/g, ' ')).join(',');

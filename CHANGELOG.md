@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.8.0 (2026-11-10)
+
+Line and area axes: real dates, fixed ranges and log scales.
+
+- `dates`: one date per point (`2026-01-05`, or `2026-01-05T14:30`) places points where they fall in time instead of evenly. The axis picks its own step for the span and the width (hours, days, weeks, months or years) and labels it to suit: `14:00`, `5 Jan`, `Jan 2026` then `Feb`, or `2026`. Tooltips and the data table show the full date, and hover columns reach halfway to each neighbour. Without a valid date for every point, the points stay evenly spaced.
+- `min` and `max` fix the value axis. Anything beyond is clipped at the edge, and the tooltip keeps the true value. On area charts, `min` applies only at or below zero, so areas keep their base.
+- `log` (line charts): each power of ten gets the same height, with 2 and 5 between when the range is short. Zero and negative values leave gaps in the line but keep their tooltips. The soft fill under the first line is left out on a log scale.
+- In the Studio: a Dates field, Axis from and to, and a log toggle. Importing a CSV with a date column into a line or area chart now uses it as dates.
+- Size: the line chart file is 12.0 kB (from 9.9 kB) and area 12.3 kB, as dates, fixed ranges and log scales live in the shared line and area code. Their budgets are now 13 kB. The bars-and-line chart moved its line helpers out of that code and is now 10.5 kB (from 11.1 kB). The full bundle is 23.8 kB, budget 26 kB.
+
 ## 1.7.0 (2026-11-10)
 
 Bars and a line on two axes.

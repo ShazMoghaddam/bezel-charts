@@ -248,6 +248,18 @@ with sync_playwright() as p:
     pg.locator('[data-toggle="line-zero"]').locator('xpath=..').click(); pg.wait_for_timeout(300)
     check('line-zero' in code() and '>0.0%</text>' in combo_inner(), 'the right axis can start at zero (one decimal place in this sample)')
 
+    # line axes: an imported date column becomes dates, plus the log scale and a fixed range
+    pg.goto(URL); pg.wait_for_timeout(600)
+    pg.click('[data-sample="daily-running-2026.csv"]'); pg.wait_for_timeout(700)
+    pg.click('[data-ui="line"]'); pg.wait_for_timeout(500)
+    check('dates="2026-' in code() and 'labels=' not in code(), 'a date column spaces the line in time: ' + code()[:160])
+    pg.click('#tab-extras'); pg.wait_for_timeout(200)
+    pg.locator('[data-toggle="log"]').locator('xpath=..').click(); pg.wait_for_timeout(300)
+    check(' log' in code() and svg_ok(), 'the log scale draws')
+    pg.locator('[data-toggle="log"]').locator('xpath=..').click(); pg.wait_for_timeout(300)
+    pg.fill('input[data-key="max"]', '5'); pg.wait_for_timeout(400)
+    check('max="5"' in code() and 'clipPath' in pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML"), 'a fixed max clips the line')
+
     # keyboard: real key presses on the example charts on the home page
     pg.goto(URL); pg.wait_for_timeout(800)
     bars = 'bezel-bars[heading="Commits this week"]'

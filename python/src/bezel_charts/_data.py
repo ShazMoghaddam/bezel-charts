@@ -243,6 +243,24 @@ def _warn_dropped(dropped: int) -> None:
         )
 
 
+def iso_dates(data, x=None):
+    """ISO dates for the points when x (a column) or the index holds real dates, else None.
+
+    Only date and datetime values count, not text that looks like a date. Times are kept when any point has one,
+    as wall-clock time.
+    """
+    if _is_frame(data):
+        seq = _to_list(data[x]) if x is not None else (None if _is_default_index(data.index) else _to_list(data.index))
+    elif _is_series(data):
+        seq = None if _is_default_index(data.index) else _to_list(data.index)
+    else:
+        return None
+    if not seq or not all(hasattr(v, "strftime") and type(v).__name__ != "NaTType" for v in seq):
+        return None
+    timed = any(any(getattr(v, part, 0) for part in ("hour", "minute", "second")) for v in seq)
+    return [v.strftime("%Y-%m-%dT%H:%M:%S" if timed else "%Y-%m-%d") for v in seq]
+
+
 def to_date(v):
     """A datetime.date from a date, datetime, pandas Timestamp or 'YYYY-MM-DD' string."""
     import datetime as dt

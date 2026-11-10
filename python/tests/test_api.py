@@ -46,11 +46,27 @@ def test_dataframe_defaults_to_numeric_columns():
     assert "2 series" in chart.svg
 
 
-def test_datetime_index_becomes_dates_and_x_format():
-    idx = pd.date_range("2026-01-01", periods=3, freq="MS")
+def test_a_datetime_index_puts_points_in_time():
+    # Since 1.8.0, real dates space the points in time and the axis picks its own date steps.
+    idx = pd.DatetimeIndex(["2026-01-01", "2026-01-02", "2026-06-01"])
     s = pd.Series([1, 2, 3], index=idx)
-    assert "2026-01-01" in texts(bc.line(s).svg)
-    assert "Jan 2026" in texts(bc.line(s, x_format="%b %Y").svg)
+    chart = bc.line(s)
+    assert chart.options["dates"] == ["2026-01-01", "2026-01-02", "2026-06-01"]
+    assert "labels" not in chart.options
+    assert "Jan 2026" in texts(chart.svg)
+    assert ids(chart.svg) == ids(bc.to_svg("line", values="1,2,3", dates="2026-01-01,2026-01-02,2026-06-01"))
+    # x_format still names the points, for tooltips, and the axis keeps its date steps.
+    named = bc.line(s, x_format="%d %B")
+    assert named.options["labels"] == ["01 January", "02 January", "01 June"] and "dates" in named.options
+
+
+def test_datetimes_keep_their_times_and_text_dates_stay_labels():
+    times = pd.DataFrame({"t": pd.to_datetime(["2026-11-10 06:00", "2026-11-10 18:00"]), "v": [1, 2]})
+    assert bc.line(times, x="t").options["dates"] == ["2026-11-10T06:00:00", "2026-11-10T18:00:00"]
+    text = pd.DataFrame({"t": ["2026-01-01", "2026-02-01"], "v": [1, 2]})
+    assert "dates" not in bc.line(text, x="t").options
+    assert bc.area(times, x="t").options["dates"] == ["2026-11-10T06:00:00", "2026-11-10T18:00:00"]
+    assert bc.line(times, x="t", dates=None).options["dates"] is None, "an explicit dates= wins"
 
 
 def test_series_numpy_and_list_draw_the_same():
@@ -115,7 +131,8 @@ def test_chart_object(tmp_path):
 
 def test_dates_as_python_objects():
     chart = bc.line(pd.DataFrame({"d": [dt.date(2026, 3, 1), dt.date(2026, 3, 2)], "v": [1, 2]}), x="d")
-    assert "2026-03-01" in texts(chart.svg)
+    assert chart.options["dates"] == ["2026-03-01", "2026-03-02"]
+    assert "1 Mar" in texts(chart.svg)
 
 
 def test_unique_gradient_ids_for_notebooks():
@@ -333,3 +350,9 @@ def test_combo_from_a_dataframe_and_from_lists():
     assert ids(lists.svg) == ids(bc.to_svg("combo", values="182,214,236", line="3.1,3.4,3.6", labels="Jan,Feb,Mar", line_suffix="%"))
     two = bc.combo(df, x="month", bars=["sales"], line=["conversion", "sales"], stacked=True)
     assert two.alt == "1 bar series and 2 lines over 3 points"
+
+
+def test_log_min_and_max_from_python():
+    assert "10k" in texts(bc.line([120, 2_400_000], log=True).svg)
+    assert texts(bc.line([40, 90, 60], min=50, max=80).svg)[-1] != "90"
+    assert "clipPath" in bc.line([40, 90, 60], min=50, max=80).svg

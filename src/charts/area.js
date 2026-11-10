@@ -1,6 +1,8 @@
-import { newId, r2, num, list, series, bool, fmt, pathOf, text, small, palette, emptyState, parseNotes, statOf } from '../core/util.js';
+import { newId, r2, num, has, list, series, bool, fmt, pathOf, text, small, palette, emptyState, parseNotes, statOf } from '../core/util.js';
 import { seriesTable, styleOf, pattern, DASHES, SHAPES, PATTERNS } from '../core/series.js';
-import { xyFrame, xyFinish, lineKey, seriesLine, pointMarks } from '../core/xy.js';
+import { xyFrame, xyFinish } from '../core/xy.js';
+import { lineKey, seriesLine, pointMarks } from '../core/lines.js';
+import { parseDates, hasTimes, pointName, datedTable } from '../core/time.js';
 import { tile } from '../core/tile.js';
 
 /**
@@ -44,16 +46,19 @@ export default function area(o, th) {
   var key = patOf
     ? function (j, x, y) { return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="10" height="10" rx="2" fill="' + (fills[j] || pal[j % pal.length]) + '"/>'; }
     : (dashOf || markOf) && lineKey(pal, dashOf, markOf, bg);
+  var T = parseDates(o, n), timed = T && hasTimes(T), lang = o.lang || 'en-GB';
   var share = function (j, i) { return pos[i] ? Math.round(Math.max(0, val(j, i)) / pos[i] * 100) : 0; };
 
   return tile(o, th, h, function (x0, y0, w, h) {
     if (!n) return emptyState(th, x0, y0, w, h);
     var f = xyFrame(o, th, {
       n: n, names: multi ? S.map(function (_, j) { return nameOf(j); }) : null, pal: pal, key: key, kw: key && (patOf ? 15 : 24),
-      lo: Math.min.apply(null, edges), hi: Math.max.apply(null, edges), zero: true, labels: labels, notes: notes,
+      lo: Math.min.apply(null, edges), hi: Math.max.apply(null, edges), zero: true, labels: labels, notes: notes, dates: T,
+      // Areas are measured from zero, so a min above zero would cut off their base: only max and a min at or below zero apply.
+      min: has(o.min) && +o.min <= 0 ? +o.min : NaN, max: has(o.max) ? +o.max : NaN,
       tick: mode === 'percent' ? function (t) { return fmt(t, { lang: o.lang }, true) + '%'; } : function (t) { return fmt(t, o, true); },
     }, x0, y0, w, h);
-    var s = (defs ? '<defs>' + defs + '</defs>' : '') + f.svg, X = f.X, Y = f.Y;
+    var s = (defs ? '<defs>' + defs + '</defs>' : '') + f.svg + (f.clip ? '<g' + f.clip + '>' : ''), X = f.X, Y = f.Y;
     // One value stretches across the chart, like a line chart does.
     var pts = function (ys) {
       var P = ys.map(function (y, i) { return [X(i), Y(y)]; });
@@ -81,8 +86,8 @@ export default function area(o, th) {
         s += text(X(i), Y(top) - 8, fmt(t, o, true), small(th, 9, 'text-anchor="middle"'));
       });
     }
-    return s + xyFinish(o, th, f, n, function (i) {
-      var tip = labels[i] || '#' + (i + 1);
+    return s + (f.clip ? '</g>' : '') + xyFinish(o, th, f, n, function (i) {
+      var tip = pointName(labels, T, i, lang, timed);
       S.forEach(function (ser, j) {
         if (i < ser.length) tip += '\n' + (multi ? nameOf(j) + ': ' : '') + fmt(ser[i], o) + (mode === 'percent' ? ' (' + share(j, i) + '%)' : '');
       });
@@ -94,4 +99,7 @@ export default function area(o, th) {
   });
 }
 
-area.table = function (o) { var S = series(o.values); return seriesTable(o, S.length > 1 && (o.stacked === 'percent' || bool(o.stacked))); };
+area.table = function (o) {
+  var S = series(o.values), t = seriesTable(o, S.length > 1 && (o.stacked === 'percent' || bool(o.stacked)));
+  return datedTable(t, o, t.rows.length);
+};
