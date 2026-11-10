@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0 (2026-11-10)
+
+Bars and a line on two axes.
+
+- `<bezel-combo>`: bars read against the left axis and one or more lines against the right, for two measures with different units. Several bar series sit side by side, or pile up with `stacked`, with negative parts below zero.
+- The right axis always has the same number of steps as the left, so every gridline reads on both sides. A rule down each side takes its data's colour, and `y-label` and `line-label` add titles above the axes.
+- `line-prefix`, `line-suffix` and `line-decimals` format the right axis and the line values. `line-zero` starts it at zero; otherwise it fits the data.
+- Tooltips give each value in its own units, with the total when stacked, and the data table has a column for every bar series and line. `dash`, `markers` and `patterns` work as on line and bar charts.
+- In the Studio (with the line's values, names, units and axis titles), the Python package as `bc.combo()`, and on its own as `bezel-charts/combo` (11.1 kB).
+- The full bundle's budget is now 24 kB (the bundle is 22.1 kB).
+
 ## 1.6.0 (2026-11-09)
 
 Box plots.

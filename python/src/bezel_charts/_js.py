@@ -322,10 +322,3 @@ def full_date(d, lang) -> str:
     if loc == "en-US":
         return f"{_WEEKDAYS[d.weekday()]}, {month} {d.day}, {d.year}"
     return f"{_WEEKDAYS[d.weekday()]}, {d.day} {month} {d.year}"
-
-
-def js_to_fixed(x: float, digits: int) -> float:
-    """Number(x.toFixed(digits)): rounds the exact binary value, with ties going away from zero as JavaScript does."""
-    from decimal import ROUND_HALF_UP, Decimal
-
-    return float(Decimal(x).quantize(Decimal(1).scaleb(-digits), rounding=ROUND_HALF_UP))

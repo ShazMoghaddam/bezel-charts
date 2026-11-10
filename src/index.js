@@ -8,6 +8,7 @@ import './entries/spark.js';
 import './entries/line.js';
 import './entries/area.js';
 import './entries/bars.js';
+import './entries/combo.js';
 import './entries/histogram.js';
 import './entries/boxplot.js';
 import './entries/scatter.js';
@@ -20,6 +21,6 @@ import { NAMES, render, toSVG } from './render.js';
 import { THEMES } from './core/themes.js';
 import { BezelChart } from './element.js';
 
-export const version = '1.6.0';
+export const version = '1.7.0';
 export const types = NAMES.slice();
 export { render, toSVG, BezelChart, THEMES as themes };

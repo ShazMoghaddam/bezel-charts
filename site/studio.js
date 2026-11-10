@@ -18,6 +18,7 @@ const CHARTS = [
   { id: 'line', tag: 'line', name: 'Line', icon: 'M3 17l5-5 4 3 8-8M3 20h18' },
   { id: 'area', tag: 'area', name: 'Area', icon: 'M3 15l5-5 4 3 8-8v15H3z' },
   { id: 'bars', tag: 'bars', name: 'Bars', icon: 'M6 20v-8M12 20V5M18 20v-11' },
+  { id: 'combo', tag: 'combo', name: 'Bars and line', icon: 'M5 20v-7M10 20V9M15 20v-5M20 20V8M3 11l6-4 5 3 7-5' },
   { id: 'grouped', tag: 'bars', name: 'Grouped bars', icon: 'M4 20v-8M8 20V8M14 20V9M18 20v-6' },
   { id: 'boxplot', tag: 'boxplot', name: 'Box plot', icon: 'M6 4v4M6 16v4M3 8h6v8H3zM3 12h6M16 6v3M16 15v4M13 9h6v6h-6zM13 11h6' },
   { id: 'histogram', tag: 'histogram', name: 'Histogram', icon: 'M3 20v-5h4v5M7 20V9h4v11M11 20V5h4v15M15 20v-8h4v8' },
@@ -29,12 +30,13 @@ const CHARTS = [
   { id: 'heatmap', tag: 'heatmap', name: 'Heatmap', icon: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4zM4 16h4v4H4z' },
 ];
 const byId = Object.fromEntries(CHARTS.map((c) => [c.id, c]));
-const WIDE = new Set(['line', 'area', 'grouped', 'histogram', 'boxplot', 'scatter', 'heatmap']);
+const WIDE = new Set(['line', 'area', 'combo', 'grouped', 'histogram', 'boxplot', 'scatter', 'heatmap']);
 
 const PRESETS = {
   spark: { heading: 'London · 7 day high', values: '17,16,15,15,13,12,14', labels: 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', suffix: '°C', 'delta-label': 'since Monday' },
   line: { heading: 'Site visitors', values: '420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640', series: '2026,2025', labels: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec', notes: 'Jun:Launch day', compact: '' },
   area: { heading: 'Energy mix · GWh', values: '120,130,125,140,150,160|80,85,90,88,95,100|40,45,60,70,85,110', series: 'Gas,Nuclear,Wind', labels: '2021,2022,2023,2024,2025,2026', stacked: 'true' },
+  combo: { heading: 'Sales and conversion', values: '182,214,236,268,251,290,312,298,340,365,392,420', line: '3.1,3.3,3.2,3.6,3.4,3.8,4.0,3.9,4.2,4.4,4.3,4.7', series: 'Sales', 'line-series': 'Conversion', labels: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec', prefix: '£', suffix: 'k', 'line-suffix': '%', 'line-decimals': '1' },
   boxplot: { heading: 'Salaries by team · £k', values: '60,66,60,59,55,60,71,65,70,64,65,63,49,69,66,66,48,48,55,58,64,62,66,57,95|50,50,44,58,51,55,44,44,46,47,52,49,45,42,45,55,43,49,51,39,22|55,68,35,52,54,47,60,54,40,63,62,64,69,59,56,42,61,49,50,42,45,50|47,31,34,42,48,44,32,28,43,37,35,46,47,42,42,43,49,44,70', series: 'Engineering,Marketing,Product,Support', prefix: '£', suffix: 'k', mark: 'mean' },
   histogram: { heading: 'Commute times · minutes', values: '21,38,45,28,19,33,39,46,21,20,42,39,51,45,33,31,62,31,25,21,35,36,30,33,37,42,46,36,14,42,18,32,18,34,25,36,70,33,43,19,31,41,33,38,35,23,40,25,55,28,42,34,44,27,45,33,48,41,36,25,42,39,52,30,40,40,37,36,36,27,23,30,40,51,45,46,43,42,36,42', mark: 'median' },
   bars: { heading: 'Commits this week', values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '' },
@@ -46,11 +48,11 @@ const PRESETS = {
   progress: { heading: 'Sprint 14', values: '18,6,3', labels: 'Done,In review,Blocked', max: '34' },
   heatmap: { heading: 'Contributions', suffix: ' commits' },
 };
-const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], histogram: [120, 360, 190], boxplot: [120, 360, 200], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
+const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], histogram: [120, 360, 190], combo: [120, 360, 200], boxplot: [120, 360, 200], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
 const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
-  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'dash', 'markers', 'patterns', 'zones',
+  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dash', 'markers', 'patterns', 'zones',
   'center-label', 'theme', 'frame', 'corners', 'height', 'color', 'background', 'no-tooltips', 'static'];
 
 const all = CHARTS.map((c) => c.id);
@@ -63,14 +65,17 @@ const effectiveStat = (ui, a) => a.stat || statDefault(ui);
 const FIELDS = [
   { tab: 'data', kind: 'import', only: all },
   { tab: 'data', key: 'heading', kind: 'text', label: 'Title', placeholder: 'e.g. Monthly sales', only: all },
-  { tab: 'data', kind: 'series', only: only('line', 'area', 'bars', 'grouped', 'histogram', 'boxplot') },
+  { tab: 'data', kind: 'series', only: only('line', 'area', 'bars', 'grouped', 'histogram', 'boxplot', 'combo') },
+  { tab: 'data', key: 'line', kind: 'text', label: 'Line values', placeholder: 'e.g. 3.1, 3.4, 3.6', only: only('combo'),
+    hint: 'Read against the right-hand axis. Separate several lines with |.' },
+  { tab: 'data', key: 'line-series', kind: 'text', label: 'Line names', placeholder: 'e.g. Conversion', only: only('combo') },
   { tab: 'data', kind: 'groups', only: only('scatter') },
   { tab: 'data', key: 'values', kind: 'numbers', only: only('spark', 'ring', 'donut', 'progress', 'heatmap'),
     label: { spark: 'Values', ring: 'Values, one ring each', donut: 'Values, one slice each', progress: 'Values, one segment each', heatmap: 'Values, one per day' },
     hint: 'Separate with commas, spaces or new lines. You can paste two columns from a spreadsheet to fill the labels as well.' },
   { tab: 'data', key: 'values', kind: 'number', label: 'Reading', only: only('gauge') },
-  { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'area', 'bars', 'grouped', 'ring', 'donut', 'progress'),
-    hint: { spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', area: 'One per point, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
+  { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'area', 'bars', 'grouped', 'combo', 'ring', 'donut', 'progress'),
+    hint: { spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', area: 'One per point, along the bottom.', combo: 'One per column, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
   { tab: 'data', key: 'labels', kind: 'text', label: 'Caption', placeholder: 'e.g. CPU', only: only('gauge') },
   { tab: 'data', key: 'labels', kind: 'list', label: 'Point names (optional)', hint: 'Shown in tooltips, in the same order as the points.', only: only('scatter') },
   { tab: 'data', kind: 'pair', only: only('gauge'), fields: [{ key: 'min', kind: 'number', label: 'Lowest', placeholder: '0' }, { key: 'max', kind: 'number', label: 'Highest', placeholder: '100' }] },
@@ -85,6 +90,9 @@ const FIELDS = [
   { tab: 'style', key: 'height', kind: 'range', label: 'Chart height', only: Object.keys(HEIGHTS), when: (a) => !('horizontal' in a) },
   { tab: 'style', kind: 'colours', only: all },
   { tab: 'style', kind: 'pair', only: all, fields: [{ key: 'prefix', kind: 'text', label: 'Before numbers', placeholder: '£' }, { key: 'suffix', kind: 'text', label: 'After numbers', placeholder: '%' }] },
+  { tab: 'style', kind: 'pair', only: only('combo'), fields: [{ key: 'line-prefix', kind: 'text', label: 'Before line numbers', placeholder: '$' }, { key: 'line-suffix', kind: 'text', label: 'After line numbers', placeholder: '%' }] },
+  { tab: 'style', key: 'line-decimals', kind: 'select', label: 'Line decimal places', options: [['', 'Automatic'], ['0', '0'], ['1', '1'], ['2', '2'], ['3', '3']], only: only('combo') },
+  { tab: 'style', kind: 'pair', only: only('combo'), fields: [{ key: 'y-label', kind: 'text', label: 'Left axis title', placeholder: 'e.g. Sales' }, { key: 'line-label', kind: 'text', label: 'Right axis title', placeholder: 'e.g. Conversion' }] },
   { tab: 'style', key: 'decimals', kind: 'select', label: 'Decimal places', options: [['', 'Automatic'], ['0', '0'], ['1', '1'], ['2', '2'], ['3', '3']], only: all },
   { tab: 'style', key: 'compact', kind: 'toggle', label: 'Short big numbers (12.5k)', only: all },
   { tab: 'style', key: 'lang', kind: 'select', label: 'Language for numbers and dates', only: all,
@@ -103,6 +111,8 @@ const FIELDS = [
   { tab: 'extras', key: 'horizontal', kind: 'toggle', label: 'Horizontal bars', only: only('bars', 'grouped') },
   { tab: 'extras', key: 'horizontal', kind: 'toggle', label: 'Lay the boxes on their side', only: only('boxplot') },
   { tab: 'extras', key: 'stacked', kind: 'toggle', label: 'Stack the series in one bar', only: only('grouped') },
+  { tab: 'extras', key: 'stacked', kind: 'toggle', label: 'Stack the bars', only: only('combo'), when: (a) => String(a.values || '').includes('|') },
+  { tab: 'extras', key: 'line-zero', kind: 'toggle', label: 'Start the right axis at zero', only: only('combo') },
   { tab: 'extras', key: 'stacked', kind: 'seg', label: 'Several series', options: [['', 'Overlap'], ['true', 'Stack'], ['percent', 'Share of 100%']], only: only('area'),
     when: (a) => String(a.values || '').includes('|'), hint: 'Stack piles the series so the top edge is the total. Share of 100% shows how the total splits.' },
   { tab: 'extras', key: 'angle-labels', kind: 'toggle', label: 'Slant labels so every one fits', only: only('bars', 'grouped'), when: (a) => !('horizontal' in a) },
@@ -118,9 +128,9 @@ const FIELDS = [
     hint: 'Typical values stop within one and a half box heights and show anything further out as a dot.' },
   { tab: 'extras', key: 'mark', kind: 'toggle', value: 'mean', label: 'A diamond at the mean', only: only('boxplot') },
   // Ways to tell series apart without relying on colour. Each only shows once there is more than one series to tell apart.
-  { tab: 'extras', key: 'dash', kind: 'toggle', label: 'A different dash for each line', only: only('line', 'area'), when: (a) => String(a.values || '').includes('|') },
-  { tab: 'extras', key: 'markers', kind: 'toggle', label: 'Shapes on the points', only: only('line', 'area', 'scatter'), when: (a, ui) => ui !== 'scatter' || String(a.x || '').includes('|') },
-  { tab: 'extras', key: 'patterns', kind: 'toggle', label: 'A different pattern for each series', only: only('grouped', 'area', 'histogram'), when: (a, ui) => ui === 'grouped' || String(a.values || '').includes('|') },
+  { tab: 'extras', key: 'dash', kind: 'toggle', label: 'A different dash for each line', only: only('line', 'area', 'combo'), when: (a, ui) => String((ui === 'combo' ? a.line : a.values) || '').includes('|') },
+  { tab: 'extras', key: 'markers', kind: 'toggle', label: 'Shapes on the points', only: only('line', 'area', 'combo', 'scatter'), when: (a, ui) => ui !== 'scatter' || String(a.x || '').includes('|') },
+  { tab: 'extras', key: 'patterns', kind: 'toggle', label: 'A different pattern for each series', only: only('grouped', 'area', 'histogram', 'combo'), when: (a, ui) => ui === 'grouped' || String(a.values || '').includes('|') },
   { tab: 'extras', key: 'no-tooltips', kind: 'toggle', invert: true, label: 'Exact values on hover and with the keyboard', only: all },
   { tab: 'extras', key: 'static', kind: 'toggle', invert: true, label: 'Animate when it first appears', only: all },
 ];
@@ -336,6 +346,14 @@ export function createStudio(root) {
     if (labels.length) attrs.labels = labels.join(',');
 
     switch (ui) {
+      case 'combo': {
+        if (N.length < 2) return '!Bars and a line need two number columns: one for the bars and one for the line.';
+        attrs.values = col(N[0]).join(',');
+        attrs.line = col(N[1]).join(',');
+        attrs.series = (N[0].name || 'Bars').replace(/,/g, ' ');
+        attrs['line-series'] = (N[1].name || 'Line').replace(/,/g, ' ');
+        return `${rows}.${from} bars from ${name(N[0])}, the line from ${name(N[1])}.`;
+      }
       case 'line': case 'area': case 'bars': case 'grouped': case 'histogram': case 'boxplot': {
         if (ui === 'histogram' || ui === 'boxplot') delete attrs.labels;
         const use = N.slice(0, 6);
@@ -550,6 +568,10 @@ export function createStudio(root) {
     const labels = listOf(attrs.labels);
     const valuesCount = tokens(attrs.values).length;
     switch (ui) {
+      case 'combo': {
+        const rows = seriesRows(), lines = String(attrs.line || '').split('|').filter((v) => v.trim()), names = listOf(attrs['line-series']);
+        return rows.map((r, i) => r.name || (rows.length > 1 ? `Bars ${i + 1}` : 'Bars')).concat(lines.map((_, i) => names[i] || (lines.length > 1 ? `Line ${i + 1}` : 'Line')));
+      }
       case 'line': case 'area': case 'bars': case 'grouped': case 'histogram': case 'boxplot': {
         const rows = seriesRows();
         return rows.length > 1 ? rows.map((r, i) => r.name || `Series ${i + 1}`) : [ui === 'line' ? 'Line' : ui === 'area' ? 'Area' : 'Bars'];

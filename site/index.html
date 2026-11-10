@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bezel Charts</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Thirteen polished chart tiles as zero-dependency web components, with static SVG export for READMEs, Notion and slides.">
+<meta name="description" content="Fourteen polished chart tiles as zero-dependency web components, with static SVG export for READMEs, Notion and slides.">
 <link rel="canonical" href="https://shazmoghaddam.github.io/bezel-charts/site/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Bezel Charts">
 <meta property="og:title" content="Bezel Charts: charts that look finished the moment you add them">
-<meta property="og:description" content="Thirteen polished chart tiles as free, open-source web components. Build one in the Studio, copy one line of HTML, or save it as an SVG for your README.">
+<meta property="og:description" content="Fourteen polished chart tiles as free, open-source web components. Build one in the Studio, copy one line of HTML, or save it as an SVG for your README.">
 <meta property="og:url" content="https://shazmoghaddam.github.io/bezel-charts/site/">
 <meta property="og:image" content="https://shazmoghaddam.github.io/bezel-charts/docs/social-preview.png">
 <meta property="og:image:width" content="2560">
@@ -47,12 +47,12 @@
 <main id="top">
   <section class="hero in">
     <h1>Charts that look <em>finished</em> the moment you add them.</h1>
-    <p class="lede">Thirteen polished chart tiles as web components. Write one HTML tag, pass your numbers, done. Every chart also exports as a static SVG for READMEs, Notion and slides, where JavaScript can't run.</p>
+    <p class="lede">Fourteen polished chart tiles as web components. Write one HTML tag, pass your numbers, done. Every chart also exports as a static SVG for READMEs, Notion and slides, where JavaScript can't run.</p>
   </section>
 
   <section class="in" id="charts" aria-labelledby="charts-h">
     <div class="toolbar">
-      <h2 id="charts-h">Thirteen chart types · sample data</h2>
+      <h2 id="charts-h">Fourteen chart types · sample data</h2>
       <div class="seg" role="group" aria-label="Tile theme">
         <button type="button" data-theme-set="auto" aria-pressed="true">Auto</button>
         <button type="button" data-theme-set="dark" aria-pressed="false">Dark</button>
@@ -74,6 +74,11 @@
       <article class="card wide" data-card="area">
         <bezel-area heading="Energy mix · GWh" values="120,130,125,140,150,160|80,85,90,88,95,100|40,45,60,70,85,110" series="Gas,Nuclear,Wind" labels="2021,2022,2023,2024,2025,2026" stacked></bezel-area>
         <div class="meta"><div><b>Area</b><span>Totals over time and what makes them up, stacked or as shares of 100%.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card wide" data-card="combo">
+        <bezel-combo heading="Sales and conversion" values="182,214,236,268,251,290,312,298,340,365,392,420" line="3.1,3.3,3.2,3.6,3.4,3.8,4.0,3.9,4.2,4.4,4.3,4.7" series="Sales" line-series="Conversion" labels="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec" prefix="£" suffix="k" line-suffix="%" line-decimals="1"></bezel-combo>
+        <div class="meta"><div><b>Bars and line</b><span>Two measures with different units, with gridlines that read on both axes.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
       <article class="card wide" data-card="histogram">
@@ -201,14 +206,14 @@
           <svg viewBox="0 0 32 32" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="9" stroke="currentColor" stroke-width="2.4"/><path d="M9 21.5V17M14 21.5v-9M19 21.5V15M24 21.5V10" stroke="currentColor" stroke-width="2.6"/></svg>
           Bezel Charts
         </a>
-        <p class="foot__eyebrow">Open-source web components · v1.6</p>
-        <p class="foot__lede">Thirteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Add one tag to any page, or save any chart as an image for a README, Notion page or slide.</p>
+        <p class="foot__eyebrow">Open-source web components · v1.7</p>
+        <p class="foot__lede">Fourteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Add one tag to any page, or save any chart as an image for a README, Notion page or slide.</p>
       </div>
 
       <dl class="foot__specs">
-        <div><dt>Chart types</dt><dd>13</dd></div>
+        <div><dt>Chart types</dt><dd>14</dd></div>
         <div><dt>Dependencies</dt><dd>0</dd></div>
-        <div><dt>Gzipped</dt><dd>20 kB</dd></div>
+        <div><dt>Gzipped</dt><dd>22 kB</dd></div>
       </dl>
 
       <nav class="foot__links" aria-label="Footer">

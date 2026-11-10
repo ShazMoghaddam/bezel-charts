@@ -59,7 +59,7 @@ Then in your README, with `chart.alt` as the alt text:
 ![Monthly revenue: latest £79k. £42k, £48k, £45k, £53k, £61k, £58k, £66k, £72k, £79k](docs/revenue.svg)
 ```
 
-## The thirteen charts
+## The fourteen charts
 
 | Function | What it draws |
 | --- | --- |
@@ -67,6 +67,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.line(data)` | A line chart with one or more series, a value axis, labels and a legend. |
 | `bc.area(data)` | Filled areas over time, overlapping, stacked (`stacked=True`) or as shares of 100% (`stacked="percent"`). |
 | `bc.bars(data)` | Bars, vertical or horizontal. Several columns or series become grouped bars side by side. |
+| `bc.combo(df, x=, bars=, line=)` | Bars on the left axis and lines on the right, for two measures with different units. |
 | `bc.histogram(data)` | How raw values spread out: counts per range, with round edges, mean and median lines and shares. |
 | `bc.boxplot(data)` | Box plots comparing spreads, with quartiles matching pandas, outliers and an optional mean. |
 | `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
@@ -76,7 +77,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
 | `bc.progress(data)` | A progress bar, single or stacked with a legend. |
 
-Grouped bars are `bc.bars()` with several series, which makes thirteen. They are the same thirteen as the web components, and `bc.types` lists them.
+Grouped bars are `bc.bars()` with several series, which makes fourteen. They are the same fourteen as the web components, and `bc.types` lists them.
 
 ### Area
 
@@ -87,6 +88,15 @@ bc.area(energy, x="year", stacked="percent", heading="Share of supply")
 ```
 
 The value axis always starts at zero, and the tooltip shows each series, the total and, in a percent stack, each share.
+
+### Bars and a line
+
+```python
+bc.combo(df, x="month", bars="sales", line="conversion", prefix="£", line_suffix="%", heading="Sales and conversion")
+bc.combo(bars=[182, 214, 236], line=[3.1, 3.4, 3.6], labels=["Jan", "Feb", "Mar"])
+```
+
+`bars=` and `line=` can each be a list of columns. `stacked=True` piles several bar series up, and `line_prefix`, `line_suffix` and `line_decimals` format the right axis.
 
 ### Histogram
 

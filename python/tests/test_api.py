@@ -240,7 +240,7 @@ def test_donut_from_a_dataframe():
 
 
 def test_all_types_match_the_javascript_list():
-    assert bc.types == ["spark", "line", "area", "bars", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
+    assert bc.types == ["spark", "line", "area", "bars", "combo", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
     for t in bc.types:
         assert bc.to_svg(t).startswith("<svg")
 
@@ -322,3 +322,14 @@ def test_boxplot_from_columns_a_dict_and_a_long_frame():
     long = pd.DataFrame({"team": ["North"] * 3 + ["South"] * 3, "pay": [1, 2, 3, 4, 5, 6]})
     assert ids(bc.boxplot(long, y="pay", by="team").svg) == expected
     assert bc.boxplot(long, y="pay", by="team", heading="Pay").alt == "Pay: 2 groups, medians from 2 to 5"
+
+
+def test_combo_from_a_dataframe_and_from_lists():
+    df = pd.DataFrame({"month": ["Jan", "Feb", "Mar"], "sales": [182, 214, 236], "conversion": [3.1, 3.4, 3.6]})
+    expected = ids(bc.to_svg("combo", values="182,214,236", line="3.1,3.4,3.6", series="sales", line_series="conversion",
+                             labels="Jan,Feb,Mar", line_suffix="%"))
+    assert ids(bc.combo(df, x="month", bars="sales", line="conversion", line_suffix="%").svg) == expected
+    lists = bc.combo(bars=[182, 214, 236], line=[3.1, 3.4, 3.6], labels=["Jan", "Feb", "Mar"], line_suffix="%")
+    assert ids(lists.svg) == ids(bc.to_svg("combo", values="182,214,236", line="3.1,3.4,3.6", labels="Jan,Feb,Mar", line_suffix="%"))
+    two = bc.combo(df, x="month", bars=["sales"], line=["conversion", "sales"], stacked=True)
+    assert two.alt == "1 bar series and 2 lines over 3 points"

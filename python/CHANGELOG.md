@@ -1,5 +1,10 @@
 # Changelog (Python package)
 
+## 1.7.0 (2026-11-10)
+
+- `bc.combo()`: bars and lines on two axes, from a DataFrame with `x=`, `bars=` and `line=`, or from lists. Single columns keep their names for the legend. Matches `<bezel-combo>` byte for byte, with 12 parity cases.
+- The histogram now uses the package's existing `toFixed` helper rather than a second copy of it.
+
 ## 1.6.0 (2026-11-09)
 
 - `bc.boxplot()`: box plots from a list, Series, dict, DataFrame columns, or a long DataFrame with `y=` and `by=`. Quartiles match pandas. `whiskers="range"`, `mark="mean"` and `horizontal=True`. Matches `<bezel-boxplot>` byte for byte, with 13 parity cases.

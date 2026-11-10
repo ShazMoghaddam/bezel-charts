@@ -9,7 +9,7 @@
 [![Python](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-D99A0E)](LICENSE)
 
-Bezel Charts is a set of free, open-source web components: thirteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
+Bezel Charts is a set of free, open-source web components: fourteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
 ![Bezel Charts: a sparkline, rings, a gauge, a line chart with a launch day note, a donut, a bar chart with a target, a scatter plot with a trend line and a year-long activity heatmap, in light and dark tiles](docs/bezel-charts.png)
 
@@ -20,7 +20,7 @@ Bezel Charts is a set of free, open-source web components: thirteen chart tiles 
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
 - **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, grouped series, goal lines and notes on key points.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 20 kB gzipped for all thirteen charts, or 7 to 10 kB for a page that loads just one. No dependencies and no build step.
+- **Light.** About 22 kB gzipped for all fourteen charts, or 7 to 11 kB for a page that loads just one. No dependencies and no build step.
 - **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
@@ -49,7 +49,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.6.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.7.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -85,8 +85,9 @@ import { toSVG } from 'bezel-charts/line'; // render and toSVG work for every ch
 | --- | --- |
 | One sparkline, ring, donut, gauge, progress bar or heatmap | 7.2 to 7.4 kB |
 | One line, area, histogram, box plot, scatter or bar chart | 9.4 to 10.4 kB |
+| One bars-and-line combo | 11.1 kB |
 | A line and a bar chart | 12.6 kB |
-| Every chart: the full bundle | 20.4 kB |
+| Every chart: the full bundle | 22.1 kB |
 
 Once a page needs four or five different charts, load the full bundle instead. `<bezel-chart type="…">` works with whichever charts are loaded, and tells you which file to add if its type isn't one of them. The classic `iife.js` script always has every chart, because a classic script can't load the shared file.
 
@@ -218,6 +219,30 @@ Stacked bars put positive parts above zero and negative parts below it. The tool
 ```
 
 Without `angle-labels`, labels that don't fit take turns, so only every few are shown. With it, they lean at 40 degrees and every one shows, shortened after 24 characters. The tooltip always has the full label.
+
+### `<bezel-combo>`
+
+Bars and lines with different units on one chart, such as sales in pounds as bars and conversion in percent as a line. Bars read against the left axis and lines against the right.
+
+```html
+<bezel-combo heading="Sales and conversion" values="182,214,236,268" line="3.1,3.4,3.6,4.2"
+  series="Sales" line-series="Conversion" labels="Q1,Q2,Q3,Q4" prefix="£" suffix="k" line-suffix="%"></bezel-combo>
+```
+
+| Attribute       | Values                                                        | Default |
+| --------------- | ------------------------------------------------------------- | ------- |
+| `values`        | bar numbers, series separated by `\|`                         |         |
+| `line`          | line numbers, lines separated by `\|`                         |         |
+| `series`, `line-series` | names for the bars and the lines                       |         |
+| `labels`        | one per column, along the bottom                              |         |
+| `stacked`       | with several bar series, pile them up                         | side by side |
+| `line-prefix`, `line-suffix`, `line-decimals` | number formatting for the right axis and the line values | |
+| `y-label`, `line-label` | titles above the left and right axes                  |         |
+| `line-zero`     | boolean, start the right axis at zero                         | off     |
+| `dash`, `markers`, `patterns` | styles for the lines and the bars               | off     |
+| `height`        | chart height in px                                            | `200`   |
+
+Two scales on one chart are easy to misread, so the right axis always has the same number of steps as the left: every gridline reads on both sides. A rule down each side takes its data's colour, so it's clear which axis belongs to what. The bar axis always includes zero; the line axis fits its data unless you add `line-zero`. The tooltip gives every value in its own units, with the total when stacked.
 
 ### `<bezel-histogram>`
 
@@ -488,7 +513,7 @@ bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
 bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
 ```
 
-All thirteen charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
+All fourteen charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
 
 ## Frameworks
 
@@ -533,7 +558,7 @@ docs/          the README image and social preview, with the pages that render t
 test/          node:test suites, plus a Playwright browser test
 ```
 
-Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The full bundle has a 22 kB gzip budget and each chart file its own, checked in CI by `npm run size`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The full bundle has a 24 kB gzip budget and each chart file its own, checked in CI by `npm run size`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 

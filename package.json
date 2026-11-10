@@ -1,7 +1,7 @@
 {
   "name": "bezel-charts",
-  "version": "1.6.0",
-  "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, areas, bars, histograms, box plots, rings, donuts, gauges, progress bars and heatmaps, with one-click static SVG export for READMEs.",
+  "version": "1.7.0",
+  "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, areas, bars, bar and line combos, histograms, box plots, rings, donuts, gauges, progress bars and heatmaps, with one-click static SVG export for READMEs.",
   "type": "module",
   "main": "dist/bezel-charts.js",
   "module": "dist/bezel-charts.js",
@@ -11,6 +11,7 @@
     "./line": "./dist/charts/line.js",
     "./area": "./dist/charts/area.js",
     "./bars": "./dist/charts/bars.js",
+    "./combo": "./dist/charts/combo.js",
     "./histogram": "./dist/charts/histogram.js",
     "./boxplot": "./dist/charts/boxplot.js",
     "./scatter": "./dist/charts/scatter.js",
@@ -44,7 +45,9 @@
     "readme",
     "data-visualization",
     "histogram",
-    "boxplot"
+    "boxplot",
+    "combo-chart",
+    "dual-axis"
   ],
   "author": "Shaz Moghaddam (https://shazmoghaddam.github.io)",
   "license": "MIT",
