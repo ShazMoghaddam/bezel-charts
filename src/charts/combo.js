@@ -1,6 +1,6 @@
 import { newId, r2, num, has, list, series, bool, fmt, tw, text, small, hit, anim, palette, emptyState, pathOf } from '../core/util.js';
 import { niceScale, legend, styleOf, pattern, marker, DASHES, SHAPES, PATTERNS } from '../core/series.js';
-import { seriesLine, pointMarks } from '../core/xy.js';
+import { seriesLine, pointMarks } from '../core/lines.js';
 import { tile } from '../core/tile.js';
 
 /**

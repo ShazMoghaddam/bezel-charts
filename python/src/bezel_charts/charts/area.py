@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+import math
+
 from .._js import js_round
 from .._series import line_key, point_marks, series_line, xy_finish, xy_frame
+from .._time import has_times, parse_dates, point_name
 from .._tile import tile
 from .._util import (
-    DASHES, PATTERNS, SHAPES, Opts, R, bool_, empty_state, fmt, jmax, jmin, lst, new_id, num, palette, parse_notes,
-    path_of, pattern, series, small, stat_of, style_of, text, to_string, truthy,
+    DASHES, PATTERNS, SHAPES, Opts, R, bool_, empty_state, fmt, has, jmax, jmin, lst, new_id, num, palette, parse_notes,
+    path_of, pattern, series, small, stat_of, style_of, text, to_number, to_string, truthy,
 )
 
 
@@ -75,6 +78,10 @@ def area(o, th) -> str:
 
     key = pattern_key if pat_of else line_key(pal, dash_of, mark_of, bg) if dash_of or mark_of else None
 
+    T = parse_dates(o, n)
+    timed = bool(T) and has_times(T)
+    lang = o.lang if has(o.lang) else "en-GB"
+
     def share(j, i):
         return js_round(jmax(0, val(j, i)) / pos[i] * 100) if pos[i] else 0
 
@@ -85,10 +92,14 @@ def area(o, th) -> str:
         f = xy_frame(o, th, {
             "n": n, "names": [name_of(j) for j in range(k)] if multi else None, "pal": pal, "key": key,
             "kw": (15 if pat_of else 24) if key else None, "lo": jmin(*edges), "hi": jmax(*edges), "zero": True,
-            "labels": labels, "notes": notes,
+            "labels": labels, "notes": notes, "dates": T,
+            # Areas are measured from zero, so a min above zero would cut off their base: only max and a min at or
+            # below zero apply.
+            "min": to_number(o.min) if has(o.min) and to_number(o.min) <= 0 else math.nan,
+            "max": to_number(o.max) if has(o.max) else math.nan,
             "tick": (lambda t: fmt(t, plain, True) + "%") if mode == "percent" else (lambda t: fmt(t, o, True)),
         }, x0, y0, w, h)
-        s = ("<defs>" + defs + "</defs>" if defs else "") + f.svg
+        s = ("<defs>" + defs + "</defs>" if defs else "") + f.svg + ("<g" + f.clip + ">" if f.clip else "")
         X, Y = f.X, f.Y
 
         # One value stretches across the chart, like a line chart does.
@@ -130,8 +141,11 @@ def area(o, th) -> str:
                 top_v = jmax(*[hs[i] for hs in highs], 0)
                 s += text(X(i), Y(top_v) - 8, fmt(t, o, True), small(th, 9, 'text-anchor="middle"'))
 
+        if f.clip:
+            s += "</g>"
+
         def tip(i):
-            t = labels[i] if i < len(labels) and labels[i] else "#" + str(i + 1)
+            t = point_name(labels, T, i, lang, timed)
             for j, ser in enumerate(S):
                 if i < len(ser):
                     t += "\n" + (name_of(j) + ": " if multi else "") + fmt(ser[i], o) + (" (" + R(share(j, i)) + "%)" if mode == "percent" else "")

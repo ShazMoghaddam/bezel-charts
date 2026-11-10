@@ -1,5 +1,10 @@
 # Changelog (Python package)
 
+## 1.8.0 (2026-11-10)
+
+- **Changed:** when `x=` or the index holds real dates (a `datetime64` column, `datetime.date` or `Timestamp` values), `bc.line()` and `bc.area()` now space the points in time, with date steps on the axis and full dates in tooltips. Before, the dates became evenly spaced labels. Charts of irregular dates will look different, and correct. `x_format` still names the points; pass `dates=None` to keep the old even spacing. Text that only looks like a date is unchanged.
+- `min=`, `max=` and `log=True`, matching the web components, with 26 parity cases covering dates, ranges and log scales.
+
 ## 1.7.0 (2026-11-10)
 
 - `bc.combo()`: bars and lines on two axes, from a DataFrame with `x=`, `bars=` and `line=`, or from lists. Single columns keep their names for the legend. Matches `<bezel-combo>` byte for byte, with 12 parity cases.
