@@ -14,6 +14,8 @@ const CASES = {
     { values: '4' }, { values: '-10,5,-3,8', straight: '' }, { values: '1,2,3', labels: 'a,b,c', zero: '', stat: 'last' }],
   area: [{}, { values: '5' }, { values: '1,3,2|2,2,4', series: 'A,B', labels: 'a,b,c', notes: 'b:Mid', goal: 3 }, { values: '1,3,2|2,2,4', stacked: '', 'show-values': '' },
     { values: '1,3,2|2,2,4', stacked: 'percent', patterns: '' }, { values: '-1,3,-2|2,-2,4', stacked: '', straight: '' }, { values: '0,0,0|0,0,0', stacked: 'percent' }],
+  combo: [{}, { values: '5' }, { values: '1,2,3', line: '4,5,6' }, { values: '1,2|3,4', line: '10,20', stacked: '' }, { values: '-1,2', line: '5,5', 'line-zero': '' },
+    { line: '1,2,3' }, { values: '1,2', line: '0.1,0.2|0.3,0.4', 'y-label': 'Sales', 'line-label': 'Rate', dash: '', markers: '', patterns: '' }],
   histogram: [{}, { values: '5' }, { values: '5,5,5' }, { values: '1,2,2,3,3,3,4,4,5', mark: 'mean,median' }, { values: '1,2,3|2,3,4,5', series: 'A,B', percent: '', patterns: '' },
     { values: '0.1,0.2,0.3,0.4', 'bin-width': '0.1' }, { values: '-5,-2.5,0,2.5,5', bins: 4 }, { values: '1,2,3', 'bin-width': '0.0000001' }],
   boxplot: [{}, { values: '5' }, { values: '5,5,5' }, { values: '1,2,3,4,100', mark: 'mean' }, { values: '1,2,3|4,5,6', series: 'A,B', horizontal: '' },
@@ -400,4 +402,44 @@ test('box plots name each group, unless there is only one without a name', () =>
 test('the box plot summary gives the medians', () => {
   assert.match(render('boxplot', { values: '1,2,3|4,5,6', heading: 'Pay' }), /aria-label="Pay: 2 groups, medians from 2 to 5"/);
   assert.match(render('boxplot', { values: '1,2,3,4' }), /aria-label="median 2.5, middle half 1.75 to 3.25"/);
+});
+
+const ticksOf = (svg, anchor) => [...svg.matchAll(new RegExp(`text-anchor="${anchor}"[^>]*>([^<]*)<`, 'g'))].map((m) => m[1]);
+
+test('combo lines get a right axis with the same number of steps as the bars', () => {
+  const svg = render('combo', { values: '182,214,236', line: '3.1,3.6,4.7', 'line-suffix': '%', 'line-decimals': 1 });
+  const left = ticksOf(svg, 'end'), right = ticksOf(svg, 'start');
+  assert.equal(left.length, right.length);
+  assert.ok(right.every((t) => t.endsWith('%')), right.join(' '));
+});
+
+test('combo tooltips give each measure in its own units, with the total when stacked', () => {
+  const svg = render('combo', { values: '10,20|5,5', line: '3.5,4', series: 'Online,Shops', 'line-series': 'Rate', labels: 'Jan,Feb', stacked: '', prefix: '£', 'line-suffix': '%' });
+  assert.deepEqual(tips(svg), ['Jan|Online: £10|Shops: £5|Total: £15|Rate: 3.5%', 'Feb|Online: £20|Shops: £5|Total: £25|Rate: 4%']);
+});
+
+test('stacked combo bars pile up, with negative parts below zero', () => {
+  const svg = render('combo', { values: '3,3|4,-2', line: '1,2', stacked: '' });
+  const left = ticksOf(svg, 'end').map((t) => Number(t.replace('−', '-')));
+  assert.ok(Math.max(...left) >= 7 && Math.min(...left) <= -2, left.join(' '));
+});
+
+test('each axis has a rule in its data colour, and titles when given', () => {
+  const svg = render('combo', { values: '1,2', line: '3,4', 'y-label': 'Sales', 'line-label': 'Rate', theme: 'light' });
+  assert.match(svg, /stroke="#6E70F0" stroke-width="2"\/>/);
+  assert.match(svg, /stroke="#E2508C" stroke-width="2"\/>/);
+  assert.match(svg, />Sales<\/text>/);
+  assert.match(svg, />Rate<\/text>/);
+});
+
+test('combo without a line draws just the bars, with no right axis', () => {
+  const svg = render('combo', { values: '1,2,3' });
+  assert.equal(ticksOf(svg, 'start').length, 0);
+  assert.match(svg, /aria-label="1 bar series and 0 lines over 3 points"/);
+});
+
+test('combo tables list the bars, the total and the lines', () => {
+  const t = table('combo', { values: '1,2|3,4', line: '0.5,0.6', stacked: '', 'line-suffix': '%' });
+  assert.deepEqual(t.head, ['Label', 'Bars 1', 'Bars 2', 'Total', 'Line']);
+  assert.deepEqual(t.rows[0], ['#1', '1', '3', '4', '0.5%']);
 });

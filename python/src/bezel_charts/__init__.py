@@ -29,9 +29,9 @@ from ._tile import THEMES as themes
 from ._util import Opts, fmt, lst, series
 from .charts import TYPES
 
-__version__ = "1.6.0"
+__version__ = "1.7.0"
 __all__ = [
-    "Chart", "area", "bars", "boxplot", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
+    "Chart", "area", "bars", "boxplot", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
     "to_svg", "types", "__version__",
 ]
 
@@ -181,6 +181,42 @@ def boxplot(data: Any = None, *, y: Any = None, by: Any = None, **options: Any) 
     else:
         values, names, _labels = _data.prepare(data, None, y, None)
     return Chart("boxplot", _options(options, values, names, None))
+
+
+def combo(
+    data: Any = None, *, x: Any = None, bars: Any = None, line: Any = None, x_format: str | None = None, **options: Any
+) -> Chart:
+    """Bars on the left axis and one or more lines on the right, for two measures with different units.
+
+    With a DataFrame, ``bars=`` and ``line=`` name a column or a list of columns, and ``x=`` the labels:
+    ``bc.combo(df, x="month", bars="sales", line="conversion", line_suffix="%")``. Without one, pass the data
+    straight in: ``bc.combo(bars=[182, 214], line=[3.1, 3.4], labels=["Jan", "Feb"])``. ``stacked=True`` piles
+    several bar series up. ``line_prefix``, ``line_suffix`` and ``line_decimals`` format the right axis.
+    """
+    out = dict(options)
+    if data is not None:
+        # A combo always has a legend, so even a single column keeps its name.
+        if bars is not None:
+            values, names, lbls = _data.prepare(data, x, bars, x_format)
+            out = _options(out, values, names or ([str(bars)] if isinstance(bars, str) else None), lbls)
+        if line is not None:
+            lvalues, lnames, lbls = _data.prepare(data, x, line, x_format)
+            lnames = lnames or ([str(line)] if isinstance(line, str) else None)
+            out.setdefault("line", lvalues)
+            if lnames:
+                out.setdefault("line_series", lnames)
+            if lbls and "labels" not in out:
+                out["labels"] = lbls
+    else:
+        if bars is not None:
+            values, names, lbls = _data.prepare(bars, None, None, x_format)
+            out = _options(out, values, names, lbls)
+        if line is not None:
+            lvalues, lnames, _lbls = _data.prepare(line, None, None, x_format)
+            out.setdefault("line", lvalues)
+            if lnames:
+                out.setdefault("line_series", lnames)
+    return Chart("combo", _options(out, None, None, None))
 
 
 def histogram(data: Any = None, *, y: Any = None, **options: Any) -> Chart:

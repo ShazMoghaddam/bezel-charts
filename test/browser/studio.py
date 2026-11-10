@@ -237,6 +237,17 @@ with sync_playwright() as p:
     pg.locator('[data-toggle="horizontal"]').locator('xpath=..').click(); pg.wait_for_timeout(400)
     check('horizontal' in code() and svg_ok(), 'boxes lie on their side')
 
+    # bars and line: a right axis in the line's units, and its own controls
+    pg.goto(URL); pg.wait_for_timeout(600)
+    pg.click('[data-ui="combo"]'); pg.wait_for_timeout(400)
+    combo_inner = lambda: pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML")
+    check('line="' in code() and svg_ok() and '%</text>' in combo_inner(), 'the combo sample draws with a percent axis on the right')
+    pg.fill('input[data-key="line"]', '3.1,3.4,3.6|1,2,3'); pg.wait_for_timeout(400)
+    check('Line 2' in combo_inner() or 'Conversion' in combo_inner(), 'a second line joins the legend')
+    pg.click('#tab-extras'); pg.wait_for_timeout(200)
+    pg.locator('[data-toggle="line-zero"]').locator('xpath=..').click(); pg.wait_for_timeout(300)
+    check('line-zero' in code() and '>0.0%</text>' in combo_inner(), 'the right axis can start at zero (one decimal place in this sample)')
+
     # keyboard: real key presses on the example charts on the home page
     pg.goto(URL); pg.wait_for_timeout(800)
     bars = 'bezel-bars[heading="Commits this week"]'

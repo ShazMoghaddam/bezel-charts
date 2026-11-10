@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 
-from .._js import js_round, js_to_fixed
+from .._js import js_round, to_fixed_number
 from .._tile import tile
 from .._util import (
     PATTERNS, Opts, R, anim, bool_, empty_state, fmt, has, hit, jmax, jmin, legend, lst, new_id, nice_scale, num,
@@ -181,7 +181,7 @@ def binned(o):
     state = {"s0": math.floor(lo / w)}
 
     def edge(i):
-        return js_to_fixed((state["s0"] + i) * w, dp + 3)
+        return to_fixed_number((state["s0"] + i) * w, dp + 3)
 
     while edge(0) > lo:
         state["s0"] -= 1
