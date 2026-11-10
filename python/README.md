@@ -321,4 +321,9 @@ After changing a JavaScript chart, run `npm run fixtures` from the repository ro
 
 ## Licence
 
-[MIT](https://github.com/ShazMoghaddam/bezel-charts/blob/main/LICENSE). Designed and built by [Shaz Moghaddam](https://shazmoghaddam.github.io), London.
+[MIT](https://github.com/ShazMoghaddam/bezel-charts/blob/main/LICENSE)
+
+---
+
+Created by **Shaz Moghaddam** · London\
+[Website](https://shazmoghaddam.github.io/) · [LinkedIn](https://www.linkedin.com/in/shazmoghaddam/)
