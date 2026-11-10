@@ -125,7 +125,7 @@ def waterfall(o, th) -> str:
         if has(o.goal):
             s += goal_line(o, th, px, px + pw, Y(to_number(o.goal)))
         for i, st in enumerate(steps):
-            s += hit(px + i * slot, top0, slot, h - (top0 - y0), tip_of(st))
+            s += hit(px + i * slot, top0, slot, h - (top0 - y0), tip_of(st), i, st["change"])
         return s
 
     summary = "ends at " + fmt(end, o) + " after " + str(n) + (" step" if n == 1 else " steps") if n else "no data"

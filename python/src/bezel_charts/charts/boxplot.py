@@ -118,7 +118,7 @@ def boxplot(o, th) -> str:
                 + ("\n" + str(n_out) + (" outlier" if n_out == 1 else " outliers") if n_out else "")
                 + ("\nMean " + f(st["mean"]) if show_mean else "") + "\nn = " + str(st["n"])
             )
-            s += hit(px, C(i) - band / 2, pw, band, tip) if horiz else hit(C(i) - band / 2, y0, band, ph, tip)
+            s += hit(px, C(i) - band / 2, pw, band, tip, i, st["median"], i) if horiz else hit(C(i) - band / 2, y0, band, ph, tip, i, st["median"], i)
         return s
 
     return tile(o, th, h, draw, {"summary": about})

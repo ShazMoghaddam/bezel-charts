@@ -6,7 +6,7 @@ import math
 
 from .._tile import tile
 from .._util import (
-    MONO, SANS, N, R, clamp, empty_state, esc, fmt, has, jmin, lst, num, nums, palette, small, stat_of, text,
+    ref, MONO, SANS, N, R, clamp, empty_state, esc, fmt, has, jmin, lst, num, nums, palette, small, stat_of, text,
     trunc, truthy,
 )
 
@@ -59,7 +59,7 @@ def ring(o, th) -> str:
             s += (
                 '<circle cx="' + R(cx) + '" cy="' + R(cy) + '" r="' + R(r + sw / 2)
                 + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="'
-                + esc(label_of(i) + ": " + show(n) + ("" if auto else " of " + fmt(mx, o))) + '"/>'
+                + esc(label_of(i) + ": " + show(n) + ("" if auto else " of " + fmt(mx, o))) + '"' + ref(i, n) + "/>"
             )
         if single:
             s += text(

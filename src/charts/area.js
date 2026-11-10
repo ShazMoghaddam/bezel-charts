@@ -92,7 +92,7 @@ export default function area(o, th) {
         if (i < ser.length) tip += '\n' + (multi ? nameOf(j) + ': ' : '') + fmt(ser[i], o) + (mode === 'percent' ? ' (' + share(j, i) + '%)' : '');
       });
       return tip + (mode ? '\nTotal: ' + fmt(totals[i], o) : '');
-    });
+    }, S);
   }, {
     stat: statOf(mode ? totals : S[0] || [], o, ''),
     summary: k + ' series ' + (mode === 'percent' ? 'as shares of each total' : mode ? 'stacked' : 'filled') + ' over ' + n + ' points',

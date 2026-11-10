@@ -151,7 +151,7 @@ def area(o, th) -> str:
                     t += "\n" + (name_of(j) + ": " if multi else "") + fmt(ser[i], o) + (" (" + R(share(j, i)) + "%)" if mode == "percent" else "")
             return t + ("\nTotal: " + fmt(totals[i], o) if mode else "")
 
-        return s + xy_finish(o, th, f, n, tip)
+        return s + xy_finish(o, th, f, n, tip, S)
 
     word = "as shares of each total" if mode == "percent" else "stacked" if mode else "filled"
     return tile(o, th, h, draw, {

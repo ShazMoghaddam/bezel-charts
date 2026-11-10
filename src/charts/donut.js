@@ -1,4 +1,4 @@
-import { esc, r2, num, has, nums, list, sum, trunc, fmt, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO } from '../core/util.js';
+import { esc, r2, num, has, nums, list, sum, trunc, fmt, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO, ref } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 export default function donut(o, th) {
@@ -34,7 +34,7 @@ export default function donut(o, th) {
       s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(y) + '" r="4" fill="' + pal[i % pal.length] + '"/>' +
         text(lx + 14, y + 4, trunc(labels[i] || '#' + (i + 1), Math.floor((x0 + w - lx - 50) / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"') +
         text(x0 + w, y + 4, pct + '%', 'text-anchor="end" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11" font-weight="600"') +
-        hit(lx, y - rowH / 2, x0 + w - lx, rowH, tip);
+        hit(lx, y - rowH / 2, x0 + w - lx, rowH, tip, i, n);
     });
     start = 0;
     v.forEach(function (n, i) {
@@ -42,7 +42,7 @@ export default function donut(o, th) {
       if (len <= 0) return;
       s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="#000" stroke-opacity="0" stroke-width="' + r2(sw) +
         '" pathLength="100" stroke-dasharray="' + r2(len) + ' ' + r2(100 - len) + '" stroke-dashoffset="' + r2(-start) + '" transform="rotate(-90 ' + r2(cx) + ' ' + r2(cy) +
-        ')" class="bzc-hit" data-skip="" data-tip="' + esc((labels[i] || '#' + (i + 1)) + ': ' + fmt(n, o) + ' (' + Math.round(len) + '%)') + '"/>';
+        ')" class="bzc-hit" data-skip="" data-tip="' + esc((labels[i] || '#' + (i + 1)) + ': ' + fmt(n, o) + ' (' + Math.round(len) + '%)') + '"' + ref(i, n) + '/>';
       start += len;
     });
     return s;

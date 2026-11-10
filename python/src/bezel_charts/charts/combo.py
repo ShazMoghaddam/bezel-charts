@@ -8,7 +8,7 @@ from .._js import pow10, to_fixed_number
 from .._series import point_marks, series_line
 from .._tile import tile
 from .._util import (
-    DASHES, PATTERNS, SHAPES, Opts, R, anim, bool_, empty_state, fmt, has, hit, jmax, jmin, legend, lst, marker,
+    at, DASHES, PATTERNS, SHAPES, Opts, R, anim, bool_, empty_state, fmt, has, hit, jmax, jmin, legend, lst, marker,
     new_id, nice_scale, num, palette, path_of, pattern, series, small, style_of, text, to_string, truthy, tw,
 )
 
@@ -195,7 +195,7 @@ def combo(o, th) -> str:
             for j, ser in enumerate(L):
                 if i < len(ser):
                     tip += "\n" + line_name(j) + ": " + fmt(ser[i], lo)
-            s += hit(X(i) - band / 2, top, band, ph, tip)
+            s += hit(X(i) - band / 2, top, band, ph, tip, i, at(B + L, i))
         return s
 
     summary = (

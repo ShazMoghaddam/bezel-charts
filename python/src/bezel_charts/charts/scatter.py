@@ -172,7 +172,7 @@ def scatter(o, th) -> str:
                     ' fill="' + c + '" fill-opacity=".85" stroke="' + stroke + '" stroke-width="1.5"'
                     + (' class="bzc-a" style="animation-delay:' + R(jmin(0.8, idx * 0.012)) + 's"' if o.animate else ""),
                 )
-                s += hit(cx - 8, cy - 8, 16, 16, tip)
+                s += hit(cx - 8, cy - 8, 16, 16, tip, idx, [xv, gr["ys"][i]], j)
                 idx += 1
 
         # Notes point at a point by its position across all groups, or by its label.

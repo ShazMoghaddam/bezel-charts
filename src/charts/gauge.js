@@ -35,7 +35,7 @@ export default function gauge(o, th) {
     s += text(cx, cy - R * 0.12, show(val), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(R * 0.34) + '" font-weight="800"');
     if (labels[0]) s += text(cx, cy - R * 0.12 + 16, labels[0], small(th, 10, 'text-anchor="middle"'));
     s += text(cx - r, cy + 18, fmt(mn, o, true), small(th, 10, 'text-anchor="middle"')) + text(cx + r, cy + 18, fmt(mx, o, true), small(th, 10, 'text-anchor="middle"'));
-    s += hit(cx - R, cy - R, R * 2, R, (labels[0] ? labels[0] + ': ' : '') + show(val) + ' (range ' + fmt(mn, o) + ' to ' + fmt(mx, o) + ')' + (has(o.goal) ? '\nGoal: ' + fmt(+o.goal, o) : ''));
+    s += hit(cx - R, cy - R, R * 2, R, (labels[0] ? labels[0] + ': ' : '') + show(val) + ' (range ' + fmt(mn, o) + ' to ' + fmt(mx, o) + ')' + (has(o.goal) ? '\nGoal: ' + fmt(+o.goal, o) : ''), 0, val);
     return s;
   }, { summary: isFinite(val) ? show(val) + ' on a scale of ' + fmt(mn, o) + ' to ' + fmt(mx, o) : 'no data' });
 }

@@ -34,7 +34,7 @@ export default function spark(o, th) {
     }
     var step = v.length > 1 ? w / (v.length - 1) : w;
     v.forEach(function (n, i) {
-      s += hit(X(i) - step / 2, y0 - 6, step, h + 12, (labels[i] || '#' + (i + 1)) + ': ' + fmt(n, o));
+      s += hit(X(i) - step / 2, y0 - 6, step, h + 12, (labels[i] || '#' + (i + 1)) + ': ' + fmt(n, o), i, n);
     });
     return s;
   }, { stat: st, summary: v.length ? 'latest ' + fmt(v[v.length - 1], o) : 'no data' });

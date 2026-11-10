@@ -1,4 +1,4 @@
-import { esc, r2, clamp, num, has, nums, list, trunc, fmt, text, small, hit, palette, emptyState, statOf, SANS, MONO } from '../core/util.js';
+import { esc, r2, clamp, num, has, nums, list, trunc, fmt, text, small, hit, palette, emptyState, statOf, SANS, MONO, ref } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 export default function ring(o, th) {
@@ -21,7 +21,7 @@ export default function ring(o, th) {
       if (pct > 0) s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="' + c + '" stroke-width="' + r2(sw) +
         '" stroke-linecap="round" pathLength="100" transform="rotate(-90 ' + r2(cx) + ' ' + r2(cy) + ')" style="stroke-dasharray:' + r2(pct) + ' 100' +
         (o.animate ? ';animation-delay:' + i * 0.12 + 's' : '') + '"' + (o.animate ? ' class="bzc-s"' : '') + '/>';
-      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r + sw / 2) + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="' + esc((labels[i] || '#' + (i + 1)) + ': ' + show(n) + (auto ? '' : ' of ' + fmt(max, o))) + '"/>';
+      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r + sw / 2) + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="' + esc((labels[i] || '#' + (i + 1)) + ': ' + show(n) + (auto ? '' : ' of ' + fmt(max, o))) + '"' + ref(i, n) + '/>';
     });
     if (single) {
       s += text(cx, cy + size * 0.08, show(v[0]), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(size * 0.22) + '" font-weight="800"');

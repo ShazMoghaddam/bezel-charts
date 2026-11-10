@@ -7,7 +7,7 @@ import math
 from .._js import js_round
 from .._tile import tile
 from .._util import (
-    MONO, SANS, N, R, anim, empty_state, esc, fmt, has, hit, jmax, jmin, lst, num, nums, palette, small, stat_of,
+    ref, MONO, SANS, N, R, anim, empty_state, esc, fmt, has, hit, jmax, jmin, lst, num, nums, palette, small, stat_of,
     text, to_string, total, trunc,
 )
 
@@ -82,7 +82,7 @@ def donut(o, th) -> str:
                     x0 + w, y + 4, N(pct) + "%",
                     'text-anchor="end" fill="' + th["muted"] + '" font-family="' + MONO + '" font-size="11" font-weight="600"',
                 )
-                + hit(lx, y - row_h / 2, x0 + w - lx, row_h, tip)
+                + hit(lx, y - row_h / 2, x0 + w - lx, row_h, tip, i, n)
             )
         start = 0
         for i, n in enumerate(v):
@@ -94,7 +94,7 @@ def donut(o, th) -> str:
                 + ' stroke-width="' + R(sw) + '" pathLength="100" stroke-dasharray="' + R(length) + " " + R(100 - length)
                 + '" stroke-dashoffset="' + R(-start) + '" transform="rotate(-90 ' + R(cx) + " " + R(cy)
                 + ')" class="bzc-hit" data-skip="" data-tip="' + esc(name(i) + ": " + fmt(n, o) + " (" + N(js_round(length)) + "%)")
-                + '"/>'
+                + '"' + ref(i, n) + "/>"
             )
             start += length
         return s

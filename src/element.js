@@ -1,13 +1,13 @@
 /** The custom element shared by every chart tag. */
 import { render, table, toStatic } from './render.js';
-import { MONO, SANS, esc, clamp } from './core/util.js';
+import { MONO, SANS, esc, clamp, list } from './core/util.js';
 import { THEMES } from './core/themes.js';
 
 export const ATTRIBUTES = [
   'type', 'values', 'labels', 'series', 'heading', 'prefix', 'suffix', 'decimals', 'compact', 'color', 'theme', 'frame',
   'width', 'height', 'goal', 'goal-label', 'notes', 'show-values', 'stat', 'delta', 'delta-label', 'max', 'min', 'value',
   'zones', 'horizontal', 'straight', 'zero', 'start', 'lang', 'corners', 'background', 'center-label', 'highlight',
-  'x', 'y', 'x-label', 'y-label', 'trend', 'static', 'no-tooltips', 'stacked', 'angle-labels', 'dash', 'markers', 'patterns', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'targets', 'zone-labels', 'totals',
+  'x', 'y', 'x-label', 'y-label', 'trend', 'static', 'no-tooltips', 'stacked', 'angle-labels', 'dash', 'markers', 'patterns', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'targets', 'zone-labels', 'totals', 'clickable',
 ];
 
 const HOST_CSS =
@@ -18,7 +18,7 @@ const HOST_CSS =
   'border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}' +
   // The focus ring is white with a black edge, so it shows on light and dark pages alike. Then the outline on the
   // value the arrow keys are on, and text only screen readers get.
-  '.c{outline:none}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}' +
+  '.c{outline:none}:host([clickable]) .bzc-hit{cursor:pointer}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}' +
   '.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}' +
   '@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}';
 
@@ -66,13 +66,24 @@ export class BezelChart extends Base {
       // The chart, the tooltip, the screen reader announcements and the data table stay in place between redraws,
       // so a focused chart keeps its focus when it resizes or changes theme.
       this.attachShadow({ mode: 'open' }).innerHTML = `<style>${HOST_CSS}</style><div class="c" role="group" aria-roledescription="chart"></div>` +
-        '<p class="sr" id="h">Use the arrow keys to step through the values.</p><div class="tip" aria-hidden="true"></div><div class="sr" aria-live="polite"></div><div class="sr"></div>';
+        '<p class="sr" id="h"></p><div class="tip" aria-hidden="true"></div><div class="sr" aria-live="polite"></div><div class="sr"></div>';
       [, this.#box, , this.#tipEl, this.#live, this.#table] = this.shadowRoot.children;
       this.shadowRoot.addEventListener('pointermove', (e) => this.#tip(e));
       this.shadowRoot.addEventListener('pointerdown', (e) => this.#tip(e));
       this.addEventListener('pointerleave', () => this.#tipEl.classList.remove('on'));
       this.#box.addEventListener('keydown', (e) => this.#key(e));
       this.#box.addEventListener('blur', () => this.#clear());
+      this.shadowRoot.addEventListener('click', (e) => {
+        const mark = e.target?.closest?.('[data-i]');
+        if (mark) this.#select(mark);
+      });
+    }
+    // A framework may set data before this element's script loads. That lands on the plain element and would
+    // hide the setter, so take the value back and set it properly.
+    if (Object.prototype.hasOwnProperty.call(this, 'data')) {
+      const d = this.data;
+      delete this.data;
+      this.data = d;
     }
     live.add(this);
     this.#dark = darkQuery();
@@ -103,10 +114,25 @@ export class BezelChart extends Base {
     });
   }
 
+  /**
+   * Options set from JavaScript, as real arrays and numbers rather than attribute text:
+   * chart.data = { values: [[4, 9, 6], [3, 5, 8]], labels: ['Mon', 'Tue', 'Wed'] }. They win over the matching
+   * attributes, keys can be camelCase or as written in HTML, and setting null goes back to the attributes alone.
+   */
+  get data() {
+    return this.#data;
+  }
+
+  set data(d) {
+    this.#data = d && typeof d === 'object' ? d : null;
+    this.attributeChangedCallback();
+  }
+
   /** Current settings as a plain object, the same shape BezelCharts.render() takes. */
   get options() {
     const o = {};
     for (const name of ATTRIBUTES) if (this.hasAttribute(name)) o[name] = this.getAttribute(name);
+    if (this.#data) for (const k of Object.keys(this.#data)) o[k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())] = this.#data[k];
     if (!o.width) o.width = this.#width || 360;
     o.autoTheme = pageTheme() || (this.#dark ? (this.#dark.matches ? 'dark' : 'light') : 'dark');
     return o;
@@ -145,6 +171,7 @@ export class BezelChart extends Base {
   #width = 0;
   #rendered = false;
   #queued = false;
+  #data = null;
   #onScheme = () => {
     const t = this.getAttribute('theme');
     if (!t || t === 'auto') this.refresh();
@@ -179,6 +206,7 @@ export class BezelChart extends Base {
     }
     // Charts with tooltips take keyboard focus too, so keyboard users get the same exact values as mouse users.
     const keys = !!img && !this.hasAttribute('no-tooltips');
+    this.shadowRoot.getElementById('h').textContent = 'Use the arrow keys to step through the values.' + (this.hasAttribute('clickable') ? ' Press Enter to select one.' : '');
     if (keys) {
       box.setAttribute('tabindex', '0');
       box.setAttribute('aria-describedby', 'h');
@@ -230,6 +258,11 @@ export class BezelChart extends Base {
       i = i < 0 ? (step > 0 ? 0 : n - 1) : clamp(i + step, 0, n - 1);
     } else if (e.key === 'Home' || e.key === 'End') {
       i = e.key === 'Home' ? 0 : n - 1;
+    } else if ((e.key === 'Enter' || e.key === ' ') && this.#at >= 0) {
+      // The keyboard's click: the same event as clicking the value the arrow keys are on.
+      e.preventDefault();
+      this.#select(this.#marks()[this.#at]);
+      return;
     } else {
       if (e.key === 'Escape') this.#clear();
       return;
@@ -249,6 +282,30 @@ export class BezelChart extends Base {
     this.#at = i;
     this.#place(mark, r.left + r.width / 2, r.top);
     if (say) this.#live.textContent = `${mark.getAttribute('data-tip').replace(/\n/g, ', ')}. ${i + 1} of ${marks.length}`;
+  }
+
+  /**
+   * Fires bezel-click for a clicked bar, point, slice or row. detail has the chart type, the item's index, its series
+   * index and name when it has just one, its label, its value (a number, or one per series where the item covers
+   * several, and [x, y] on a scatter) and the tooltip text.
+   */
+  #select(mark) {
+    if (!mark?.hasAttribute?.('data-i')) return;
+    const o = this.options, index = +mark.getAttribute('data-i');
+    const s = mark.hasAttribute('data-s') ? +mark.getAttribute('data-s') : null;
+    const v = (mark.getAttribute('data-v') || '').split(',').map((x) => (x === '' ? null : +x));
+    this.dispatchEvent(new CustomEvent('bezel-click', {
+      bubbles: true,
+      detail: {
+        type: this.chartType,
+        index,
+        series: s,
+        seriesName: s == null ? null : list(o.series)[s] ?? null,
+        label: list(o.labels)[index] ?? null,
+        value: v.length === 1 ? v[0] : v,
+        text: mark.getAttribute('data-tip'),
+      },
+    }));
   }
 
   #clear() {

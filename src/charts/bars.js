@@ -1,4 +1,4 @@
-import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, statOf, SANS, MONO } from '../core/util.js';
+import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, statOf, SANS, MONO, at } from '../core/util.js';
 import { legend, seriesTable, styleOf, pattern, PATTERNS } from '../core/series.js';
 import { tile, dims } from '../core/tile.js';
 
@@ -85,7 +85,7 @@ export default function bars(o, th) {
             s += text(x0 + w, by + subH / 2 + 3.8, vals[j][i], 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="' + (grouped ? 10 : 11) + '" font-weight="600"');
           });
         }
-        s += hit(x0, ry, w, rowH - 6, tipOf(i));
+        s += hit(x0, ry, w, rowH - 6, tipOf(i), i, at(S, i));
       }
       if (has(o.goal) && +o.goal > 0) {
         var gx = bx + (+o.goal) / span * bw;
@@ -153,7 +153,7 @@ export default function bars(o, th) {
           ? text(lx, ly, labText(labels[c]), small(th, 10, 'text-anchor="end" transform="rotate(-' + ANGLE + ' ' + r2(lx) + ' ' + r2(ly) + ')"'))
           : text(lx, ly, labels[c], small(th, 10, 'text-anchor="middle"'));
       }
-      s += hit(x0 + c * slot, top0, slot, h - (top0 - y0), tipOf(c));
+      s += hit(x0 + c * slot, top0, slot, h - (top0 - y0), tipOf(c), c, at(S, c));
     }
     if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal));
     return s;

@@ -30,7 +30,7 @@ from ._util import Opts, fmt, lst, series
 from .charts import TYPES
 from .charts.waterfall import walk as _walk
 
-__version__ = "1.9.0"
+__version__ = "1.10.0"
 __all__ = [
     "Chart", "area", "bars", "boxplot", "bullet", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
     "to_svg", "types", "waterfall", "__version__",

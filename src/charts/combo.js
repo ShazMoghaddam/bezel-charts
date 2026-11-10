@@ -1,4 +1,4 @@
-import { newId, r2, num, has, list, series, bool, fmt, tw, text, small, hit, anim, palette, emptyState, pathOf } from '../core/util.js';
+import { newId, r2, num, has, list, series, bool, fmt, tw, text, small, hit, anim, palette, emptyState, pathOf, at } from '../core/util.js';
 import { niceScale, legend, styleOf, pattern, marker, DASHES, SHAPES, PATTERNS } from '../core/series.js';
 import { seriesLine, pointMarks } from '../core/lines.js';
 import { tile } from '../core/tile.js';
@@ -109,7 +109,7 @@ export default function combo(o, th) {
       B.forEach(function (ser, j) { if (i < ser.length) { tip += '\n' + barName(j) + ': ' + fmt(ser[i], o); t += ser[i]; } });
       if (stacked) tip += '\nTotal: ' + fmt(t, o);
       L.forEach(function (ser, j) { if (i < ser.length) tip += '\n' + lineName(j) + ': ' + fmt(ser[i], lo); });
-      s += hit(X(i) - band / 2, top, band, ph, tip);
+      s += hit(X(i) - band / 2, top, band, ph, tip, i, at(B.concat(L), i));
     }
     return s;
   }, { summary: k + ' bar series' + (stacked ? ' stacked' : '') + ' and ' + m + (m === 1 ? ' line' : ' lines') + ' over ' + n + ' points' });

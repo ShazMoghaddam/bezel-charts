@@ -93,7 +93,7 @@ def gauge(o, th) -> str:
             (label0 + ": " if label0 else "") + show(val) + " (range " + fmt(mn, o) + " to " + fmt(mx, o) + ")"
             + ("\nGoal: " + fmt(to_number(o.goal), o) if has(o.goal) else "")
         )
-        s += hit(cx - Rr, cy - Rr, Rr * 2, Rr, tip)
+        s += hit(cx - Rr, cy - Rr, Rr * 2, Rr, tip, 0, val)
         return s
 
     summary = show(val) + " on a scale of " + fmt(mn, o) + " to " + fmt(mx, o) if finite(val) else "no data"

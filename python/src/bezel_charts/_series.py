@@ -6,7 +6,7 @@ import math
 
 from ._time import date_ticks
 from ._util import (
-    DASHES, N, R, anim, clamp, goal_line, has, hit, jmax, jmin, legend, marker, new_id, nice_scale, small, text,
+    at, DASHES, N, R, anim, clamp, goal_line, has, hit, jmax, jmin, legend, marker, new_id, nice_scale, small, text,
     to_number, tw,
 )
 
@@ -144,7 +144,7 @@ def xy_frame(o, th, c, x0, y0, w, h) -> Frame:
     return Frame(s, X, Y, px, pw, top, ph, clip, bool(T))
 
 
-def xy_finish(o, th, f: Frame, n, tip) -> str:
+def xy_finish(o, th, f: Frame, n, tip, S) -> str:
     """The goal line, then one hover column per point; dated points reach halfway to each neighbour."""
     g = f.Y(to_number(o.goal)) if has(o.goal) else math.nan
     s = goal_line(o, th, f.px, f.px + f.pw, g) if math.isfinite(g) else ""
@@ -152,11 +152,11 @@ def xy_finish(o, th, f: Frame, n, tip) -> str:
     X = f.X
     for j in range(n):
         if not f.uneven:
-            s += hit(X(j) - step / 2, f.top, step, f.ph, tip(j))
+            s += hit(X(j) - step / 2, f.top, step, f.ph, tip(j), j, at(S, j))
             continue
         left = (X(j - 1) + X(j)) / 2 if j else X(0) - ((X(1) - X(0)) / 2 if n > 1 else f.pw / 2)
         right = (X(j) + X(j + 1)) / 2 if j < n - 1 else X(j) + ((X(j) - X(j - 1)) / 2 if n > 1 else f.pw / 2)
-        s += hit(left, f.top, jmax(1, right - left), f.ph, tip(j))
+        s += hit(left, f.top, jmax(1, right - left), f.ph, tip(j), j, at(S, j))
     return s
 
 

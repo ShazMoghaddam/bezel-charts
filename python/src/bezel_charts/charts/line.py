@@ -105,6 +105,6 @@ def line(o, th) -> str:
                     t += "\n" + (name_of(k) + ": " if multi else "") + fmt(v[j], o)
             return t
 
-        return s + xy_finish(o, th, f, n, tip)
+        return s + xy_finish(o, th, f, n, tip, S)
 
     return tile(o, th, h, draw, {"stat": st, "summary": str(len(S)) + " series over " + str(n) + " points"})

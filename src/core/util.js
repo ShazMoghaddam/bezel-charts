@@ -66,9 +66,20 @@ export function text(x, y, s, attrs) {
 export function small(th, size, extra, fill) {
   return 'fill="' + (fill || th.muted) + '" font-family="' + MONO + '" font-size="' + (size || 10) + '"' + (extra ? ' ' + extra : '');
 }
-export function hit(x, y, w, h, tip) {
+/**
+ * Which item a hover area stands for, so a click can say: its position (data-i), its series when it has just one
+ * (data-s) and its numbers (data-v, one per series, blank where a series is shorter).
+ */
+export function ref(i, v, s) {
+  return ' data-i="' + i + '"' + (s == null ? '' : ' data-s="' + s + '"') + ' data-v="' + [].concat(v).join(',') + '"';
+}
+/** Each series' value at position i, kept in series order. */
+export function at(S, i) {
+  return S.map(function (s) { return i < s.length ? s[i] : ''; });
+}
+export function hit(x, y, w, h, tip, i, v, s) {
   return '<rect class="bzc-hit" x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(Math.max(1, w)) + '" height="' + r2(Math.max(1, h)) +
-    '" fill="#000" fill-opacity="0" data-tip="' + esc(tip) + '"/>';
+    '" fill="#000" fill-opacity="0" data-tip="' + esc(tip) + '"' + (i == null ? '' : ref(i, v, s)) + '/>';
 }
 export function anim(o, cls, delay) {
   if (!o.animate) return '';

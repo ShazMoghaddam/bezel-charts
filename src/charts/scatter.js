@@ -101,7 +101,7 @@ export default function scatter(o, th) {
           (has(o.xLabel) ? o.xLabel : 'x') + ': ' + fmt(xv, xo) + '\n' + (has(o.yLabel) ? o.yLabel : 'y') + ': ' + fmt(gr.ys[i], o);
         s += marker(shapeOf(j), cx, cy, r, ' fill="' + c + '" fill-opacity=".85" stroke="' + bg + '" stroke-width="1.5"' +
           (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : ''));
-        s += hit(cx - 8, cy - 8, 16, 16, tip);
+        s += hit(cx - 8, cy - 8, 16, 16, tip, idx, [xv, gr.ys[i]], j);
         idx++;
       });
     });

@@ -215,3 +215,71 @@ test('the version is the same in npm, PyPI, the library and the built files', as
     assert.ok(readFileSync(f, 'utf8').startsWith(`/*! Bezel Charts v${pkg.version} `), f);
   }
 });
+
+const clicks = (el) => {
+  const got = [];
+  el.addEventListener('bezel-click', (e) => got.push(e.detail));
+  return got;
+};
+const click = (el, i) => el.shadowRoot.querySelectorAll('[data-i]')[i].dispatchEvent(new window.Event('click', { bubbles: true }));
+
+test('the data property takes real arrays, wins over attributes and goes back to them when cleared', async () => {
+  const el = mount('<bezel-bars values="1,2,3" labels="a,b,c"></bezel-bars>');
+  await flush();
+  el.data = { values: [[4, 9], [3, 5]], labels: ['Mon', 'Tue'], series: ['North', 'South'], showValues: true };
+  await flush();
+  assert.equal(el.options.values[1][1], 5);
+  assert.equal(el.options['show-values'], true, 'camelCase keys become attribute names');
+  assert.equal(el.options.labels[0], 'Mon');
+  assert.match(el.shadowRoot.innerHTML, /North: 4/);
+  el.data = null;
+  await flush();
+  assert.match(el.shadowRoot.innerHTML, /a: 1/);
+  assert.equal(el.data, null);
+});
+
+test('clicking a bar fires bezel-click with its index, label, value and text', async () => {
+  const el = mount('<bezel-bars values="4,9,6" labels="Mon,Tue,Wed"></bezel-bars>');
+  await flush();
+  const got = clicks(el);
+  click(el, 1);
+  assert.deepEqual(got, [{ type: 'bars', index: 1, series: null, seriesName: null, label: 'Tue', value: 9, text: 'Tue: 9' }]);
+});
+
+test('a column over several series gives one value per series, and a scatter point gives x and y', async () => {
+  const el = mount('<bezel-line values="1,2,3|4,5" series="A,B" labels="x,y,z"></bezel-line>');
+  await flush();
+  const got = clicks(el);
+  click(el, 2);
+  assert.deepEqual(got[0].value, [3, null], 'a shorter series is null');
+  assert.equal(got[0].series, null);
+  const sc = mount('<bezel-scatter x="1,2|3" y="5,6|7" series="Left,Right"></bezel-scatter>');
+  await flush();
+  const pts = clicks(sc);
+  click(sc, 2);
+  assert.deepEqual([pts[0].index, pts[0].series, pts[0].seriesName, pts[0].value], [2, 1, 'Right', [3, 7]]);
+});
+
+test('Enter and Space select the value the arrow keys are on', async () => {
+  const el = mount('<bezel-donut values="5,3,2" labels="Rent,Food,Fun" clickable></bezel-donut>');
+  await flush();
+  const got = clicks(el);
+  key(el, 'Enter');
+  assert.equal(got.length, 0, 'nothing is selected before the arrow keys move');
+  key(el, 'ArrowRight');
+  key(el, 'ArrowRight');
+  key(el, 'Enter');
+  key(el, ' ');
+  assert.deepEqual(got.map((d) => [d.label, d.value]), [['Food', 3], ['Food', 3]]);
+  assert.match(el.shadowRoot.getElementById('h').textContent, /Press Enter to select one/);
+});
+
+test('clickable only changes the cursor and the hint; clicks fire either way', async () => {
+  const el = mount('<bezel-waterfall values="10,-4,0" totals="2"></bezel-waterfall>');
+  await flush();
+  assert.doesNotMatch(el.shadowRoot.getElementById('h').textContent, /Enter/);
+  assert.match(el.shadowRoot.querySelector('style').textContent, /:host\(\[clickable\]\) \.bzc-hit\{cursor:pointer\}/);
+  const got = clicks(el);
+  click(el, 1);
+  assert.deepEqual([got[0].index, got[0].value, got[0].text], [1, -4, 'Step 2\nChange −4\nRunning total 6']);
+});
