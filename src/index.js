@@ -21,6 +21,6 @@ import { NAMES, render, toSVG } from './render.js';
 import { THEMES } from './core/themes.js';
 import { BezelChart } from './element.js';
 
-export const version = '1.7.0';
+export const version = '1.8.0';
 export const types = NAMES.slice();
 export { render, toSVG, BezelChart, THEMES as themes };

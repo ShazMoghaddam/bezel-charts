@@ -202,3 +202,16 @@ test('every option the renderers read is an observed attribute', async () => {
   // animate and auto-theme are set by the element itself, not by attributes.
   for (const name of used) if (!['animate', 'auto-theme'].includes(name)) assert.ok(ATTRIBUTES.includes(name), name);
 });
+
+test('the version is the same in npm, PyPI, the library and the built files', async () => {
+  const { readFileSync } = await import('node:fs');
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+  const lock = JSON.parse(readFileSync('package-lock.json', 'utf8'));
+  assert.equal(api.version, pkg.version, 'src/index.js');
+  assert.equal(lock.version, pkg.version, 'package-lock.json');
+  const py = readFileSync('python/src/bezel_charts/__init__.py', 'utf8').match(/__version__ = "([^"]+)"/)[1];
+  assert.equal(py, pkg.version, 'the Python package');
+  for (const f of ['dist/bezel-charts.min.js', 'dist/charts/line.js']) {
+    assert.ok(readFileSync(f, 'utf8').startsWith(`/*! Bezel Charts v${pkg.version} `), f);
+  }
+});

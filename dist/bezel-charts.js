@@ -1,4 +1,4 @@
-/*! Bezel Charts v1.7.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.8.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/util.js
 var SANS = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -2409,7 +2409,7 @@ register("heatmap", heatmap);
 define("heatmap");
 
 // src/index.js
-var version = "1.7.0";
+var version = "1.8.0";
 var types = NAMES.slice();
 export {
   BezelChart,
