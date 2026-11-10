@@ -11,7 +11,7 @@
 
 Bezel Charts is a set of free, open-source web components: sixteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
-![Bezel Charts: a sparkline, rings, a gauge, a line chart with a launch day note, a donut, a bar chart with a target, a scatter plot with a trend line and a year-long activity heatmap, in light and dark tiles](docs/bezel-charts.png)
+![All sixteen Bezel Charts in light and dark tiles: a sparkline, a progress bar, rings, a gauge and a donut; a line chart with a launch day note and a bars-and-line chart on two axes; a waterfall from revenue to profit, a bullet scorecard and bars with a target; stacked areas and a histogram with its median; a scatter plot with a trend line, box plots and grouped bars; and an activity heatmap](docs/bezel-charts.png)
 
 **[Open the Studio](https://shazmoghaddam.github.io/bezel-charts/site/#studio)** to build a chart and copy its code.
 
@@ -20,7 +20,7 @@ Bezel Charts is a set of free, open-source web components: sixteen chart tiles d
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
 - **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, histograms, box plots, waterfalls, bullet charts, grouped series, goal lines and notes on key points.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 26 kB gzipped for all sixteen charts, or 7 to 12 kB for a page that loads just one. No dependencies and no build step.
+- **Light.** About 26 kB gzipped for all sixteen charts, or 8 to 13 kB for a page that loads just one. No dependencies and no build step.
 - **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
@@ -83,11 +83,11 @@ import { toSVG } from 'bezel-charts/line'; // render and toSVG work for every ch
 
 | Page | Gzipped |
 | --- | --- |
-| One sparkline, ring, donut, gauge, progress bar or heatmap | 7.3 to 7.5 kB |
-| One waterfall, bullet, histogram, box plot, scatter, bar or bars-and-line chart | 9.0 to 10.5 kB |
-| One line or area chart | 12.0 to 12.4 kB |
-| A line and a bar chart | 15.1 kB |
-| Every chart: the full bundle | 25.9 kB |
+| One sparkline, ring, donut, gauge, progress bar or heatmap | 7.7 to 8.0 kB |
+| One waterfall, bullet, histogram, box plot, scatter, bar or bars-and-line chart | 9.5 to 11.0 kB |
+| One line or area chart | 12.5 to 12.9 kB |
+| A line and a bar chart | 15.3 kB |
+| Every chart: the full bundle | 26.4 kB |
 
 Once a page needs four or five different charts, load the full bundle instead. `<bezel-chart type="…">` works with whichever charts are loaded, and tells you which file to add if its type isn't one of them. The classic `iife.js` script always has every chart, because a classic script can't load the shared file.
 
@@ -650,7 +650,7 @@ docs/          the README image and social preview, with the pages that render t
 test/          node:test suites, plus a Playwright browser test
 ```
 
-Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The full bundle has a 26 kB gzip budget and each chart file its own, checked in CI by `npm run size`. See [CONTRIBUTING.md](CONTRIBUTING.md).
+Each chart is a pure function that takes its options and a theme and returns an SVG string, which keeps them easy to test and lets the same code run in Node. The full bundle has a 28 kB gzip budget and each chart file its own, checked in CI by `npm run size`. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 
@@ -658,8 +658,13 @@ Found a security problem? Please report it privately through GitHub rather than 
 
 ## Credits
 
-Typeface Geist (SIL Open Font License) on the website; the charts themselves use the system font. Designed and built by [Shaz Moghaddam](https://shazmoghaddam.github.io), London.
+Typeface Geist (SIL Open Font License) on the website; the charts themselves use the system font.
 
 ## Licence
 
 [MIT](LICENSE)
+
+---
+
+Created by **Shaz Moghaddam** · London\
+[Website](https://shazmoghaddam.github.io/) · [LinkedIn](https://www.linkedin.com/in/shazmoghaddam/)

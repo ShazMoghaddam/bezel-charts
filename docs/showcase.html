@@ -2,27 +2,40 @@
 <meta charset="utf-8">
 <title>Bezel Charts showcase</title>
 <!-- Renders docs/bezel-charts.png, the image at the top of the README:
-     npm run serve, then: python3 scripts/shot.py http://localhost:4173/docs/showcase.html docs/bezel-charts.png 1200 -->
+     npm run serve, then: python3 scripts/shot.py http://localhost:4173/docs/showcase.html docs/bezel-charts.png 1600 -->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..600&display=swap">
 <style>
   html, body { margin: 0; }
-  body { width: 1200px; background: radial-gradient(120% 90% at 50% 0%, #F4F5F7 0%, #DCDFE4 100%); font-family: "Geist", sans-serif; }
-  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 48px; align-items: start; }
+  body { width: 1600px; background: radial-gradient(120% 90% at 50% 0%, #F4F5F7 0%, #DCDFE4 100%); font-family: "Geist", sans-serif; }
+  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; padding: 48px; align-items: start; }
   .wide { grid-column: span 2; }
   .full { grid-column: 1 / -1; }
+  .stack { display: grid; gap: 24px; }
 </style>
 <script type="module" src="../src/index.js"></script>
 
 <div class="grid">
-  <bezel-spark static theme="dark" heading="London · 7 day high" values="17,16,15,15,13,12,14" labels="Mon,Tue,Wed,Thu,Fri,Sat,Sun" suffix="°C" delta-label="since Monday"></bezel-spark>
-  <bezel-ring static theme="light" heading="Today" values="72,45,90" labels="Move,Focus,Sleep"></bezel-ring>
-  <bezel-gauge static theme="dark" heading="Server load" values="63" labels="CPU" zones="60,85" goal="80"></bezel-gauge>
+  <div class="stack">
+    <bezel-spark static theme="dark" height="40" heading="London · 7 day high" values="17,16,15,15,13,12,14" labels="Mon,Tue,Wed,Thu,Fri,Sat,Sun" suffix="°C" delta-label="since Monday"></bezel-spark>
+    <bezel-progress static theme="light" heading="Sprint 14" values="18,6,3" labels="Done,In review,Blocked" max="34" goal="27"></bezel-progress>
+  </div>
+  <bezel-ring static theme="light" height="248" heading="Today" values="72,45,90" labels="Move,Focus,Sleep"></bezel-ring>
+  <bezel-gauge static theme="dark" height="248" heading="Server load" values="63" labels="CPU" zones="60,85" goal="80"></bezel-gauge>
+  <bezel-donut static theme="light" height="248" heading="Monthly budget" values="1200,420,210,160,140" labels="Rent,Food,Bills,Travel,Fun" prefix="£"></bezel-donut>
 
-  <bezel-line static theme="light" class="wide" heading="Site visitors" values="420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640" series="2026,2025" labels="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec" notes="Jun:Launch day" compact></bezel-line>
-  <bezel-donut static theme="dark" heading="Monthly budget" values="1200,420,210,160,140" labels="Rent,Food,Bills,Travel,Fun" prefix="£"></bezel-donut>
+  <bezel-line static theme="light" class="wide" height="200" heading="Site visitors" values="420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640" series="2026,2025" labels="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec" notes="Jun:Launch day" compact></bezel-line>
+  <bezel-combo static theme="dark" class="wide" height="200" heading="Sales and conversion" values="182,214,236,268,251,290,312,298,340,365,392,420" line="3.1,3.3,3.2,3.6,3.4,3.8,4.0,3.9,4.2,4.4,4.3,4.7" series="Sales" line-series="Conversion" labels="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec" prefix="£" suffix="k" line-suffix="%" line-decimals="1"></bezel-combo>
 
-  <bezel-bars static theme="dark" heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total" show-values goal="7" goal-label="Target"></bezel-bars>
-  <bezel-scatter static theme="light" class="wide" heading="Study hours vs exam score" x="2,3,3.5,4,5,5.5,6,6.5,7,8,8.5,9,10,11,12" y="48,52,61,55,63,58,70,66,72,75,71,82,80,88,91" x-label="Hours studied" y-label="Score" suffix="%" trend notes="12:Top student"></bezel-scatter>
+  <bezel-waterfall static theme="dark" class="wide" height="152" heading="Revenue to profit" values="420,85,-160,-95,0,-38,0" labels="Revenue,Services,Costs,Overheads,EBIT,Tax,Profit" totals="Revenue,EBIT,Profit" prefix="£" suffix="k"></bezel-waterfall>
+  <bezel-bullet static theme="light" heading="Q3 scorecard" values="182,64,7.4,46,91" targets="200,60,8,50,90" labels="Revenue £k,Margin %,NPS,Orders k,Retention %" zones="150,180|40,55|6,7|35,45|80,88" zone-labels="Poor,Fair,Good"></bezel-bullet>
+  <bezel-bars static theme="dark" height="132" heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total" show-values goal="7" goal-label="Target"></bezel-bars>
 
-  <bezel-heatmap static theme="light" class="full" heading="Contributions" start="2025-11-03" suffix=" commits" values="4,6,10,5,5,2,0,5,6,8,0,3,0,3,7,0,10,10,7,2,0,0,5,0,2,2,0,0,4,9,5,7,5,2,0,3,10,10,9,7,0,0,3,0,8,4,9,0,3,9,0,2,10,5,3,0,0,6,8,2,0,0,3,8,0,2,0,0,3,0,6,4,2,8,0,2,0,4,2,2,10,8,0,3,2,4,9,7,0,3,0,2,8,3,3,0,0,2,2,6,4,4,10,0,2,9,2,0,9,8,0,0,8,10,2,10,9,2,0,0,0,10,2,7,0,3,6,3,0,7,0,0,2,9,6,3,10,2,0,0,4,0,0,4,6,0,0,9,10,7,7,6,0,0,0,10,7,10,0,2,0,8,3,10,0,6,2,3,8,7,8,10,3,2,3,9,4,8,9,6,2,0,6,6,0,7,10,3,2,4,8,6,4,9,0,3,0,6,5,2,7,0,2,10,2,0,3,7,0,0,9,7,4,9,3,2,0,4,8,10,9,4,2,0,0,5,9,9,7,3,0,0,4,3,2,4,2,0,3,9,10,4,0,0,3,0,7,6,3,8,0,0,5,0,9,2,0,0,2,4,6,7,8,10,2,0,5,0,0,5,7,0,0,3,7,5,6,8,0,3,9,0,10,7,0,0,2,10,4,6,9,8,3,0,7,2,7,9,7,2,0,9,10,10,5,8,0,3,9,3,0,4,6,3,0,0,8,0,8,0,0,3,0,0,5,7,9,2,3,5,10,0,2,5,0,2,7,5,9,6,3,0,3,9,2,9,10,5,2,0,5,5,6,0,10,0,0,8,6,5,7,0,0,0"></bezel-heatmap>
+  <bezel-area static theme="light" class="wide" height="190" heading="Energy mix · GWh" values="120,130,125,140,150,160|80,85,90,88,95,100|40,45,60,70,85,110" series="Gas,Nuclear,Wind" labels="2021,2022,2023,2024,2025,2026" stacked></bezel-area>
+  <bezel-histogram static theme="dark" class="wide" height="190" heading="Commute times · minutes" values="21,38,45,28,19,33,39,46,21,20,42,39,51,45,33,31,62,31,25,21,35,36,30,33,37,42,46,36,14,42,18,32,18,34,25,36,70,33,43,19,31,41,33,38,35,23,40,25,55,28,42,34,44,27,45,33,48,41,36,25,42,39,52,30,40,40,37,36,36,27,23,30,40,51,45,46,43,42,36,42" mark="median"></bezel-histogram>
+
+  <bezel-scatter static theme="dark" class="wide" height="220" heading="Study hours vs exam score" x="2,3,3.5,4,5,5.5,6,6.5,7,8,8.5,9,10,11,12" y="48,52,61,55,63,58,70,66,72,75,71,82,80,88,91" x-label="Hours studied" y-label="Score" suffix="%" trend notes="12:Top student"></bezel-scatter>
+  <bezel-boxplot static theme="light" height="220" heading="Salaries by team · £k" values="60,66,60,59,55,60,71,65,70,64,65,63,49,69,66,66,48,48,55,58,64,62,66,57,95|50,50,44,58,51,55,44,44,46,47,52,49,45,42,45,55,43,49,51,39,22|55,68,35,52,54,47,60,54,40,63,62,64,69,59,56,42,61,49,50,42,45,50|47,31,34,42,48,44,32,28,43,37,35,46,47,42,42,43,49,44,70" series="Eng,Mkt,Prod,Supp" prefix="£" suffix="k" mark="mean"></bezel-boxplot>
+  <bezel-bars static theme="dark" height="196" heading="Revenue by quarter" values="182000,214000,236000,268000|151000,170000,198000,205000" series="2026,2025" labels="Q1,Q2,Q3,Q4" prefix="£" compact></bezel-bars>
+
+  <bezel-heatmap static theme="light" class="full" heading="Contributions" start="2025-04-07" suffix=" commits" values="0,7,3,10,6,0,0,0,1,8,0,0,2,0,0,0,2,9,5,3,0,0,0,7,3,0,0,2,0,5,0,8,4,0,3,0,10,6,2,9,0,0,0,4,0,0,3,2,0,0,0,5,1,8,3,0,0,3,10,6,0,0,2,0,8,0,0,7,0,3,0,2,9,5,1,0,0,0,7,3,0,6,2,0,0,0,8,4,0,3,0,0,6,2,9,0,0,2,0,0,0,3,10,0,3,0,5,1,8,4,0,0,0,10,6,0,9,2,0,0,0,0,7,3,3,0,0,9,5,1,0,0,2,0,3,0,6,2,0,3,0,8,4,0,7,0,0,0,2,9,0,1,2,0,0,0,3,10,6,3,0,0,1,8,4,0,0,2,0,6,0,9,5,0,3,0,0,7,3,10,0,0,0,5,1,0,4,2,0,0,0,6,2,9,3,0,0,4,0,7,0,0,2,0,9,0,1,8,0,3,4,6,10,5,5,2,0,5,6,8,0,3,0,3,7,0,10,10,7,2,0,0,5,0,2,2,0,0,4,9,5,7,5,2,0,3,10,10,9,7,0,0,3,0,8,4,9,0,3,9,0,2,10,5,3,0,0,6,8,2,0,0,3,8,0,2,0,0,3,0,6,4,2,8,0,2,0,4,2,2,10,8,0,3,2,4,9,7,0,3,0,2,8,3,3,0,0,2,2,6,4,4,10,0,2,9,2,0,9,8,0,0,8,10,2,10,9,2,0,0,0,10,2,7,0,3,6,3,0,7,0,0,2,9,6,3,10,2,0,0,4,0,0,4,6,0,0,9,10,7,7,6,0,0,0,10,7,10,0,2,0,8,3,10,0,6,2,3,8,7,8,10,3,2,3,9,4,8,9,6,2,0,6,6,0,7,10,3,2,4,8,6,4,9,0,3,0,6,5,2,7,0,2,10,2,0,3,7,0,0,9,7,4,9,3,2,0,4,8,10,9,4,2,0,0,5,9,9,7,3,0,0,4,3,2,4,2,0,3,9,10,4,0,0,3,0,7,6,3,8,0,0,5,0,9,2,0,0,2,4,6,7,8,10,2,0,5,0,0,5,7,0,0,3,7,5,6,8,0,3,9,0,10,7,0,0,2,10,4,6,9,8,3,0,7,2,7,9,7,2,0,9,10,10,5,8,0,3,9,3,0,4,6,3,0,0,8,0,8,0,0,3,0,0,5,7,9,2,3,5,10,0,2,5,0,2,7,5,9,6,3,0,3,9,2,9,10,5,2,0,5,5,6,0,10,0,0,8,6,5,7,0,0,0"></bezel-heatmap>
 </div>
