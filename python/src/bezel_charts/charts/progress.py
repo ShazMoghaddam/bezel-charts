@@ -92,7 +92,7 @@ def progress(o, th) -> str:
             if length > 0:
                 name = label_of(i) or ("Progress" if single else "#" + str(i + 1))
                 tip = name + ": " + show(n) + ("" if single else " (" + N(js_round(n / mx * 100)) + "%)")
-                s += hit(x0 + acc / mx * w, by - 4, length, 22, tip)
+                s += hit(x0 + acc / mx * w, by - 4, length, 22, tip, i, n)
             acc += n
         for i, it in enumerate(layout):
             lx = x0 + it["x"]

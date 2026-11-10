@@ -1,4 +1,4 @@
-import { esc, r2, has, nums, sum, fmt, text, small, palette, emptyState, statOf } from '../core/util.js';
+import { esc, r2, has, nums, sum, fmt, text, small, palette, emptyState, statOf, ref } from '../core/util.js';
 import { tile, dims } from '../core/tile.js';
 
 var FULL = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
@@ -50,7 +50,7 @@ export default function heatmap(o, th) {
       var lvl = v[i] <= 0 || !max ? 0 : Math.ceil(v[i] / max * 4);
       var fill = lvl ? c : th.grid, fo = lvl ? op[lvl - 1] : 0.7;
       s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(cell) + '" height="' + r2(cell) + '" rx="' + r2(cell * 0.24) + '" fill="' + fill + '" fill-opacity="' + fo + '"' +
-        (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(col * 0.012) + 's"' : '') + ' data-tip="' + esc(fullF.format(day) + ': ' + fmt(v[i], o)) + '"/>';
+        (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(col * 0.012) + 's"' : '') + ' data-tip="' + esc(fullF.format(day) + ': ' + fmt(v[i], o)) + '"' + ref(i, v[i]) + '/>';
     }
     var ly = gy + 7 * pitch + 14, lc = 10, lx = x0 + w - 5 * (lc + 3) - 30;
     s += text(x0, ly + 8, fmt(sum(v), o, true) + ' in ' + v.length + ' days', small(th, 10));

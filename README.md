@@ -49,7 +49,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.9.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.10.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -470,6 +470,7 @@ Any of the above, picked with `type`: `<bezel-chart type="donut" values="3,2,1">
 | `width`         | a fixed width in px instead of filling the container            |               |
 | `no-tooltips`   | boolean, turns off hover, tap and keyboard values, and leaves the chart out of the Tab order | off |
 | `static`        | boolean, skips the entrance animation                           | off           |
+| `clickable`     | boolean, a pointer over each value and an Enter hint for screen readers, when you handle `bezel-click` | off |
 
 Not every option suits every chart: `notes` works on spark, line, area and scatter; `show-values` on spark, line, area and bars; `goal-label` on spark, line, area, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
 
@@ -495,6 +496,7 @@ Every chart works without a mouse and without seeing it.
 | Right or Down | The next value |
 | Left or Up | The previous value |
 | Home, End | The first or last value |
+| Enter, Space | Selects the value, firing `bezel-click` |
 | Escape | Hides the tooltip |
 
 The value you're on is outlined, with its tooltip showing. On a heatmap, Left and Right move a week and Up and Down move a day, following the grid. A chart keeps its place when it redraws, for example when the window resizes.
@@ -536,10 +538,44 @@ Every chart element has:
 
 - `toSVG()`: the chart as a static SVG string.
 - `download(name)`: saves the chart as an `.svg` file.
+- `data`: options as real arrays and numbers, set from JavaScript (below).
 - `options`: the current settings as a plain object.
 - `refresh()`: redraws without replaying the animation.
 
-It fires a `bezel-render` event each time it draws.
+It fires a `bezel-render` event each time it draws, and `bezel-click` when someone picks a value.
+
+### Data from JavaScript
+
+Attributes are text, so from JavaScript it's simpler to hand the chart real arrays. `data` takes any options, and the chart redraws:
+
+```js
+const chart = document.querySelector('bezel-bars');
+chart.data = { values: [[182, 214, 236], [151, 170, 198]], labels: ['Q1', 'Q2', 'Q3'], series: ['2026', '2025'] };
+```
+
+Several series are nested arrays. Anything in `data` wins over the matching attribute, so HTML can set the look (`heading`, `prefix`, `theme`) and JavaScript the numbers. Keys can be camelCase (`showValues`) or as written in HTML (`'show-values'`). Set `chart.data = null` to go back to the attributes alone. Large datasets skip the round trip through text, and `data` set before the chart's script has loaded is kept.
+
+### Clicks
+
+Clicking a bar, point, slice, row or day fires `bezel-click`. So does pressing Enter or Space on the value the arrow keys are on, so keyboard users can do the same as mouse users.
+
+```js
+chart.addEventListener('bezel-click', (e) => {
+  const { index, label, value } = e.detail;
+  showDetails(label, value); // for example, open the month someone picked
+});
+```
+
+| `e.detail` | Holds |
+| --- | --- |
+| `type` | the chart type, such as `bars` |
+| `index` | the item's position, counting from 0: the column, bar, slice, row or day. On a scatter, the point's position across all groups, the same as `labels` and `notes` use |
+| `series`, `seriesName` | the series index and name when the item belongs to one series (scatter points, box plots), otherwise `null` |
+| `label` | the item's label, if it has one |
+| `value` | the number. Where an item covers several series, such as a column on a line chart, one per series, with `null` for a series that's shorter. A scatter point gives `[x, y]`, a box plot its median, a histogram its count per series, a waterfall the change, and bars and a line the bars then the lines |
+| `text` | the tooltip text, with everything the chart shows for that item |
+
+A chart can't tell whether anything is listening, so it doesn't change the cursor on its own. Add `clickable` to show a pointer over each value and tell screen reader users they can press Enter to select one.
 
 The module also exports `render(type, options)` and `toSVG(type, options)`, which return SVG strings without touching the DOM. They take the same option names as the attributes and run anywhere, including Node:
 
@@ -569,18 +605,22 @@ All sixteen charts are available, and the Python output matches the JavaScript b
 
 ## Frameworks
 
-Bezel Charts are standard custom elements, so they work anywhere HTML does. Set attributes as strings.
+Bezel Charts are standard custom elements, so they work anywhere HTML does. Pass arrays through `data`, set everything else as attributes, and listen for `bezel-click`.
 
 **React 19+**
 
 ```jsx
-<bezel-line values={data.join(',')} labels={months.join(',')} heading="Sales" />
+import 'bezel-charts';
+
+<bezel-line heading="Sales" data={{ values: sales, labels: months }} onbezel-click={(e) => setMonth(e.detail.label)} />
 ```
+
+React 19 sets `data` as a property because the element has one, so import Bezel Charts before the chart first renders. React 18 and earlier pass everything as text: use `values={sales.join(',')}` there.
 
 **Vue**
 
 ```vue
-<bezel-donut :values="parts.join(',')" heading="Budget" />
+<bezel-donut heading="Budget" :data.prop="{ values: parts, labels: names }" @bezel-click="pick" />
 ```
 
 In Vue, tell the compiler these are custom elements with `compilerOptions.isCustomElement: (tag) => tag.startsWith('bezel-')`.

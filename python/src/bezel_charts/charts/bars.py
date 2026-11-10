@@ -6,7 +6,7 @@ import math
 
 from .._tile import dims, tile
 from .._util import (
-    MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, new_id,
+    at, MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, new_id,
     num, palette, pattern, series, small, stat_of, style_of, text, to_number, to_string, trunc, truthy, tw,
 )
 
@@ -172,7 +172,7 @@ def bars(o, th) -> str:
                         'text-anchor="end" fill="' + th["fg"] + '" font-family="' + MONO + '" font-size="'
                         + N(10 if grouped else 11) + '" font-weight="600"',
                     )
-                s += hit(x0, ry, w, row_h - 6, tip_of(i))
+                s += hit(x0, ry, w, row_h - 6, tip_of(i), i, at(S, i))
             if has(o.goal) and to_number(o.goal) > 0:
                 gx = bx + to_number(o.goal) / span * bw
                 s += (
@@ -295,7 +295,7 @@ def bars(o, th) -> str:
                     )
                 else:
                     s += text(lx, ly, labels[c], small(th, 10, 'text-anchor="middle"'))
-            s += hit(x0 + c * slot, top0, slot, h - (top0 - y0), tip_of(c))
+            s += hit(x0 + c * slot, top0, slot, h - (top0 - y0), tip_of(c), c, at(S, c))
         if has(o.goal):
             s += goal_line(o, th, x0, x0 + w, Y(to_number(o.goal)))
         return s

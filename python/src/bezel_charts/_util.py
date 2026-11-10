@@ -246,10 +246,24 @@ def small(th, size=None, extra=None, fill=None) -> str:
     )
 
 
-def hit(x, y, w, h, tip) -> str:
+def ref(i, v, s=None) -> str:
+    """Which item a hover area stands for: its position, its series when it has just one, and its numbers."""
+    vals = v if isinstance(v, list) else [v]
+    return (
+        ' data-i="' + str(i) + '"' + ("" if s is None else ' data-s="' + str(s) + '"')
+        + ' data-v="' + ",".join(x if isinstance(x, str) else js_str(x) for x in vals) + '"'
+    )
+
+
+def at(S, i) -> list:
+    """Each series' value at position i, kept in series order, blank where a series is shorter."""
+    return [ser[i] if i < len(ser) else "" for ser in S]
+
+
+def hit(x, y, w, h, tip, i=None, v=None, s=None) -> str:
     return (
         '<rect class="bzc-hit" x="' + R(x) + '" y="' + R(y) + '" width="' + R(jmax(1, w)) + '" height="'
-        + R(jmax(1, h)) + '" fill="#000" fill-opacity="0" data-tip="' + esc(tip) + '"/>'
+        + R(jmax(1, h)) + '" fill="#000" fill-opacity="0" data-tip="' + esc(tip) + '"' + ("" if i is None else ref(i, v, s)) + "/>"
     )
 
 

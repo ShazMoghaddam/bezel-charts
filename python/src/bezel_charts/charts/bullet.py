@@ -116,7 +116,7 @@ def bullet(o, th) -> str:
             if i < len(labels):
                 s += text(x0, cy + 4, trunc(labels[i], math.floor(lab_w / 6.7)), 'fill="' + th["fg"] + '" font-family="' + SANS + '" font-size="12"')
             s += text(x0 + w, cy + 4, fmt(val, o), 'text-anchor="end" fill="' + th["fg"] + '" font-family="' + MONO + '" font-size="11" font-weight="600"')
-            s += hit(x0, ry, w, row_h - 8, tip_of(i))
+            s += hit(x0, ry, w, row_h - 8, tip_of(i), i, val)
         return s
 
     measures = " measure" if n == 1 else " measures"

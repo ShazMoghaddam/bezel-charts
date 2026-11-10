@@ -8,7 +8,7 @@ import re
 
 from .._js import full_date, month_short, weekday_short
 from .._tile import dims, tile
-from .._util import N, R, empty_state, esc, fmt, has, jmax, jmin, nums, palette, small, stat_of, text, to_string, total, truthy
+from .._util import ref, N, R, empty_state, esc, fmt, has, jmax, jmin, nums, palette, small, stat_of, text, to_string, total, truthy
 
 _ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 
@@ -75,7 +75,7 @@ def heatmap(o, th) -> str:
                 '<rect x="' + R(x) + '" y="' + R(y) + '" width="' + R(cell) + '" height="' + R(cell) + '" rx="'
                 + R(cell * 0.24) + '" fill="' + fill + '" fill-opacity="' + N(fo) + '"'
                 + (' class="bzc-a" style="animation-delay:' + R(col * 0.012) + 's"' if o.animate else "")
-                + ' data-tip="' + esc(full_date(day, lang) + ": " + fmt(val, o)) + '"/>'
+                + ' data-tip="' + esc(full_date(day, lang) + ": " + fmt(val, o)) + '"' + ref(i, val) + "/>"
             )
         ly = gy + 7 * pitch + 14
         lc = 10

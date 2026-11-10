@@ -60,7 +60,7 @@ export default function waterfall(o, th) {
       if (labels[i] != null && i % every === 0) s += text(x + bwid / 2, py + ph + negTag + 15, labels[i], small(th, 10, 'text-anchor="middle"'));
     });
     if (has(o.goal)) s += goalLine(o, th, px, px + pw, Y(+o.goal));
-    steps.forEach(function (st, i) { s += hit(px + i * slot, top0, slot, h - (top0 - y0), tipOf(st)); });
+    steps.forEach(function (st, i) { s += hit(px + i * slot, top0, slot, h - (top0 - y0), tipOf(st), i, st.change); });
     return s;
   }, { summary: n ? 'ends at ' + fmt(end, o) + ' after ' + n + (n === 1 ? ' step' : ' steps') : 'no data' });
 

@@ -92,7 +92,7 @@ export default function histogram(o, th) {
     for (i = 0; i < b.count; i++) {
       var tip = range(i);
       S.forEach(function (_, j) { tip += '\n' + (multi ? nameOf(j) + ': ' : '') + b.counts[j][i] + ' (' + share(j, i) + '%)'; });
-      s += hit(X(i), top, cw, ph, tip);
+      s += hit(X(i), top, cw, ph, tip, i, S.map(function (_, j) { return b.counts[j][i]; }));
     }
     return s;
   }, {

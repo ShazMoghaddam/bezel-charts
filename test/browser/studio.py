@@ -281,6 +281,22 @@ with sync_playwright() as p:
     pg.fill('textarea[data-key="targets"]', '1'); pg.wait_for_timeout(400)
     check('3 of 3 measures at or above target' in shadow(), 'one target applies to every row')
 
+    # data and clicks in a real browser: data set before the tag is defined survives the upgrade, and clicks report
+    pg.goto(URL); pg.wait_for_timeout(600)
+    early = pg.evaluate("""(async () => {
+      const el = document.createElement('bezel-early');
+      el.data = { values: [7, 8], labels: ['a', 'b'] };
+      document.body.append(el);
+      customElements.define('bezel-early', class extends customElements.get('bezel-spark') {});
+      await new Promise((r) => setTimeout(r, 300));
+      const got = [];
+      el.addEventListener('bezel-click', (e) => got.push(e.detail));
+      el.shadowRoot.querySelectorAll('[data-i]')[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      return { tip: el.shadowRoot.innerHTML.includes('b: 8'), data: el.data.values.join(','), got };
+    })()""")
+    check(early['tip'] and early['data'] == '7,8', 'data set before the element is defined is kept: ' + str(early)[:120])
+    check(early['got'] and early['got'][0]['label'] == 'b' and early['got'][0]['value'] == 8, 'a real click reports the item: ' + str(early['got'])[:120])
+
     # keyboard: real key presses on the example charts on the home page
     pg.goto(URL); pg.wait_for_timeout(800)
     bars = 'bezel-bars[heading="Commits this week"]'

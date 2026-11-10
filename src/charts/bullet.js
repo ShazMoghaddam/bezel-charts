@@ -57,7 +57,7 @@ export default function bullet(o, th) {
       }
       if (labels[i] != null) s += text(x0, cy + 4, trunc(labels[i], Math.floor(labW / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
       s += text(x0 + w, cy + 4, fmt(val, o), 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="11" font-weight="600"');
-      s += hit(x0, ry, w, rowH - 8, tipOf(i));
+      s += hit(x0, ry, w, rowH - 8, tipOf(i), i, val);
     }
     return s;
   }, { summary: !n ? 'no data' : anyT ? met + ' of ' + n + (n === 1 ? ' measure' : ' measures') + ' at or above target' : n + (n === 1 ? ' measure' : ' measures') });

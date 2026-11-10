@@ -1,5 +1,5 @@
 /** The axis frame line and area charts share: dates, fixed ranges and log scales included. Other charts don't load it. */
-import { newId, r2, clamp, has, tw, text, small, hit, goalLine } from './util.js';
+import { newId, r2, clamp, has, tw, text, small, hit, goalLine, at } from './util.js';
 import { niceScale, legend } from './series.js';
 import { dateTicks } from './time.js';
 
@@ -100,17 +100,17 @@ function logScale(lo, hi) {
 
 /**
  * The goal line, then one hover column per point. Evenly spaced points get equal columns centred on them; dated points
- * get columns that reach halfway to each neighbour. tip(j) gives each column's tooltip.
+ * get columns that reach halfway to each neighbour. tip(j) gives each column's tooltip, and S the series for click details.
  */
-export function xyFinish(o, th, f, n, tip) {
+export function xyFinish(o, th, f, n, tip, S) {
   var g = has(o.goal) ? f.Y(+o.goal) : NaN;
   var s = isFinite(g) ? goalLine(o, th, f.px, f.px + f.pw, g) : '';
   var step = n > 1 ? f.pw / (n - 1) : f.pw, X = f.X;
   for (var j = 0; j < n; j++) {
-    if (!f.uneven) { s += hit(X(j) - step / 2, f.top, step, f.ph, tip(j)); continue; }
+    if (!f.uneven) { s += hit(X(j) - step / 2, f.top, step, f.ph, tip(j), j, at(S, j)); continue; }
     var l = j ? (X(j - 1) + X(j)) / 2 : X(0) - (n > 1 ? (X(1) - X(0)) / 2 : f.pw / 2);
     var r = j < n - 1 ? (X(j) + X(j + 1)) / 2 : X(j) + (n > 1 ? (X(j) - X(j - 1)) / 2 : f.pw / 2);
-    s += hit(l, f.top, Math.max(1, r - l), f.ph, tip(j));
+    s += hit(l, f.top, Math.max(1, r - l), f.ph, tip(j), j, at(S, j));
   }
   return s;
 }

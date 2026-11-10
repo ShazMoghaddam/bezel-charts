@@ -42,7 +42,7 @@ export default function progress(o, th) {
     acc = 0;
     v.forEach(function (n, i) {
       var len = Math.min(n, Math.max(0, max - acc)) / max * w;
-      if (len > 0) s += hit(x0 + acc / max * w, by - 4, len, 22, (labels[i] || (single ? 'Progress' : '#' + (i + 1))) + ': ' + show(n) + (single ? '' : ' (' + Math.round(n / max * 100) + '%)'));
+      if (len > 0) s += hit(x0 + acc / max * w, by - 4, len, 22, (labels[i] || (single ? 'Progress' : '#' + (i + 1))) + ': ' + show(n) + (single ? '' : ' (' + Math.round(n / max * 100) + '%)'), i, n);
       acc += n;
     });
     layout.forEach(function (it, i) {

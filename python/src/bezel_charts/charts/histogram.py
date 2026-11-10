@@ -140,7 +140,7 @@ def histogram(o, th) -> str:
             tip = rng(i)
             for j in range(k):
                 tip += "\n" + (name_of(j) + ": " if multi else "") + R(b["counts"][j][i]) + " (" + R(share(j, i)) + "%)"
-            s += hit(X(i), top, cw, ph, tip)
+            s += hit(X(i), top, cw, ph, tip, i, [b["counts"][j][i] for j in range(k)])
         return s
 
     summary = (

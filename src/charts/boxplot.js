@@ -87,7 +87,7 @@ export default function boxplot(o, th) {
         '\n' + (st.outliers.length ? 'Range without outliers ' : 'Range ') + f(st.low) + ' to ' + f(st.high) +
         (st.outliers.length ? '\n' + st.outliers.length + (st.outliers.length === 1 ? ' outlier' : ' outliers') : '') +
         (showMean ? '\nMean ' + f(st.mean) : '') + '\nn = ' + st.n;
-      s += horiz ? hit(px, C(i) - band / 2, pw, band, tip) : hit(C(i) - band / 2, y0, band, ph, tip);
+      s += horiz ? hit(px, C(i) - band / 2, pw, band, tip, i, st.median, i) : hit(C(i) - band / 2, y0, band, ph, tip, i, st.median, i);
     });
     return s;
   }, { summary: k ? about : 'no data' });

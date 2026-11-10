@@ -61,7 +61,7 @@ export default function line(o, th) {
       var tip = pointName(labels, T, j, lang, timed);
       S.forEach(function (v, k) { if (j < v.length) tip += '\n' + (multi ? nameOf(k) + ': ' : '') + fmt(v[j], o); });
       return tip;
-    });
+    }, S);
   }, { stat: st, summary: S.length + ' series over ' + n + ' points' });
 }
 

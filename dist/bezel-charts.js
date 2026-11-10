@@ -1,4 +1,4 @@
-/*! Bezel Charts v1.9.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.10.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/util.js
 var SANS = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -101,8 +101,16 @@ function text(x, y, s, attrs) {
 function small(th, size, extra, fill) {
   return 'fill="' + (fill || th.muted) + '" font-family="' + MONO + '" font-size="' + (size || 10) + '"' + (extra ? " " + extra : "");
 }
-function hit(x, y, w, h, tip) {
-  return '<rect class="bzc-hit" x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(Math.max(1, w)) + '" height="' + r2(Math.max(1, h)) + '" fill="#000" fill-opacity="0" data-tip="' + esc(tip) + '"/>';
+function ref(i, v, s) {
+  return ' data-i="' + i + '"' + (s == null ? "" : ' data-s="' + s + '"') + ' data-v="' + [].concat(v).join(",") + '"';
+}
+function at(S, i) {
+  return S.map(function(s) {
+    return i < s.length ? s[i] : "";
+  });
+}
+function hit(x, y, w, h, tip, i, v, s) {
+  return '<rect class="bzc-hit" x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(Math.max(1, w)) + '" height="' + r2(Math.max(1, h)) + '" fill="#000" fill-opacity="0" data-tip="' + esc(tip) + '"' + (i == null ? "" : ref(i, v, s)) + "/>";
 }
 function anim(o, cls, delay) {
   if (!o.animate) return "";
@@ -231,7 +239,7 @@ function spark(o, th) {
     }
     var step = v.length > 1 ? w / (v.length - 1) : w;
     v.forEach(function(n, i) {
-      s += hit(X(i) - step / 2, y0 - 6, step, h2 + 12, (labels[i] || "#" + (i + 1)) + ": " + fmt(n, o));
+      s += hit(X(i) - step / 2, y0 - 6, step, h2 + 12, (labels[i] || "#" + (i + 1)) + ": " + fmt(n, o), i, n);
     });
     return s;
   }, { stat: st, summary: v.length ? "latest " + fmt(v[v.length - 1], o) : "no data" });
@@ -363,9 +371,10 @@ var ATTRIBUTES = [
   "log",
   "targets",
   "zone-labels",
-  "totals"
+  "totals",
+  "clickable"
 ];
-var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}.c{outline:none}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}`;
+var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}.c{outline:none}:host([clickable]) .bzc-hit{cursor:pointer}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}`;
 var STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
 var darkQuery = () => typeof matchMedia === "function" ? matchMedia("(prefers-color-scheme: dark)") : null;
 var pageTheme = () => {
@@ -397,13 +406,22 @@ var BezelChart = class extends Base {
   }
   connectedCallback() {
     if (!this.shadowRoot) {
-      this.attachShadow({ mode: "open" }).innerHTML = `<style>${HOST_CSS}</style><div class="c" role="group" aria-roledescription="chart"></div><p class="sr" id="h">Use the arrow keys to step through the values.</p><div class="tip" aria-hidden="true"></div><div class="sr" aria-live="polite"></div><div class="sr"></div>`;
+      this.attachShadow({ mode: "open" }).innerHTML = `<style>${HOST_CSS}</style><div class="c" role="group" aria-roledescription="chart"></div><p class="sr" id="h"></p><div class="tip" aria-hidden="true"></div><div class="sr" aria-live="polite"></div><div class="sr"></div>`;
       [, this.#box, , this.#tipEl, this.#live, this.#table] = this.shadowRoot.children;
       this.shadowRoot.addEventListener("pointermove", (e) => this.#tip(e));
       this.shadowRoot.addEventListener("pointerdown", (e) => this.#tip(e));
       this.addEventListener("pointerleave", () => this.#tipEl.classList.remove("on"));
       this.#box.addEventListener("keydown", (e) => this.#key(e));
       this.#box.addEventListener("blur", () => this.#clear());
+      this.shadowRoot.addEventListener("click", (e) => {
+        const mark = e.target?.closest?.("[data-i]");
+        if (mark) this.#select(mark);
+      });
+    }
+    if (Object.prototype.hasOwnProperty.call(this, "data")) {
+      const d = this.data;
+      delete this.data;
+      this.data = d;
     }
     live.add(this);
     this.#dark = darkQuery();
@@ -431,10 +449,23 @@ var BezelChart = class extends Base {
       this.#render();
     });
   }
+  /**
+   * Options set from JavaScript, as real arrays and numbers rather than attribute text:
+   * chart.data = { values: [[4, 9, 6], [3, 5, 8]], labels: ['Mon', 'Tue', 'Wed'] }. They win over the matching
+   * attributes, keys can be camelCase or as written in HTML, and setting null goes back to the attributes alone.
+   */
+  get data() {
+    return this.#data;
+  }
+  set data(d) {
+    this.#data = d && typeof d === "object" ? d : null;
+    this.attributeChangedCallback();
+  }
   /** Current settings as a plain object, the same shape BezelCharts.render() takes. */
   get options() {
     const o = {};
     for (const name of ATTRIBUTES) if (this.hasAttribute(name)) o[name] = this.getAttribute(name);
+    if (this.#data) for (const k of Object.keys(this.#data)) o[k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())] = this.#data[k];
     if (!o.width) o.width = this.#width || 360;
     o.autoTheme = pageTheme() || (this.#dark ? this.#dark.matches ? "dark" : "light" : "dark");
     return o;
@@ -469,6 +500,7 @@ var BezelChart = class extends Base {
   #width = 0;
   #rendered = false;
   #queued = false;
+  #data = null;
   #onScheme = () => {
     const t = this.getAttribute("theme");
     if (!t || t === "auto") this.refresh();
@@ -498,6 +530,7 @@ var BezelChart = class extends Base {
       box.removeAttribute("aria-label");
     }
     const keys = !!img && !this.hasAttribute("no-tooltips");
+    this.shadowRoot.getElementById("h").textContent = "Use the arrow keys to step through the values." + (this.hasAttribute("clickable") ? " Press Enter to select one." : "");
     if (keys) {
       box.setAttribute("tabindex", "0");
       box.setAttribute("aria-describedby", "h");
@@ -545,6 +578,10 @@ var BezelChart = class extends Base {
       i = i < 0 ? step > 0 ? 0 : n - 1 : clamp(i + step, 0, n - 1);
     } else if (e.key === "Home" || e.key === "End") {
       i = e.key === "Home" ? 0 : n - 1;
+    } else if ((e.key === "Enter" || e.key === " ") && this.#at >= 0) {
+      e.preventDefault();
+      this.#select(this.#marks()[this.#at]);
+      return;
     } else {
       if (e.key === "Escape") this.#clear();
       return;
@@ -563,6 +600,29 @@ var BezelChart = class extends Base {
     this.#at = i;
     this.#place(mark, r.left + r.width / 2, r.top);
     if (say) this.#live.textContent = `${mark.getAttribute("data-tip").replace(/\n/g, ", ")}. ${i + 1} of ${marks.length}`;
+  }
+  /**
+   * Fires bezel-click for a clicked bar, point, slice or row. detail has the chart type, the item's index, its series
+   * index and name when it has just one, its label, its value (a number, or one per series where the item covers
+   * several, and [x, y] on a scatter) and the tooltip text.
+   */
+  #select(mark) {
+    if (!mark?.hasAttribute?.("data-i")) return;
+    const o = this.options, index = +mark.getAttribute("data-i");
+    const s = mark.hasAttribute("data-s") ? +mark.getAttribute("data-s") : null;
+    const v = (mark.getAttribute("data-v") || "").split(",").map((x) => x === "" ? null : +x);
+    this.dispatchEvent(new CustomEvent("bezel-click", {
+      bubbles: true,
+      detail: {
+        type: this.chartType,
+        index,
+        series: s,
+        seriesName: s == null ? null : list(o.series)[s] ?? null,
+        label: list(o.labels)[index] ?? null,
+        value: v.length === 1 ? v[0] : v,
+        text: mark.getAttribute("data-tip")
+      }
+    }));
   }
   #clear() {
     this.#box.querySelector(".k")?.classList.remove("k");
@@ -873,18 +933,18 @@ function logScale(lo, hi) {
   }
   return { log: true, a, b, lo: ticks[0], hi: ticks[ticks.length - 1], ticks };
 }
-function xyFinish(o, th, f, n, tip) {
+function xyFinish(o, th, f, n, tip, S) {
   var g = has(o.goal) ? f.Y(+o.goal) : NaN;
   var s = isFinite(g) ? goalLine(o, th, f.px, f.px + f.pw, g) : "";
   var step = n > 1 ? f.pw / (n - 1) : f.pw, X = f.X;
   for (var j = 0; j < n; j++) {
     if (!f.uneven) {
-      s += hit(X(j) - step / 2, f.top, step, f.ph, tip(j));
+      s += hit(X(j) - step / 2, f.top, step, f.ph, tip(j), j, at(S, j));
       continue;
     }
     var l = j ? (X(j - 1) + X(j)) / 2 : X(0) - (n > 1 ? (X(1) - X(0)) / 2 : f.pw / 2);
     var r = j < n - 1 ? (X(j) + X(j + 1)) / 2 : X(j) + (n > 1 ? (X(j) - X(j - 1)) / 2 : f.pw / 2);
-    s += hit(l, f.top, Math.max(1, r - l), f.ph, tip(j));
+    s += hit(l, f.top, Math.max(1, r - l), f.ph, tip(j), j, at(S, j));
   }
   return s;
 }
@@ -994,7 +1054,7 @@ function line(o, th) {
         if (j < v.length) tip += "\n" + (multi ? nameOf(k) + ": " : "") + fmt(v[j], o);
       });
       return tip;
-    });
+    }, S);
   }, { stat: st, summary: S.length + " series over " + n + " points" });
 }
 line.table = function(o) {
@@ -1130,7 +1190,7 @@ function area(o, th) {
         if (i2 < ser.length) tip += "\n" + (multi ? nameOf(j2) + ": " : "") + fmt(ser[i2], o) + (mode === "percent" ? " (" + share(j2, i2) + "%)" : "");
       });
       return tip + (mode ? "\nTotal: " + fmt(totals[i2], o) : "");
-    });
+    }, S);
   }, {
     stat: statOf(mode ? totals : S[0] || [], o, ""),
     summary: k + " series " + (mode === "percent" ? "as shares of each total" : mode ? "stacked" : "filled") + " over " + n + " points"
@@ -1253,7 +1313,7 @@ function bars(o, th) {
             s += text(x0 + w, by + subH / 2 + 3.8, vals[j][i], 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="' + (grouped ? 10 : 11) + '" font-weight="600"');
           });
         }
-        s += hit(x0, ry, w, rowH - 6, tipOf(i));
+        s += hit(x0, ry, w, rowH - 6, tipOf(i), i, at(S, i));
       }
       if (has(o.goal) && +o.goal > 0) {
         var gx = bx + +o.goal / span * bw;
@@ -1263,13 +1323,13 @@ function bars(o, th) {
     }
     function stackRow(i2, bx2, by, bw2, span2) {
       var out = '<rect x="' + r2(bx2) + '" y="' + r2(by) + '" width="' + r2(bw2) + '" height="' + subH + '" rx="' + subH / 2 + '" fill="' + th.grid + '" fill-opacity=".6"/>';
-      var at = 0;
+      var at2 = 0;
       S.forEach(function(ser, j) {
         var val = i2 < ser.length ? ser[i2] : 0, len = Math.max(0, val) / span2 * bw2;
         if (len <= 0) return;
-        var gapL = at > 0 ? 1.5 : 0;
-        out += '<rect x="' + r2(bx2 + at + gapL) + '" y="' + r2(by) + '" width="' + r2(Math.max(2, len - gapL)) + '" height="' + subH + '" rx="' + r2(Math.min(3, len / 2)) + '" fill="' + colourOf(j, i2) + '"' + anim(o, "bzc-gx", i2 * 0.06 + j * 0.03) + "/>";
-        at += len;
+        var gapL = at2 > 0 ? 1.5 : 0;
+        out += '<rect x="' + r2(bx2 + at2 + gapL) + '" y="' + r2(by) + '" width="' + r2(Math.max(2, len - gapL)) + '" height="' + subH + '" rx="' + r2(Math.min(3, len / 2)) + '" fill="' + colourOf(j, i2) + '"' + anim(o, "bzc-gx", i2 * 0.06 + j * 0.03) + "/>";
+        at2 += len;
       });
       return out;
     }
@@ -1326,7 +1386,7 @@ function bars(o, th) {
         var lx = gx0 + groupW / 2, ly = py + ph + negLab + (angled ? 12 : 15);
         s += angled ? text(lx, ly, labText(labels[c]), small(th, 10, 'text-anchor="end" transform="rotate(-' + ANGLE + " " + r2(lx) + " " + r2(ly) + ')"')) : text(lx, ly, labels[c], small(th, 10, 'text-anchor="middle"'));
       }
-      s += hit(x0 + c * slot, top0, slot, h2 - (top0 - y0), tipOf(c));
+      s += hit(x0 + c * slot, top0, slot, h2 - (top0 - y0), tipOf(c), c, at(S, c));
     }
     if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal));
     return s;
@@ -1522,7 +1582,7 @@ function combo(o, th) {
       L.forEach(function(ser, j) {
         if (i < ser.length) tip += "\n" + lineName(j) + ": " + fmt(ser[i], lo);
       });
-      s += hit(X(i) - band / 2, top, band, ph, tip);
+      s += hit(X(i) - band / 2, top, band, ph, tip, i, at(B.concat(L), i));
     }
     return s;
   }, { summary: k + " bar series" + (stacked ? " stacked" : "") + " and " + m + (m === 1 ? " line" : " lines") + " over " + n + " points" });
@@ -1663,7 +1723,7 @@ function waterfall(o, th) {
     });
     if (has(o.goal)) s += goalLine(o, th, px, px + pw, Y(+o.goal));
     steps.forEach(function(st, i) {
-      s += hit(px + i * slot, top0, slot, h2 - (top0 - y0), tipOf(st));
+      s += hit(px + i * slot, top0, slot, h2 - (top0 - y0), tipOf(st), i, st.change);
     });
     return s;
   }, { summary: n ? "ends at " + fmt(end, o) + " after " + n + (n === 1 ? " step" : " steps") : "no data" });
@@ -1672,12 +1732,12 @@ function waterfall(o, th) {
   }
 }
 function walk(v, labels, totals) {
-  var at = list(totals).map(function(m) {
+  var at2 = list(totals).map(function(m) {
     var i = labels.indexOf(m);
     return i < 0 && String(parseInt(m, 10)) === m ? parseInt(m, 10) : i;
   }), run = 0;
   return v.map(function(x, i) {
-    var name = labels[i] || "Step " + (i + 1), from = run, total2 = at.indexOf(i) >= 0;
+    var name = labels[i] || "Step " + (i + 1), from = run, total2 = at2.indexOf(i) >= 0;
     run += x;
     return total2 ? { name, kind: "total", change: x, from: 0, to: run } : { name, kind: x < 0 ? "down" : "up", change: x, from, to: run };
   });
@@ -1802,7 +1862,9 @@ function histogram(o, th) {
       S.forEach(function(_, j) {
         tip += "\n" + (multi ? nameOf(j) + ": " : "") + b.counts[j][i] + " (" + share(j, i) + "%)";
       });
-      s += hit(X(i), top, cw, ph, tip);
+      s += hit(X(i), top, cw, ph, tip, i, S.map(function(_, j) {
+        return b.counts[j][i];
+      }));
     }
     return s;
   }, {
@@ -1976,7 +2038,7 @@ function boxplot(o, th) {
     stats.forEach(function(st, i) {
       if (!st.n) return;
       var tip = nameOf(i) + "\nMedian " + f(st.median) + "\nMiddle half " + f(st.q1) + " to " + f(st.q3) + "\n" + (st.outliers.length ? "Range without outliers " : "Range ") + f(st.low) + " to " + f(st.high) + (st.outliers.length ? "\n" + st.outliers.length + (st.outliers.length === 1 ? " outlier" : " outliers") : "") + (showMean ? "\nMean " + f(st.mean) : "") + "\nn = " + st.n;
-      s += horiz ? hit(px, C(i) - band / 2, pw, band, tip) : hit(C(i) - band / 2, y0, band, ph, tip);
+      s += horiz ? hit(px, C(i) - band / 2, pw, band, tip, i, st.median, i) : hit(C(i) - band / 2, y0, band, ph, tip, i, st.median, i);
     });
     return s;
   }, { summary: k ? about : "no data" });
@@ -2158,7 +2220,7 @@ function scatter(o, th) {
         var cx = PX(xv), cy2 = PY(gr.ys[i]);
         var tip = (labels[idx] ? labels[idx] + "\n" : multi ? nameOf(j) + "\n" : "") + (has(o.xLabel) ? o.xLabel : "x") + ": " + fmt(xv, xo) + "\n" + (has(o.yLabel) ? o.yLabel : "y") + ": " + fmt(gr.ys[i], o);
         s += marker(shapeOf(j), cx, cy2, r, ' fill="' + c + '" fill-opacity=".85" stroke="' + bg + '" stroke-width="1.5"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : ""));
-        s += hit(cx - 8, cy2 - 8, 16, 16, tip);
+        s += hit(cx - 8, cy2 - 8, 16, 16, tip, idx, [xv, gr.ys[i]], j);
         idx++;
       });
     });
@@ -2213,7 +2275,7 @@ function ring(o, th) {
       var pct = clamp(n / max * 100, 0, 100), c = pal[i % pal.length];
       s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="' + c + '" stroke-opacity=".16" stroke-width="' + r2(sw) + '"/>';
       if (pct > 0) s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="' + c + '" stroke-width="' + r2(sw) + '" stroke-linecap="round" pathLength="100" transform="rotate(-90 ' + r2(cx) + " " + r2(cy) + ')" style="stroke-dasharray:' + r2(pct) + " 100" + (o.animate ? ";animation-delay:" + i * 0.12 + "s" : "") + '"' + (o.animate ? ' class="bzc-s"' : "") + "/>";
-      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r + sw / 2) + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="' + esc((labels[i] || "#" + (i + 1)) + ": " + show(n) + (auto ? "" : " of " + fmt(max, o))) + '"/>';
+      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r + sw / 2) + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="' + esc((labels[i] || "#" + (i + 1)) + ": " + show(n) + (auto ? "" : " of " + fmt(max, o))) + '"' + ref(i, n) + "/>";
     });
     if (single) {
       s += text(cx, cy + size * 0.08, show(v[0]), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(size * 0.22) + '" font-weight="800"');
@@ -2286,13 +2348,13 @@ function donut(o, th) {
     v.forEach(function(n, i) {
       var y = ly + i * rowH + rowH / 2, pct = Math.round(n / total2 * 100);
       var tip = (labels[i] || "#" + (i + 1)) + ": " + fmt(n, o) + " (" + pct + "%)";
-      s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(y) + '" r="4" fill="' + pal[i % pal.length] + '"/>' + text(lx + 14, y + 4, trunc(labels[i] || "#" + (i + 1), Math.floor((x0 + w - lx - 50) / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"') + text(x0 + w, y + 4, pct + "%", 'text-anchor="end" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11" font-weight="600"') + hit(lx, y - rowH / 2, x0 + w - lx, rowH, tip);
+      s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(y) + '" r="4" fill="' + pal[i % pal.length] + '"/>' + text(lx + 14, y + 4, trunc(labels[i] || "#" + (i + 1), Math.floor((x0 + w - lx - 50) / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"') + text(x0 + w, y + 4, pct + "%", 'text-anchor="end" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11" font-weight="600"') + hit(lx, y - rowH / 2, x0 + w - lx, rowH, tip, i, n);
     });
     start = 0;
     v.forEach(function(n, i) {
       var len = n / total2 * 100;
       if (len <= 0) return;
-      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="#000" stroke-opacity="0" stroke-width="' + r2(sw) + '" pathLength="100" stroke-dasharray="' + r2(len) + " " + r2(100 - len) + '" stroke-dashoffset="' + r2(-start) + '" transform="rotate(-90 ' + r2(cx) + " " + r2(cy) + ')" class="bzc-hit" data-skip="" data-tip="' + esc((labels[i] || "#" + (i + 1)) + ": " + fmt(n, o) + " (" + Math.round(len) + "%)") + '"/>';
+      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="#000" stroke-opacity="0" stroke-width="' + r2(sw) + '" pathLength="100" stroke-dasharray="' + r2(len) + " " + r2(100 - len) + '" stroke-dashoffset="' + r2(-start) + '" transform="rotate(-90 ' + r2(cx) + " " + r2(cy) + ')" class="bzc-hit" data-skip="" data-tip="' + esc((labels[i] || "#" + (i + 1)) + ": " + fmt(n, o) + " (" + Math.round(len) + "%)") + '"' + ref(i, n) + "/>";
       start += len;
     });
     return s;
@@ -2352,7 +2414,7 @@ function gauge(o, th) {
     s += text(cx, cy - R * 0.12, show(val), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(R * 0.34) + '" font-weight="800"');
     if (labels[0]) s += text(cx, cy - R * 0.12 + 16, labels[0], small(th, 10, 'text-anchor="middle"'));
     s += text(cx - r, cy + 18, fmt(mn, o, true), small(th, 10, 'text-anchor="middle"')) + text(cx + r, cy + 18, fmt(mx, o, true), small(th, 10, 'text-anchor="middle"'));
-    s += hit(cx - R, cy - R, R * 2, R, (labels[0] ? labels[0] + ": " : "") + show(val) + " (range " + fmt(mn, o) + " to " + fmt(mx, o) + ")" + (has(o.goal) ? "\nGoal: " + fmt(+o.goal, o) : ""));
+    s += hit(cx - R, cy - R, R * 2, R, (labels[0] ? labels[0] + ": " : "") + show(val) + " (range " + fmt(mn, o) + " to " + fmt(mx, o) + ")" + (has(o.goal) ? "\nGoal: " + fmt(+o.goal, o) : ""), 0, val);
     return s;
   }, { summary: isFinite(val) ? show(val) + " on a scale of " + fmt(mn, o) + " to " + fmt(mx, o) : "no data" });
 }
@@ -2418,7 +2480,7 @@ function progress(o, th) {
     acc = 0;
     v.forEach(function(n, i) {
       var len = Math.min(n, Math.max(0, max - acc)) / max * w;
-      if (len > 0) s += hit(x0 + acc / max * w, by - 4, len, 22, (labels[i] || (single ? "Progress" : "#" + (i + 1))) + ": " + show(n) + (single ? "" : " (" + Math.round(n / max * 100) + "%)"));
+      if (len > 0) s += hit(x0 + acc / max * w, by - 4, len, 22, (labels[i] || (single ? "Progress" : "#" + (i + 1))) + ": " + show(n) + (single ? "" : " (" + Math.round(n / max * 100) + "%)"), i, n);
       acc += n;
     });
     layout.forEach(function(it, i) {
@@ -2513,7 +2575,7 @@ function bullet(o, th) {
       }
       if (labels[i] != null) s += text(x0, cy + 4, trunc(labels[i], Math.floor(labW / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
       s += text(x0 + w, cy + 4, fmt(val, o), 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="11" font-weight="600"');
-      s += hit(x0, ry, w, rowH - 8, tipOf(i));
+      s += hit(x0, ry, w, rowH - 8, tipOf(i), i, val);
     }
     return s;
   }, { summary: !n ? "no data" : anyT ? met + " of " + n + (n === 1 ? " measure" : " measures") + " at or above target" : n + (n === 1 ? " measure" : " measures") });
@@ -2597,7 +2659,7 @@ function heatmap(o, th) {
       }
       var lvl = v[i] <= 0 || !max ? 0 : Math.ceil(v[i] / max * 4);
       var fill = lvl ? c : th.grid, fo = lvl ? op[lvl - 1] : 0.7;
-      s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(cell) + '" height="' + r2(cell) + '" rx="' + r2(cell * 0.24) + '" fill="' + fill + '" fill-opacity="' + fo + '"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(col * 0.012) + 's"' : "") + ' data-tip="' + esc(fullF.format(day) + ": " + fmt(v[i], o)) + '"/>';
+      s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(cell) + '" height="' + r2(cell) + '" rx="' + r2(cell * 0.24) + '" fill="' + fill + '" fill-opacity="' + fo + '"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(col * 0.012) + 's"' : "") + ' data-tip="' + esc(fullF.format(day) + ": " + fmt(v[i], o)) + '"' + ref(i, v[i]) + "/>";
     }
     var ly = gy + 7 * pitch + 14, lc = 10, lx = x0 + w - 5 * (lc + 3) - 30;
     s += text(x0, ly + 8, fmt(sum(v), o, true) + " in " + v.length + " days", small(th, 10));
@@ -2621,7 +2683,7 @@ register("heatmap", heatmap);
 define("heatmap");
 
 // src/index.js
-var version = "1.9.0";
+var version = "1.10.0";
 var types = NAMES.slice();
 export {
   BezelChart,

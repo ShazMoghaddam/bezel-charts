@@ -78,7 +78,7 @@ def spark(o, th) -> str:
         step = w / (len(v) - 1) if len(v) > 1 else w
         for i, n in enumerate(v):
             label = labels[i] if i < len(labels) and labels[i] else "#" + str(i + 1)
-            s += hit(X(i) - step / 2, y0 - 6, step, h + 12, label + ": " + fmt(n, o))
+            s += hit(X(i) - step / 2, y0 - 6, step, h + 12, label + ": " + fmt(n, o), i, n)
         return s
 
     return tile(o, th, h, draw, {"stat": st, "summary": "latest " + fmt(v[-1], o) if v else "no data"})

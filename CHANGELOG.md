@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.10.0 (2026-11-10)
+
+Data from JavaScript and click events.
+
+- `data`: set any options from JavaScript as real arrays and numbers, such as `chart.data = { values: [[4, 9], [3, 5]], labels: ['Mon', 'Tue'] }`, and the chart redraws. It wins over the matching attributes, takes camelCase or HTML names, and `null` goes back to the attributes. Data set before the chart's script loads is kept. React 19 and Vue (`:data.prop`) pass it straight through.
+- `bezel-click`: fires when someone clicks a bar, point, slice, row or day, with the chart type, the item's index, series, label, value and tooltip text in `e.detail`. Enter or Space on the value the arrow keys are on fires it too, so keyboard users can do the same as mouse users.
+- `clickable`: a pointer cursor over each value, and a hint for screen reader users that Enter selects one. Charts don't show a pointer by default, since they can't tell whether anything handles the click.
+- Hover areas now carry `data-i`, `data-s` and `data-v` markers saying which item they stand for. They're in static SVGs too, and the Python package draws them identically.
+- Size: about 0.5 kB more per chart, as the new code is shared by all of them. The histogram, box plot and scatter budgets are now 11 kB. The full bundle is 26.4 kB.
+
 ## 1.9.0 (2026-11-10)
 
 Waterfall and bullet charts.
