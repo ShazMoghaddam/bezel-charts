@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+from pathlib import Path
 
 import pytest
 
@@ -257,7 +258,9 @@ def test_donut_from_a_dataframe():
 
 
 def test_all_types_match_the_javascript_list():
-    assert bc.types == ["spark", "line", "area", "bars", "combo", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "heatmap"]
+    # Read from src/render.js, so a chart added to one package and not the other fails here.
+    js = (Path(__file__).parents[2] / "src" / "render.js").read_text(encoding="utf-8")
+    assert bc.types == re.findall(r"'(\w+)'", re.search(r"NAMES = \[([^\]]*)\]", js).group(1))
     for t in bc.types:
         assert bc.to_svg(t).startswith("<svg")
 
@@ -356,3 +359,28 @@ def test_log_min_and_max_from_python():
     assert "10k" in texts(bc.line([120, 2_400_000], log=True).svg)
     assert texts(bc.line([40, 90, 60], min=50, max=80).svg)[-1] != "90"
     assert "clipPath" in bc.line([40, 90, 60], min=50, max=80).svg
+
+
+def test_waterfall_from_a_dict_a_series_and_a_dataframe():
+    steps = {"Revenue": 420, "Costs": -160, "Tax": -38, "Profit": 0}
+    chart = bc.waterfall(steps, totals=["Revenue", "Profit"], prefix="£")
+    assert ids(chart.svg) == ids(bc.to_svg("waterfall", values="420,-160,-38,0", labels="Revenue,Costs,Tax,Profit", totals="Revenue,Profit", prefix="£"))
+    assert "ends at £222 after 4 steps" in chart.svg
+    assert "+£" not in "".join(texts(chart.svg)).replace("−", "")
+    df = pd.DataFrame({"step": list(steps), "change": list(steps.values())})
+    assert ids(bc.waterfall(df, x="step", y="change", totals=["Revenue", "Profit"], prefix="£").svg) == ids(chart.svg)
+    assert ids(bc.waterfall(pd.Series(steps), totals=["Revenue", "Profit"], prefix="£").svg) == ids(chart.svg)
+    assert ids(bc.waterfall([5, 2, 0], totals=2).svg) == ids(bc.to_svg("waterfall", values="5,2,0", totals="2"))
+    assert chart.alt.endswith("Revenue total £420, Costs −£160, Tax −£38, Profit total £222")
+
+
+def test_bullet_targets_from_a_column_a_list_or_one_number():
+    df = pd.DataFrame({"kpi": ["Revenue", "Margin"], "actual": [182, 64], "plan": [200, 60]})
+    chart = bc.bullet(df, x="kpi", y="actual", target="plan", zones=[[150, 180], [40, 55]], zone_labels=["Poor", "Fair", "Good"])
+    expected = bc.to_svg("bullet", values="182,64", targets="200,60", labels="Revenue,Margin", zones="150,180|40,55", **{"zone-labels": "Poor,Fair,Good"})
+    assert ids(chart.svg) == ids(expected)
+    assert "1 of 2 measures at or above target" in chart.svg
+    assert ids(bc.bullet({"Revenue": 182, "Margin": 64}, target=[200, 60], zones=[[150, 180], [40, 55]], zone_labels=["Poor", "Fair", "Good"]).svg) == ids(expected)
+    one = bc.bullet([70, 90], target=80)
+    assert ids(one.svg) == ids(bc.to_svg("bullet", values="70,90", targets="80"))
+    assert "1 of 2 measures at or above target" in one.svg

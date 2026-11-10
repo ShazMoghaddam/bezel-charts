@@ -9,7 +9,7 @@
 [![Python](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-D99A0E)](LICENSE)
 
-Bezel Charts is a set of free, open-source web components: fourteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
+Bezel Charts is a set of free, open-source web components: sixteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
 ![Bezel Charts: a sparkline, rings, a gauge, a line chart with a launch day note, a donut, a bar chart with a target, a scatter plot with a trend line and a year-long activity heatmap, in light and dark tiles](docs/bezel-charts.png)
 
@@ -18,9 +18,9 @@ Bezel Charts is a set of free, open-source web components: fourteen chart tiles 
 - **One tag per chart.** `<bezel-bars values="4,9,6">` is a finished, labelled, animated chart.
 - **Yours to style.** Any colour, light and dark themes that follow the viewer's setting, rounder or squarer corners, with or without the bezel frame.
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
-- **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, grouped series, goal lines and notes on key points.
+- **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, histograms, box plots, waterfalls, bullet charts, grouped series, goal lines and notes on key points.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 24 kB gzipped for all fourteen charts, or 7 to 12 kB for a page that loads just one. No dependencies and no build step.
+- **Light.** About 26 kB gzipped for all sixteen charts, or 7 to 12 kB for a page that loads just one. No dependencies and no build step.
 - **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
@@ -49,7 +49,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.8.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.9.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -83,11 +83,11 @@ import { toSVG } from 'bezel-charts/line'; // render and toSVG work for every ch
 
 | Page | Gzipped |
 | --- | --- |
-| One sparkline, ring, donut, gauge, progress bar or heatmap | 7.2 to 7.4 kB |
-| One histogram, box plot, scatter, bar or bars-and-line chart | 9.4 to 10.5 kB |
-| One line or area chart | 12.0 to 12.3 kB |
-| A line and a bar chart | 14.8 kB |
-| Every chart: the full bundle | 23.8 kB |
+| One sparkline, ring, donut, gauge, progress bar or heatmap | 7.3 to 7.5 kB |
+| One waterfall, bullet, histogram, box plot, scatter, bar or bars-and-line chart | 9.0 to 10.5 kB |
+| One line or area chart | 12.0 to 12.4 kB |
+| A line and a bar chart | 15.1 kB |
+| Every chart: the full bundle | 25.9 kB |
 
 Once a page needs four or five different charts, load the full bundle instead. `<bezel-chart type="…">` works with whichever charts are loaded, and tells you which file to add if its type isn't one of them. The classic `iife.js` script always has every chart, because a classic script can't load the shared file.
 
@@ -253,6 +253,27 @@ Bars and lines with different units on one chart, such as sales in pounds as bar
 
 Two scales on one chart are easy to misread, so the right axis always has the same number of steps as the left: every gridline reads on both sides. A rule down each side takes its data's colour, so it's clear which axis belongs to what. The bar axis always includes zero; the line axis fits its data unless you add `line-zero`. The tooltip gives every value in its own units, with the total when stacked.
 
+### `<bezel-waterfall>`
+
+How a starting value rises and falls, step by step, to where it ends up: revenue down to profit, or a budget across the year. Give it the changes, and name the bars that show the running total.
+
+```html
+<bezel-waterfall heading="Revenue to profit" values="420,85,-160,-95,0,-38,0"
+  labels="Revenue,Services,Costs,Overheads,EBIT,Tax,Profit" totals="Revenue,EBIT,Profit" prefix="£" suffix="k"></bezel-waterfall>
+```
+
+| Attribute     | Values                                                          | Default |
+| ------------- | --------------------------------------------------------------- | ------- |
+| `values`      | the changes, in order: rises positive, falls negative           |         |
+| `labels`      | one per step, along the bottom                                  |         |
+| `totals`      | the bars that show the running total, by label or by position counting from `0` | none |
+| `series`      | names for the legend: rise, fall and total                      | `Rise,Fall,Total` |
+| `color`       | up to three colours: rise, fall and total                       | the theme's up, down and first colours |
+| `goal`        | a reference line                                                |         |
+| `height`      | chart height in px                                              | `200`   |
+
+A total adds its own value first, then shows the running total from zero. So give the opening amount for a start bar and `0` for a subtotal or the end. Changes float from the previous level, joined by a thin step line. Every bar carries a signed label (`+£85k`, `−£160k`), so rises and falls read without relying on colour; if any label would overlap its neighbour, they all hide and the tooltips and data table still give each change and running total. A label that looks like a number, such as a year, wins over a position in `totals`.
+
 ### `<bezel-histogram>`
 
 How raw values spread out. Give it the values themselves, such as 500 customers' ages, and it counts how many fall into each range. The ranges get round edges (20, 30, 40, not 19.7, 31.4) and a sensible number for the amount of data.
@@ -382,6 +403,28 @@ A progress bar, or stacked parts against a target.
 | `labels`      | one per segment                              |         |
 | `max`         | the full length of the bar                   | `100` for one value, otherwise the total |
 | `goal`        | a marker on the bar                          |         |
+
+### `<bezel-bullet>`
+
+Bullet charts: one row per measure, comparing the actual value with its target against bands for poor, fair and good. A compact choice for a KPI scorecard.
+
+```html
+<bezel-bullet heading="Q3 scorecard" values="182,64,7.4" targets="200,60,8" labels="Revenue £k,Margin %,NPS"
+  zones="150,180|40,55|6,7" zone-labels="Poor,Fair,Good"></bezel-bullet>
+```
+
+| Attribute     | Values                                                          | Default |
+| ------------- | --------------------------------------------------------------- | ------- |
+| `values`      | the actual values, one per row                                  |         |
+| `targets`     | one per row, or one number for every row, drawn as an upright line |      |
+| `labels`      | one per row, on the left                                        |         |
+| `zones`       | band edges, the same as the gauge: `150,180` makes three bands. Give each row its own with `\|` |  |
+| `zone-labels` | names for the bands, shown in tooltips and the data table       | `2 of 3` |
+| `max`         | the same end for every row                                      | each row fits its own numbers |
+| `series`      | names for the legend: actual and target                         | `Actual,Target` |
+| `color`       | one colour, or one per row                                      | theme   |
+
+Each row has its own scale from zero, so measures in different units sit together. The bands use one grey, darkest at the low end, so they read in greyscale and in print. The summary counts how many measures meet their target, and the tooltip and data table give the actual, target, difference and band.
 
 ### `<bezel-heatmap>`
 
@@ -522,7 +565,7 @@ bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
 bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
 ```
 
-All fourteen charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
+All sixteen charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
 
 ## Frameworks
 

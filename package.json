@@ -1,7 +1,7 @@
 {
   "name": "bezel-charts",
-  "version": "1.8.0",
-  "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, areas, bars, bar and line combos, histograms, box plots, rings, donuts, gauges, progress bars and heatmaps, with one-click static SVG export for READMEs.",
+  "version": "1.9.0",
+  "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, areas, bars, bar and line combos, waterfalls, histograms, box plots, rings, donuts, gauges, progress bars, bullet charts and heatmaps, with one-click static SVG export for READMEs.",
   "type": "module",
   "main": "dist/bezel-charts.js",
   "module": "dist/bezel-charts.js",
@@ -12,6 +12,7 @@
     "./area": "./dist/charts/area.js",
     "./bars": "./dist/charts/bars.js",
     "./combo": "./dist/charts/combo.js",
+    "./waterfall": "./dist/charts/waterfall.js",
     "./histogram": "./dist/charts/histogram.js",
     "./boxplot": "./dist/charts/boxplot.js",
     "./scatter": "./dist/charts/scatter.js",
@@ -19,6 +20,7 @@
     "./donut": "./dist/charts/donut.js",
     "./gauge": "./dist/charts/gauge.js",
     "./progress": "./dist/charts/progress.js",
+    "./bullet": "./dist/charts/bullet.js",
     "./heatmap": "./dist/charts/heatmap.js",
     "./src/*": "./src/*"
   },
@@ -47,7 +49,9 @@
     "histogram",
     "boxplot",
     "combo-chart",
-    "dual-axis"
+    "dual-axis",
+    "waterfall",
+    "bullet-chart"
   ],
   "author": "Shaz Moghaddam (https://shazmoghaddam.github.io)",
   "license": "MIT",

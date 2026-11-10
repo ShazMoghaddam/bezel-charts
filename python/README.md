@@ -59,7 +59,7 @@ Then in your README, with `chart.alt` as the alt text:
 ![Monthly revenue: latest £79k. £42k, £48k, £45k, £53k, £61k, £58k, £66k, £72k, £79k](docs/revenue.svg)
 ```
 
-## The fourteen charts
+## The sixteen charts
 
 | Function | What it draws |
 | --- | --- |
@@ -68,6 +68,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.area(data)` | Filled areas over time, overlapping, stacked (`stacked=True`) or as shares of 100% (`stacked="percent"`). |
 | `bc.bars(data)` | Bars, vertical or horizontal. Several columns or series become grouped bars side by side. |
 | `bc.combo(df, x=, bars=, line=)` | Bars on the left axis and lines on the right, for two measures with different units. |
+| `bc.waterfall(data, totals=)` | How a starting value rises and falls, step by step, with totals that show the running total. |
 | `bc.histogram(data)` | How raw values spread out: counts per range, with round edges, mean and median lines and shares. |
 | `bc.boxplot(data)` | Box plots comparing spreads, with quartiles matching pandas, outliers and an optional mean. |
 | `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
@@ -76,8 +77,9 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.donut(data)` | Parts of a whole, with the total in the middle and percentages alongside. |
 | `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
 | `bc.progress(data)` | A progress bar, single or stacked with a legend. |
+| `bc.bullet(data, target=)` | Bullet charts: actual against target for each measure, with bands for poor, fair and good. |
 
-Grouped bars are `bc.bars()` with several series, which makes fourteen. They are the same fourteen as the web components, and `bc.types` lists them.
+Grouped bars are `bc.bars()` with several series, which makes sixteen. They are the same sixteen as the web components, and `bc.types` lists them.
 
 ### Dates
 
@@ -108,6 +110,16 @@ bc.combo(bars=[182, 214, 236], line=[3.1, 3.4, 3.6], labels=["Jan", "Feb", "Mar"
 ```
 
 `bars=` and `line=` can each be a list of columns. `stacked=True` piles several bar series up, and `line_prefix`, `line_suffix` and `line_decimals` format the right axis.
+
+### Waterfall
+
+```python
+bc.waterfall({"Revenue": 420, "Services": 85, "Costs": -160, "Tax": -38, "Profit": 0}, totals=["Revenue", "Profit"], prefix="£", suffix="k")
+bc.waterfall(df, x="step", y="change", totals=["Opening", "Closing"])  # from a DataFrame
+bc.waterfall([120, 30, -12, 0], totals=[0, 3])                          # totals by position
+```
+
+A total adds its own value first, then shows the running total, so give the opening amount for a start and `0` for a subtotal. A missing value is drawn as 0 with a warning, so use `.fillna(0)` on total rows. `color=[rise, fall, total]` changes the colours.
 
 ### Histogram
 
@@ -201,6 +213,15 @@ bc.progress({"Done": 46, "In review": 18, "Blocked": 6}, max=100, goal=75, headi
 ![A stacked progress bar for a sprint: done, in review and blocked, with a goal marker at 75](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/progress.svg)
 
 `zones=[60, 85]` turns the gauge green below 60, amber up to 85 and red above; pass three colours with `color=` to use your own. One progress value is a percentage unless you set `max`; several stack up and fill to their total unless you set `max`.
+
+### Bullet
+
+```python
+bc.bullet(df, x="kpi", y="actual", target="plan", zones=[[150, 180], [40, 55]], zone_labels=["Poor", "Fair", "Good"])
+bc.bullet({"North": 72, "South": 95}, target=80, zones=[50, 75], suffix="%")  # one target and one set of bands for every row
+```
+
+`target=` takes a column name, a list with one per row, or one number. `zones=` is one list for every row or one list per row.
 
 ## Alt text
 

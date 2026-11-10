@@ -28,7 +28,7 @@ with sync_playwright() as p:
     code = lambda: pg.locator('#code').inner_text()
     svg_ok = lambda: pg.evaluate("(() => { const el = document.querySelector('#frame').firstElementChild; const s = el && el.shadowRoot && el.shadowRoot.querySelector('svg'); return !!s && !/NaN|undefined/.test(el.shadowRoot.innerHTML) })()")
 
-    ids = ['spark','line','bars','grouped','scatter','ring','donut','gauge','progress','heatmap']
+    ids = ['spark','line','bars','grouped','waterfall','scatter','ring','donut','gauge','progress','bullet','heatmap']
     for cid in ids:
         pg.click(f'[data-ui="{cid}"]'); pg.wait_for_timeout(250)
         check(svg_ok(), f'{cid}: preview renders')
@@ -259,6 +259,27 @@ with sync_playwright() as p:
     pg.locator('[data-toggle="log"]').locator('xpath=..').click(); pg.wait_for_timeout(300)
     pg.fill('input[data-key="max"]', '5'); pg.wait_for_timeout(400)
     check('max="5"' in code() and 'clipPath' in pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML"), 'a fixed max clips the line')
+
+    # waterfall: signed labels, totals by name, and an import that leaves totals to the user
+    pg.goto(URL); pg.wait_for_timeout(600)
+    pg.click('[data-ui="waterfall"]'); pg.wait_for_timeout(400)
+    shadow = lambda: pg.evaluate("document.querySelector('#frame').firstElementChild.shadowRoot.innerHTML")
+    check('totals="Revenue,EBIT,Profit"' in code() and svg_ok(), 'the waterfall sample draws with its totals')
+    check('>+£85k<' in shadow() and '>−£160k<' in shadow(), 'rises and falls carry signed labels')
+    pg.fill('textarea[data-key="totals"]', 'Revenue'); pg.wait_for_timeout(400)
+    check('ends at £212k after 7 steps' in shadow(), 'changing the totals changes the walk: ' + re.sub(r'.*?(ends at [^<]*).*', r'\1', shadow(), flags=re.S)[:60])
+    # The sample opens on the heatmap, so pick the waterfall again after it loads.
+    pg.click('[data-sample="daily-running-2026.csv"]'); pg.wait_for_timeout(700)
+    pg.click('[data-ui="waterfall"]'); pg.wait_for_timeout(500)
+    check('waterfall' in code() and 'totals=' not in code() and svg_ok(), 'an import into a waterfall starts without totals')
+
+    # bullet: targets, band names in the tooltip, and one target for every row
+    pg.goto(URL); pg.wait_for_timeout(600)
+    pg.click('[data-ui="bullet"]'); pg.wait_for_timeout(400)
+    check('targets="200,60,8"' in code() and '1 of 3 measures at or above target' in shadow(), 'the bullet sample compares with its targets')
+    check('Band Good' in shadow() or 'Band Fair' in shadow(), 'the bands are named in tooltips')
+    pg.fill('textarea[data-key="targets"]', '1'); pg.wait_for_timeout(400)
+    check('3 of 3 measures at or above target' in shadow(), 'one target applies to every row')
 
     # keyboard: real key presses on the example charts on the home page
     pg.goto(URL); pg.wait_for_timeout(800)

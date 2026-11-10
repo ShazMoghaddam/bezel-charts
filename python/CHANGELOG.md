@@ -1,5 +1,11 @@
 # Changelog (Python package)
 
+## 1.9.0 (2026-11-10)
+
+- `bc.waterfall()`: from a list, dict, Series or DataFrame with `x=` and `y=`, with `totals=` by name or position. `chart.alt` reads totals as the running total they show and changes as signed steps.
+- `bc.bullet()`: from a list, dict, Series or DataFrame, with `target=` as a column name, a list or one number, plus `zones=` and `zone_labels=`.
+- Both match `<bezel-waterfall>` and `<bezel-bullet>` byte for byte, with 25 parity cases. The test of `bc.types` now reads the list from the JavaScript source, so a chart added to one package and not the other fails.
+
 ## 1.8.0 (2026-11-10)
 
 - **Changed:** when `x=` or the index holds real dates (a `datetime64` column, `datetime.date` or `Timestamp` values), `bc.line()` and `bc.area()` now space the points in time, with date steps on the axis and full dates in tooltips. Before, the dates became evenly spaced labels. Charts of irregular dates will look different, and correct. `x_format` still names the points; pass `dates=None` to keep the old even spacing. Text that only looks like a date is unchanged.

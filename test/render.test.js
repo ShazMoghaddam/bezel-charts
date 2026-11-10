@@ -37,6 +37,11 @@ const CASES = {
   gauge: [{}, { values: '63', labels: 'CPU', zones: '60,85', goal: 80 }, { values: '120' }, { values: '-5', min: -10, max: 10, suffix: '°C' }, { values: '0' }],
   progress: [{}, { values: '72', labels: 'Upload' }, { values: '30,20,10', labels: 'Done,Review,Blocked', max: 100, goal: 75 },
     { values: '500,300', prefix: '£' }, { values: '200', max: 100 }, { values: '1,1,1,1,1,1,1,1' }],
+  bullet: [{}, { values: '5' }, { values: '182,64,7.4', targets: '200,60,8', labels: 'Revenue,Margin,NPS', zones: '150,180|40,55|6,7', 'zone-labels': 'Poor,Fair,Good' },
+    { values: '-3,4', targets: '2', zones: '0,5', max: 10 }, { values: '1,2,3', targets: '2', color: '#f00,#0f0,#00f', series: 'Sales,Plan' }, { values: '0,0' }, { values: '5,9', targets: '7,nope' }],
+  waterfall: [{}, { values: '5' }, { values: '120,30,-12,-25,0', labels: 'Start,Sales,Costs,Tax,Profit', totals: 'Start,Profit', prefix: '£' },
+    { values: '-5,-10,4,0', totals: '3', goal: -8 }, { values: '0,0,0' }, { values: '1,2,3', color: '#111,#222,#333', series: 'Up,Down,Sum', height: 120 },
+    { values: Array.from({ length: 40 }, (_, i) => (i % 3 ? 1200 : -800)).join(','), totals: '39', compact: '' }],
   heatmap: [{}, { values: year, start: '2025-10-27', suffix: ' commits' }, { values: '1,2,3', start: '2026-03-01' },
     { values: '0,1,2,3,4', start: '2026-07-01', lang: 'fr-FR' }],
 };
@@ -508,4 +513,49 @@ test('zero and negative values leave gaps on a log scale, but keep their tooltip
   const live = render('line', { values: '5,0,12', log: '' });
   assert.deepEqual(tips(live), ['#1|5', '#2|0', '#3|12']);
   assert.doesNotMatch(render('line', { values: '0,-2', log: '' }), /NaN/, 'with nothing positive, the axis stays linear');
+});
+
+
+test('waterfall totals stand on zero and show the running total, changes float from the last level', () => {
+  const o = { values: '120,30,-12,0', labels: 'Start,Sales,Costs,Profit', totals: 'Start,Profit', prefix: '£' };
+  const t = table('waterfall', o);
+  assert.deepEqual(t.head, ['Step', 'Change', 'Running total']);
+  assert.deepEqual(t.rows, [['Start', 'Total', '£120'], ['Sales', '+£30', '£150'], ['Costs', '−£12', '£138'], ['Profit', 'Total', '£138']]);
+  const svg = render('waterfall', o);
+  assert.match(svg, /ends at £138 after 4 steps/);
+  assert.deepEqual(tips(svg).slice(0, 3), ['Start|Total £120', 'Sales|Change +£30|Running total £150', 'Costs|Change −£12|Running total £138']);
+  // Signed labels on the bars, so rises and falls don't rely on colour.
+  for (const tag of ['£120', '+£30', '−£12', '£138']) assert.ok(svg.includes('>' + tag + '<'), tag);
+});
+
+test('waterfall totals by position, a label that looks like a number wins, and colours follow rise, fall, total', () => {
+  assert.deepEqual(table('waterfall', { values: '5,-2,0', totals: '2' }).rows.map((r) => r[1]), ['+5', '−2', 'Total']);
+  assert.deepEqual(table('waterfall', { values: '5,-2,0', labels: '2024,2,2026', totals: '2' }).rows.map((r) => r[1]), ['+5', 'Total', '0']);
+  const svg = render('waterfall', { values: '5,-2,0', totals: '2', color: '#111111,#222222,#333333', series: 'Up,Down,Net' });
+  for (const c of ['#111111', '#222222', '#333333']) assert.ok(svg.includes(`fill="${c}"`), c);
+  for (const n of ['Up', 'Down', 'Net']) assert.ok(svg.includes('>' + n + '<'), n);
+});
+
+test('waterfall labels hide together when any would overlap its neighbour', () => {
+  const many = Array.from({ length: 60 }, (_, i) => (i % 2 ? 123456 : -98765)).join(',');
+  assert.doesNotMatch(render('waterfall', { values: many, width: 300 }), />\+123,456</);
+  assert.match(render('waterfall', { values: '1,2', width: 300 }), />\+2</);
+});
+
+test('bullet rows compare the actual with the target and name the band it falls in', () => {
+  const o = { values: '182,64', targets: '200,60', labels: 'Revenue,Margin', zones: '150,180|40,55', zoneLabels: 'Poor,Fair,Good' };
+  const t = table('bullet', o);
+  assert.deepEqual(t.head, ['Measure', 'Actual', 'Target', 'Difference', 'Band']);
+  assert.deepEqual(t.rows, [['Revenue', '182', '200', '−18', 'Good'], ['Margin', '64', '60', '+4', 'Good']]);
+  const svg = render('bullet', o);
+  assert.match(svg, /1 of 2 measures at or above target/);
+  assert.equal(tips(svg)[0], 'Revenue|Actual 182|Target 200|Difference −18|Band Good');
+});
+
+test('bullet with one target for every row, unnamed bands, and no targets at all', () => {
+  assert.deepEqual(table('bullet', { values: '40,90', targets: '80', zones: '50,75' }).rows, [['Measure 1', '40', '80', '−40', '1 of 3'], ['Measure 2', '90', '80', '+10', '3 of 3']]);
+  const plain = render('bullet', { values: '3,4' });
+  assert.match(plain, /2 measures</);
+  assert.doesNotMatch(plain, /Target/);
+  assert.deepEqual(table('bullet', { values: '3,4' }).head, ['Measure', 'Actual']);
 });

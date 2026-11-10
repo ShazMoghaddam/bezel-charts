@@ -20,6 +20,7 @@ const CHARTS = [
   { id: 'bars', tag: 'bars', name: 'Bars', icon: 'M6 20v-8M12 20V5M18 20v-11' },
   { id: 'combo', tag: 'combo', name: 'Bars and line', icon: 'M5 20v-7M10 20V9M15 20v-5M20 20V8M3 11l6-4 5 3 7-5' },
   { id: 'grouped', tag: 'bars', name: 'Grouped bars', icon: 'M4 20v-8M8 20V8M14 20V9M18 20v-6' },
+  { id: 'waterfall', tag: 'waterfall', name: 'Waterfall', icon: 'M4 20V8h3v12zM7 8h3v4M10 12h3v3M13 15h3v5M16 6h4v14h-4' },
   { id: 'boxplot', tag: 'boxplot', name: 'Box plot', icon: 'M6 4v4M6 16v4M3 8h6v8H3zM3 12h6M16 6v3M16 15v4M13 9h6v6h-6zM13 11h6' },
   { id: 'histogram', tag: 'histogram', name: 'Histogram', icon: 'M3 20v-5h4v5M7 20V9h4v11M11 20V5h4v15M15 20v-8h4v8' },
   { id: 'scatter', tag: 'scatter', name: 'Scatter', icon: 'M6 17h.01M9 12h.01M13 14h.01M17 8h.01M19 11h.01M8 7h.01' },
@@ -27,16 +28,19 @@ const CHARTS = [
   { id: 'donut', tag: 'donut', name: 'Donut', icon: 'M12 3a9 9 0 0 1 9 9M19.4 17.2A9 9 0 1 1 12 3' },
   { id: 'gauge', tag: 'gauge', name: 'Gauge', icon: 'M4 17a8 8 0 0 1 16 0M12 17l4-5' },
   { id: 'progress', tag: 'progress', name: 'Progress', icon: 'M4 10h16v4H4zM4 10h9v4H4z' },
+  { id: 'bullet', tag: 'bullet', name: 'Bullet', icon: 'M3 7h18v4H3zM3 8.5h11v1H3zM16 6v6M3 15h18v4H3zM3 16.5h8v1H3zM13 14v6' },
   { id: 'heatmap', tag: 'heatmap', name: 'Heatmap', icon: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4zM4 16h4v4H4z' },
 ];
 const byId = Object.fromEntries(CHARTS.map((c) => [c.id, c]));
-const WIDE = new Set(['line', 'area', 'combo', 'grouped', 'histogram', 'boxplot', 'scatter', 'heatmap']);
+const WIDE = new Set(['line', 'area', 'combo', 'waterfall', 'grouped', 'histogram', 'boxplot', 'scatter', 'heatmap']);
 
 const PRESETS = {
   spark: { heading: 'London · 7 day high', values: '17,16,15,15,13,12,14', labels: 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', suffix: '°C', 'delta-label': 'since Monday' },
   line: { heading: 'Site visitors', values: '420,460,510,580,620,900,1180,1240,1310,1290,1420,1560|380,400,430,450,470,490,520,540,560,600,610,640', series: '2026,2025', labels: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec', notes: 'Jun:Launch day', compact: '' },
   area: { heading: 'Energy mix · GWh', values: '120,130,125,140,150,160|80,85,90,88,95,100|40,45,60,70,85,110', series: 'Gas,Nuclear,Wind', labels: '2021,2022,2023,2024,2025,2026', stacked: 'true' },
   combo: { heading: 'Sales and conversion', values: '182,214,236,268,251,290,312,298,340,365,392,420', line: '3.1,3.3,3.2,3.6,3.4,3.8,4.0,3.9,4.2,4.4,4.3,4.7', series: 'Sales', 'line-series': 'Conversion', labels: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec', prefix: '£', suffix: 'k', 'line-suffix': '%', 'line-decimals': '1' },
+  waterfall: { heading: 'Revenue to profit', values: '420,85,-160,-95,0,-38,0', labels: 'Revenue,Services,Costs,Overheads,EBIT,Tax,Profit', totals: 'Revenue,EBIT,Profit', prefix: '£', suffix: 'k' },
+  bullet: { heading: 'Q3 scorecard', values: '182,64,7.4', targets: '200,60,8', labels: 'Revenue £k,Margin %,NPS', zones: '150,180|40,55|6,7', 'zone-labels': 'Poor,Fair,Good' },
   boxplot: { heading: 'Salaries by team · £k', values: '60,66,60,59,55,60,71,65,70,64,65,63,49,69,66,66,48,48,55,58,64,62,66,57,95|50,50,44,58,51,55,44,44,46,47,52,49,45,42,45,55,43,49,51,39,22|55,68,35,52,54,47,60,54,40,63,62,64,69,59,56,42,61,49,50,42,45,50|47,31,34,42,48,44,32,28,43,37,35,46,47,42,42,43,49,44,70', series: 'Engineering,Marketing,Product,Support', prefix: '£', suffix: 'k', mark: 'mean' },
   histogram: { heading: 'Commute times · minutes', values: '21,38,45,28,19,33,39,46,21,20,42,39,51,45,33,31,62,31,25,21,35,36,30,33,37,42,46,36,14,42,18,32,18,34,25,36,70,33,43,19,31,41,33,38,35,23,40,25,55,28,42,34,44,27,45,33,48,41,36,25,42,39,52,30,40,40,37,36,36,27,23,30,40,51,45,46,43,42,36,42', mark: 'median' },
   bars: { heading: 'Commits this week', values: '4,9,6,3,8,5,3', labels: 'M,T,W,T,F,S,S', stat: 'total', 'show-values': '' },
@@ -48,11 +52,11 @@ const PRESETS = {
   progress: { heading: 'Sprint 14', values: '18,6,3', labels: 'Done,In review,Blocked', max: '34' },
   heatmap: { heading: 'Contributions', suffix: ' commits' },
 };
-const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], histogram: [120, 360, 190], combo: [120, 360, 200], boxplot: [120, 360, 200], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
+const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], histogram: [120, 360, 190], combo: [120, 360, 200], waterfall: [140, 400, 200], boxplot: [120, 360, 200], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
 const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
-  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'dash', 'markers', 'patterns', 'zones',
+  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'dash', 'markers', 'patterns', 'zones', 'zone-labels', 'targets', 'totals',
   'center-label', 'theme', 'frame', 'corners', 'height', 'color', 'background', 'no-tooltips', 'static'];
 
 const all = CHARTS.map((c) => c.id);
@@ -76,11 +80,17 @@ const FIELDS = [
     label: { spark: 'Values', ring: 'Values, one ring each', donut: 'Values, one slice each', progress: 'Values, one segment each', heatmap: 'Values, one per day' },
     hint: 'Separate with commas, spaces or new lines. You can paste two columns from a spreadsheet to fill the labels as well.' },
   { tab: 'data', key: 'values', kind: 'number', label: 'Reading', only: only('gauge') },
-  { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'area', 'bars', 'grouped', 'combo', 'ring', 'donut', 'progress'),
-    hint: { spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', area: 'One per point, along the bottom.', combo: 'One per column, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
+  { tab: 'data', key: 'values', kind: 'numbers', label: 'Changes, in order', only: only('waterfall'),
+    hint: 'Rises are positive and falls negative. For a total bar, put the opening amount for a start or 0 for a subtotal.' },
+  { tab: 'data', key: 'values', kind: 'numbers', label: 'Actual values, one row each', only: only('bullet') },
+  { tab: 'data', key: 'targets', kind: 'numbers', label: 'Targets', only: only('bullet'), hint: 'One per row, or one number for every row. Drawn as an upright line.' },
+  { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'area', 'bars', 'grouped', 'combo', 'waterfall', 'ring', 'donut', 'progress', 'bullet'),
+    hint: { waterfall: 'One per step, along the bottom.', bullet: 'One per row, on the left.', spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', area: 'One per point, along the bottom.', combo: 'One per column, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
   { tab: 'data', key: 'labels', kind: 'text', label: 'Caption', placeholder: 'e.g. CPU', only: only('gauge') },
   { tab: 'data', key: 'labels', kind: 'list', label: 'Point names (optional)', hint: 'Shown in tooltips, in the same order as the points.', only: only('scatter') },
   { tab: 'data', kind: 'pair', only: only('gauge'), fields: [{ key: 'min', kind: 'number', label: 'Lowest', placeholder: '0' }, { key: 'max', kind: 'number', label: 'Highest', placeholder: '100' }] },
+  { tab: 'data', key: 'totals', kind: 'list', label: 'Totals', only: only('waterfall'),
+    hint: 'The bars that show the running total, by label (or position, counting from 0). They stand on zero in the total colour.' },
   { tab: 'data', key: 'max', kind: 'number', label: 'Out of', placeholder: '100', hint: 'The value that fills a ring. Leave empty for 100.', only: only('ring') },
   { tab: 'data', key: 'max', kind: 'number', label: 'Out of', placeholder: 'Total', hint: 'The full length of the bar. Leave empty to use the total.', only: only('progress') },
   { tab: 'data', kind: 'pair', only: only('scatter'), fields: [{ key: 'x-label', kind: 'text', label: 'Across (x) title', placeholder: 'e.g. Hours' }, { key: 'y-label', kind: 'text', label: 'Up (y) title', placeholder: 'e.g. Score' }] },
@@ -104,10 +114,14 @@ const FIELDS = [
   { tab: 'extras', key: 'delta', kind: 'select', label: 'Change since the start', only: only('spark', 'line', 'area', 'bars', 'grouped'), when: (a, ui) => effectiveStat(ui, a) === 'last',
     options: [['', 'Show it, rising is good'], ['inverse', 'Show it, falling is good'], ['none', 'Hide it']] },
   { tab: 'extras', key: 'delta-label', kind: 'text', label: 'Change wording', placeholder: 'since start', only: only('spark', 'line', 'area', 'bars', 'grouped'), when: (a, ui) => effectiveStat(ui, a) === 'last' && a.delta !== 'none' },
-  { tab: 'extras', kind: 'pair', only: only('spark', 'line', 'area', 'bars', 'grouped', 'boxplot', 'scatter'), fields: [{ key: 'goal', kind: 'number', label: 'Goal line at', placeholder: 'e.g. 100' }, { key: 'goal-label', kind: 'text', label: 'Goal wording', placeholder: 'Goal' }] },
+  { tab: 'extras', kind: 'pair', only: only('spark', 'line', 'area', 'bars', 'grouped', 'waterfall', 'boxplot', 'scatter'), fields: [{ key: 'goal', kind: 'number', label: 'Goal line at', placeholder: 'e.g. 100' }, { key: 'goal-label', kind: 'text', label: 'Goal wording', placeholder: 'Goal' }] },
   { tab: 'extras', key: 'goal', kind: 'number', label: 'Goal marker at', placeholder: 'e.g. 80', only: only('gauge', 'progress') },
   { tab: 'extras', kind: 'notes', only: only('spark', 'line', 'area', 'scatter') },
   { tab: 'extras', key: 'zones', kind: 'text', label: 'Zone breakpoints', placeholder: 'e.g. 60, 85', hint: 'The reading turns from green to amber to red as it passes each number.', only: only('gauge') },
+  { tab: 'extras', key: 'zones', kind: 'text', label: 'Band edges', placeholder: 'e.g. 150, 180', only: only('bullet'),
+    hint: 'Two numbers make three bands, darkest at the low end. Give each row its own with | between them.' },
+  { tab: 'extras', key: 'zone-labels', kind: 'list', label: 'Band names', placeholder: 'e.g. Poor, Fair, Good', only: only('bullet'), hint: 'Shown in tooltips and the data table.' },
+  { tab: 'extras', key: 'max', kind: 'number', label: 'Scale up to', placeholder: 'Automatic', only: only('bullet'), hint: 'The same end for every row. Leave empty and each row fits its own numbers.' },
   { tab: 'extras', key: 'center-label', kind: 'text', label: 'Centre wording', placeholder: 'Total', only: only('donut') },
   { tab: 'extras', key: 'show-values', kind: 'toggle', label: 'Show values on the chart', only: only('spark', 'line', 'area', 'bars', 'grouped') },
   { tab: 'extras', key: 'horizontal', kind: 'toggle', label: 'Horizontal bars', only: only('bars', 'grouped') },
@@ -414,6 +428,17 @@ export function createStudio(root) {
         attrs.values = String(last);
         return `${rows}. Showing the last value of ${name(N[0])}.`;
       }
+      case 'waterfall': {
+        attrs.values = col(N[0]).join(',');
+        delete attrs.totals;
+        return `${rows}.${from} changes from ${name(N[0])}. Mark any totals under Totals.`;
+      }
+      case 'bullet': {
+        attrs.values = col(N[0]).join(',');
+        delete attrs.zones; delete attrs['zone-labels'];
+        if (N[1]) attrs.targets = col(N[1]).join(','); else delete attrs.targets;
+        return `${rows}.${from} values from ${name(N[0])}${N[1] ? `, targets from ${name(N[1])}` : ''}.`;
+      }
       case 'ring': {
         const vals = col(N[0]).slice(0, 6), top = Math.max(...vals);
         attrs.values = vals.join(',');
@@ -593,6 +618,10 @@ export function createStudio(root) {
         const n = Math.max(1, Math.min(ui === 'donut' ? 6 : 8, valuesCount));
         return Array.from({ length: n }, (_, i) => (ui === 'donut' && valuesCount > 6 && i === 5 ? 'Other' : labels[i] || `#${i + 1}`));
       }
+      case 'waterfall':
+        return ['Rise', 'Fall', 'Total'];
+      case 'bullet':
+        return ['Actual'];
       case 'gauge': {
         const z = tokens(attrs.zones).length;
         return z ? ['Low', 'Middle', 'High', 'Very high', 'Top'].slice(0, Math.min(5, z + 1)) : ['Reading'];
@@ -604,7 +633,7 @@ export function createStudio(root) {
   function colourValues(slots) {
     const th = customElements.get('bezel-chart').themes[themeNow()];
     const given = listOf(attrs.color);
-    const base = given.length ? given : ui === 'gauge' && tokens(attrs.zones).length ? [th.up, th.palette[3], th.down] : th.palette;
+    const base = given.length ? given : ui === 'gauge' && tokens(attrs.zones).length ? [th.up, th.palette[3], th.down] : ui === 'waterfall' ? [th.up, th.down, th.palette[0]] : th.palette;
     return slots.map((_, i) => base[i % base.length]);
   }
   function renderColours() {

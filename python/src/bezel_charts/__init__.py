@@ -28,11 +28,12 @@ from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
 from ._util import Opts, fmt, lst, series
 from .charts import TYPES
+from .charts.waterfall import walk as _walk
 
-__version__ = "1.8.0"
+__version__ = "1.9.0"
 __all__ = [
-    "Chart", "area", "bars", "boxplot", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
-    "to_svg", "types", "__version__",
+    "Chart", "area", "bars", "boxplot", "bullet", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
+    "to_svg", "types", "waterfall", "__version__",
 ]
 
 #: Every chart type, the same as in the JavaScript package.
@@ -84,12 +85,22 @@ class Chart:
         m = re.search(r'aria-label="([^"]*)"', self.svg)
         out = html.unescape(m.group(1)) if m else f"{self.type} chart"
         o = Opts({_camel(k): v for k, v in self.options.items()})
-        S = series(o.values) if self.type in ("spark", "line", "area", "bars", "donut", "progress") else []
+        S = series(o.values) if self.type in ("spark", "line", "area", "bars", "donut", "progress", "bullet") else []
         if len(S) == 1:
             labels = lst(o.labels)
             parts = [(labels[i] + " " if i < len(labels) and labels[i] else "") + fmt(v, o) for i, v in enumerate(S[0])]
             more = len(parts) - 12
             out += ". " + ", ".join(parts[:12]) + (f" and {more} more" if more > 0 else "")
+        elif self.type == "waterfall":
+            # Totals read as the running total they show, changes as signed steps.
+            steps = _walk((series(o.values) or [[]])[0], lst(o.labels), o.totals)
+            parts = [
+                st["name"] + (" total " + fmt(st["to"], o) if st["kind"] == "total" else " " + ("+" if st["change"] > 0 else "") + fmt(st["change"], o))
+                for st in steps
+            ]
+            more = len(parts) - 12
+            if parts:
+                out += ". " + ", ".join(parts[:12]) + (f" and {more} more" if more > 0 else "")
         return out
 
     def save(self, path: str | PathLike) -> Path:
@@ -346,3 +357,42 @@ def progress(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | 
     if data is not None and not hasattr(data, "__iter__") and not isinstance(data, Mapping):
         data = [data]
     return _parts_chart("progress", data, x, y, x_format, options)
+
+
+def waterfall(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, totals: Any = None, **options: Any) -> Chart:
+    """A waterfall: how a starting value rises and falls, step by step, to where it ends up.
+
+    Pass the changes as a list, a dict of step to change, a Series (its index names the steps) or a DataFrame
+    with ``y=`` for the changes and ``x=`` for the names. ``totals=`` lists the bars that show the running total,
+    by name or position. A total adds its own value first, so give the opening amount for a start and 0 for a
+    subtotal::
+
+        bc.waterfall({"Revenue": 420, "Costs": -160, "Tax": -38, "Profit": 0}, totals=["Revenue", "Profit"])
+
+    Rises, falls and totals use the theme's colours; ``color=[rise, fall, total]`` changes them.
+    """
+    out = dict(options)
+    if totals is not None:
+        out["totals"] = [totals] if isinstance(totals, (str, int)) else list(totals)
+    return _parts_chart("waterfall", data, x, y, x_format, out)
+
+
+def bullet(
+    data: Any = None, *, x: Any = None, y: Any = None, target: Any = None, x_format: str | None = None, **options: Any
+) -> Chart:
+    """Bullet charts: one row per measure, with the actual value as a bar, the target as a line and bands behind.
+
+    Pass the actual values as a list, a dict of name to value, a Series or a DataFrame with ``y=`` for the values
+    and ``x=`` for the names. ``target=`` is a column name, a list (one per row) or one number for every row.
+    ``zones=`` sets the band edges, the same as the gauge's: ``zones=[150, 180]`` for every row, or one list per
+    row such as ``zones=[[150, 180], [40, 55]]``. ``zone_labels=["Poor", "Fair", "Good"]`` names the bands.
+    """
+    out = dict(options)
+    if target is not None:
+        if isinstance(target, str) and _data._is_frame(data):
+            out["targets"] = _data.numbers(data[target], "targets")
+        elif isinstance(target, (int, float)) and not isinstance(target, bool):
+            out["targets"] = [float(target)]
+        else:
+            out["targets"] = _data.numbers(target, "targets")
+    return _parts_chart("bullet", data, x, y, x_format, out)

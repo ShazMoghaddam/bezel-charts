@@ -81,6 +81,11 @@
         <div class="meta"><div><b>Bars and line</b><span>Two measures with different units, with gridlines that read on both axes.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
+      <article class="card wide" data-card="waterfall">
+        <bezel-waterfall heading="Revenue to profit" values="420,85,-160,-95,0,-38,0" labels="Revenue,Services,Costs,Overheads,EBIT,Tax,Profit" totals="Revenue,EBIT,Profit" prefix="£" suffix="k"></bezel-waterfall>
+        <div class="meta"><div><b>Waterfall</b><span>How a total rises and falls, step by step, to where it ends up.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
       <article class="card wide" data-card="histogram">
         <bezel-histogram heading="Commute times · minutes" values="21,38,45,28,19,33,39,46,21,20,42,39,51,45,33,31,62,31,25,21,35,36,30,33,37,42,46,36,14,42,18,32,18,34,25,36,70,33,43,19,31,41,33,38,35,23,40,25,55,28,42,34,44,27,45,33,48,41,36,25,42,39,52,30,40,40,37,36,36,27,23,30,40,51,45,46,43,42,36,42" mark="median"></bezel-histogram>
         <div class="meta"><div><b>Histogram</b><span>How values spread out, with round ranges and the median marked.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
@@ -124,6 +129,11 @@
       <article class="card" data-card="progress">
         <bezel-progress heading="Sprint 14" values="18,6,3" labels="Done,In review,Blocked" max="34" goal="27"></bezel-progress>
         <div class="meta"><div><b>Progress</b><span>Stacked parts against a target.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
+      </article>
+
+      <article class="card" data-card="bullet">
+        <bezel-bullet heading="Q3 scorecard" values="182,64,7.4" targets="200,60,8" labels="Revenue £k,Margin %,NPS" zones="150,180|40,55|6,7" zone-labels="Poor,Fair,Good"></bezel-bullet>
+        <div class="meta"><div><b>Bullet</b><span>Each measure against its target, with bands for poor, fair and good.</span></div><div class="acts"><button type="button" data-edit>Customise</button><button type="button" data-copy="svg">Copy SVG</button></div></div>
       </article>
 
       <article class="card full" data-card="heatmap">
@@ -206,14 +216,14 @@
           <svg viewBox="0 0 32 32" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1.5" y="1.5" width="29" height="29" rx="9" stroke="currentColor" stroke-width="2.4"/><path d="M9 21.5V17M14 21.5v-9M19 21.5V15M24 21.5V10" stroke="currentColor" stroke-width="2.6"/></svg>
           Bezel Charts
         </a>
-        <p class="foot__eyebrow">Open-source web components · v1.8</p>
+        <p class="foot__eyebrow">Open-source web components · v1.9</p>
         <p class="foot__lede">Fourteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Add one tag to any page, or save any chart as an image for a README, Notion page or slide.</p>
       </div>
 
       <dl class="foot__specs">
-        <div><dt>Chart types</dt><dd>14</dd></div>
+        <div><dt>Chart types</dt><dd>16</dd></div>
         <div><dt>Dependencies</dt><dd>0</dd></div>
-        <div><dt>Gzipped</dt><dd>24 kB</dd></div>
+        <div><dt>Gzipped</dt><dd>26 kB</dd></div>
       </dl>
 
       <nav class="foot__links" aria-label="Footer">
