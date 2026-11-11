@@ -1,5 +1,9 @@
 # Changelog (Python package)
 
+## 1.10.1 (2026-11-11)
+
+- Version bump only, to stay in step with the npm package, whose README image was fixed. No code changes.
+
 ## 1.10.0 (2026-11-10)
 
 - Hover areas carry `data-i`, `data-s` and `data-v` markers, matching the web components' new click events byte for byte. Saved SVGs are a little larger and otherwise unchanged. Nothing else changes for Python users; the version moves with the web components.
