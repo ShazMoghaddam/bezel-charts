@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.1 (2026-11-11)
+
+README image fix for npm.
+
+- The README image on npm was broken. npm resolves relative image paths against the repository, and the image was renamed to `docs/bezel-charts-16.png` after 1.10.0 was published, so the 1.10.0 page still pointed at the old name. The README now uses the full GitHub address, so npm, PyPI mirrors and any other site that shows it load the same image.
+- No code changes. The version moves in step across npm and Python, as the version test expects.
+
 ## 1.10.0 (2026-11-10)
 
 Data from JavaScript and click events.

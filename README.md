@@ -11,7 +11,7 @@
 
 Bezel Charts is a set of free, open-source web components: sixteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
-![All sixteen Bezel Charts in light and dark tiles: a sparkline, a progress bar, rings, a gauge and a donut; a line chart with a launch day note and a bars-and-line chart on two axes; a waterfall from revenue to profit, a bullet scorecard and bars with a target; stacked areas and a histogram with its median; a scatter plot with a trend line, box plots and grouped bars; and an activity heatmap](docs/bezel-charts-16.png)
+![All sixteen Bezel Charts in light and dark tiles: a sparkline, a progress bar, rings, a gauge and a donut; a line chart with a launch day note and a bars-and-line chart on two axes; a waterfall from revenue to profit, a bullet scorecard and bars with a target; stacked areas and a histogram with its median; a scatter plot with a trend line, box plots and grouped bars; and an activity heatmap](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/docs/bezel-charts-16.png)
 
 **[Open the Studio](https://shazmoghaddam.github.io/bezel-charts/site/#studio)** to build a chart and copy its code.
 
@@ -49,7 +49,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.10.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.10.1` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
