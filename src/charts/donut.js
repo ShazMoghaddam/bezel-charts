@@ -1,6 +1,45 @@
 import { esc, r2, num, has, nums, list, sum, trunc, fmt, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO, ref } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
+/**
+ * The total and the centre label, kept inside the hole. The total shrinks if it's too wide. The label shrinks to 7px,
+ * then wraps onto two lines, then is shortened with "…".
+ */
+function centre(o, th, cx, cy, size, sw, total) {
+  var ri = size / 2 - sw, big = fmt(total, o, true), fs = size * 0.17;
+  // How wide the hole is at a distance from its centre, less a little padding.
+  var chord = function (dy) { return 2 * Math.sqrt(Math.max(0, ri * ri - dy * dy)) - 8; };
+  // Monospace at 0.6 of the size, plus 1px letter spacing; and the largest size, in half pixels, that fits a width.
+  var wide = function (t, f) { return t.length * (f * 0.6 + 1); };
+  var fit = function (t, room) { return Math.floor((room / t.length - 1) / 0.6 * 2) / 2; };
+  var lab = (has(o.centerLabel) ? String(o.centerLabel) : 'Total').toUpperCase(), lines = [lab], ls = 9, ty = cy + 2, ly = [cy + 16];
+  if (wide(lab, 9) > chord(16)) {
+    ls = Math.max(7, fit(lab, chord(16)));
+    var words = lab.split(' ').filter(Boolean);
+    if (ls === 7 && words.length > 1 && wide(lab, 7) > chord(16)) {
+      // Two lines, split where the larger one needs the least shrinking, and the whole centre moves up to stay balanced.
+      var best = -1;
+      for (var k = 1; k < words.length; k++) {
+        var a = words.slice(0, k).join(' '), b = words.slice(k).join(' '), f = Math.min(9, fit(a, chord(10)), fit(b, chord(19)));
+        if (f > best) { best = f; lines = [a, b]; }
+      }
+      if (best < 7) {
+        // Still too long at 7px: fill the first line with whole words, and only the second is shortened.
+        for (k = words.length - 1; k > 1 && wide(words.slice(0, k).join(' '), 7) > chord(10); k--);
+        lines = [words.slice(0, k).join(' '), words.slice(k).join(' ')];
+      }
+      ls = Math.max(7, best); ty = cy - 3; ly = [cy + 10, cy + 19];
+    }
+    lines = lines.map(function (t, i) {
+      return wide(t, ls) > chord(ly[i] - cy) ? trunc(t, Math.max(1, Math.floor(chord(ly[i] - cy) / (ls * 0.6 + 1)))) : t;
+    });
+  }
+  var room = chord(fs * 0.7 + cy - ty);
+  if (big.length * fs * 0.62 > room) fs = Math.max(8, room / (big.length * 0.62));
+  return text(cx, ty, big, 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(fs) + '" font-weight="800"') +
+    lines.map(function (t, i) { return text(cx, ly[i], t, small(th, ls, 'text-anchor="middle" letter-spacing="1"')); }).join('');
+}
+
 export default function donut(o, th) {
   var raw = nums(o.values).map(function (n) { return Math.max(0, n); }), lab = list(o.labels), pal = palette(o, th);
   var v = raw.slice(), labels = lab.slice();
@@ -25,8 +64,7 @@ export default function donut(o, th) {
         '" transform="rotate(-90 ' + r2(cx) + ' ' + r2(cy) + ')"' + anim(o, 'bzc-a', i * 0.08) + '/>';
       start += len;
     });
-    s += text(cx, cy + 2, fmt(total, o, true), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(size * 0.17) + '" font-weight="800"');
-    s += text(cx, cy + 2 + 14, (has(o.centerLabel) ? o.centerLabel : 'Total').toUpperCase(), small(th, 9, 'text-anchor="middle" letter-spacing="1"'));
+    s += centre(o, th, cx, cy, size, sw, total);
     var lx = x0 + size + 22, rowH = Math.min(24, h / v.length), ly = cy - rowH * v.length / 2;
     v.forEach(function (n, i) {
       var y = ly + i * rowH + rowH / 2, pct = Math.round(n / total * 100);

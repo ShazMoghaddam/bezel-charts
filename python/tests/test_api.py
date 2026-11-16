@@ -15,7 +15,7 @@ np = pytest.importorskip("numpy")
 
 
 def ids(svg: str) -> str:
-    """Gradient and clip path ids are random so charts can share a page; ignore them when comparing."""
+    """Ids are worked out from the whole SVG, so ignore them when comparing charts that differ elsewhere."""
     return re.sub(r"bzc[gc][0-9a-z]+", "id", svg)
 
 
@@ -136,9 +136,62 @@ def test_dates_as_python_objects():
     assert "1 Mar" in texts(chart.svg)
 
 
-def test_unique_gradient_ids_for_notebooks():
-    a, b = bc.spark([1, 2]).svg, bc.spark([1, 2]).svg
-    assert re.search(r'id="(bzcg[^"]+)"', a).group(1) != re.search(r'id="(bzcg[^"]+)"', b).group(1)
+def test_the_same_chart_gives_byte_identical_svg_twice():
+    for type_ in bc.types:
+        opts = {"values": "4,9,6|3,7,8", "series": "A,B", "patterns": "dots,stripes", "x": "1,2,3", "y": "3,1,2"}
+        assert bc.to_svg(type_, **opts) == bc.to_svg(type_, **opts), type_
+        assert bc.render(type_, animate=True, **opts) == bc.render(type_, animate=True, **opts), type_
+        assert "\u0001" not in bc.render(type_, **opts)
+    df = pd.DataFrame({"m": ["Jan", "Feb"], "a": [1, 2], "b": [3, 4]})
+    assert bc.bars(df, x="m", patterns=True).svg == bc.bars(df, x="m", patterns=True).svg
+
+
+def test_ids_differ_between_charts_so_notebooks_dont_clash():
+    a = re.findall(r' id="([^"]+)"', bc.spark([1, 2]).svg)
+    b = re.findall(r' id="([^"]+)"', bc.spark([1, 3]).svg)
+    assert len(a) == 1 and re.fullmatch(r"bzcg[0-9a-z]{7}1", a[0])
+    assert a != b
+
+
+def test_id_option_names_the_ids():
+    opts = {"values": "4,9,6|3,7,8", "series": "A,B", "patterns": "dots,stripes"}
+    assert re.findall(r' id="([^"]+)"', bc.to_svg("bars", id="oldest trees", **opts)) == ["oldest-trees-g1", "oldest-trees-g2"]
+    assert re.findall(r' id="([^"]+)"', bc.progress([3, 4], id="2026").svg) == ["bzc-2026-c1"]
+
+
+def test_goal_label_moves_clear_of_bar_values():
+    svg = bc.to_svg("bars", values="40,72,55,90,66", labels="A,B,C,D,E", goal=70, show_values=True)
+    assert re.search(r'<text x="24" [^>]*text-anchor="start"[^>]*>Goal 70</text>', svg), "moved to the left, clear of 66"
+    blocked = bc.to_svg("bars", values="80,72,85,90,96", goal=70, show_values=True)
+    assert re.search(r'paint-order="stroke"[^>]*>Goal 70<', blocked)
+
+
+def test_horizontal_bars_label_the_goal():
+    plain = bc.bars([40, 72, 55], horizontal=True)
+    goal = bc.bars([40, 72, 55], horizontal=True, goal=50, goal_label="Target")
+    assert goal.height - plain.height == 16
+    assert "Target 50" in texts(goal.svg)
+
+
+def test_compact_numbers_use_capital_m_b_and_t():
+    def show(v, **o):
+        return [t for t in texts(bc.to_svg("bars", values=str(v), compact=True, show_values=True, **o)) if re.search(r"\d", t)][0]
+
+    assert [show(v) for v in (15000, 2200000, 3.4e9, 5e12)] == ["15k", "2.2M", "3.4B", "5T"]
+    assert [show(v, lang="en-US") for v in (15000, 2200000, 3.4e9, 5e12)] == ["15K", "2.2M", "3.4B", "5T"]
+
+
+def test_donut_centre_label_fits_the_hole():
+    v = {"values": "2200000,1500000,900000", "compact": True}
+
+    def centre(svg):
+        return re.findall(r'letter-spacing="1">([^<]*)<', svg)
+
+    assert centre(bc.to_svg("donut", center_label="Total", **v)) == ["TOTAL"]
+    assert centre(bc.to_svg("donut", center_label="Square kilometres of forest", **v)) == ["SQUARE KILOMETRES", "OF FOREST"]
+    cut = centre(bc.to_svg("donut", values="12500000000,3", prefix="£", center_label="Revenue across all regions and years", height=110))
+    assert cut[0] == "REVENUE" and cut[1].endswith("…")
+    assert centre(bc.to_svg("donut", center_label="Antidisestablishmentarianism", **v))[0].endswith("…")
 
 
 def test_unsupported_lang_warns_once_and_falls_back():

@@ -2,8 +2,31 @@
 export const SANS = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 export const MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
 
-let uid = 0;
-export function newId(p) { return 'bzc' + p + (++uid).toString(36) + Math.random().toString(36).slice(2, 6); }
+/*
+ * Gradient, pattern and clip path ids. While a chart draws, newId() hands out placeholders; once the SVG is finished,
+ * stableIds() swaps them for ids worked out from the SVG itself, so the same chart always gives the same bytes and
+ * different charts on one page don't clash. An `id` option names them instead: id="sales" gives sales-g1, sales-c1.
+ */
+var seq = 0, MARK = '\u0001';
+export function newId(p) { return MARK + 'bzc' + p + (++seq) + MARK; }
+/** FNV-1a over UTF-16 code units, as 7 base-36 digits. Python works it out the same way. */
+export function hash(s) {
+  var h = 0x811c9dc5;
+  for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return ('0000000' + h.toString(36)).slice(-7);
+}
+export function resetIds() { seq = 0; }
+export function stableIds(svg, id) {
+  if (svg.indexOf(MARK + 'bzc') < 0) return svg;
+  var pre;
+  if (has(id)) {
+    pre = String(id).trim().replace(/[^\w-]/g, '-');
+    if (!/^[A-Za-z_]/.test(pre)) pre = 'bzc-' + pre;
+    pre += '-';
+  }
+  var h = pre ? '' : hash(svg);
+  return svg.replace(/\u0001bzc([a-z])(\d+)\u0001/g, function (_, p, n) { return pre ? pre + p + n : 'bzc' + p + h + n; });
+}
 export function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
@@ -40,9 +63,13 @@ export function fmt(n, o, short) {
   else d = n % 1 === 0 ? 0 : a < 10 ? 2 : a < 100 ? 1 : 0;
   var opts = { maximumFractionDigits: d, minimumFractionDigits: has(o.decimals) ? d : 0 };
   if ((bool(o.compact) || short) && a >= 10000) { opts = { notation: 'compact', maximumFractionDigits: 1 }; }
-  var s;
-  try { s = new Intl.NumberFormat(o.lang || 'en-GB', opts).format(a); }
+  var s, nf;
+  try { nf = new Intl.NumberFormat(o.lang || 'en-GB', opts); s = nf.format(a); }
   catch (e) { s = String(r2(a)); }
+  // British English shortens to 2.2m, 3.4bn and 5tn, and "m" reads like metres. Millions and up get capitals: 2.2M, 3.4B, 5T.
+  if (opts.notation && nf && /^en-GB\b/.test(nf.resolvedOptions().locale)) {
+    s = s.replace(/(\d)(m|bn|tn)$/, function (_, d, u) { return d + { m: 'M', bn: 'B', tn: 'T' }[u]; });
+  }
   return (n < 0 ? '−' : '') + (o.prefix || '') + s + (o.suffix || '');
 }
 
@@ -103,12 +130,17 @@ export function parseNotes(o, labels) {
     return i >= 0 && t ? { i: i, text: t } : null;
   }).filter(Boolean);
 }
-export function goalLine(o, th, x1, x2, y) {
-  var label = (has(o.goalLabel) ? o.goalLabel : 'Goal') + ' ' + fmt(num(o.goal, 0), o);
+/**
+ * The dashed goal line and its label, above the line at its right end. A chart that knows where its label would
+ * clash can say where it goes instead: `at` is [x, y, text-anchor, extra attributes].
+ */
+export function goalLine(o, th, x1, x2, y, at) {
+  at = at || [x2, y - 5, 'end', ''];
   return '<line x1="' + r2(x1) + '" x2="' + r2(x2) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.fg +
     '" stroke-opacity=".55" stroke-width="1.25" stroke-dasharray="4 4"/>' +
-    text(x2, y - 5, label, small(th, 10, 'text-anchor="end"'));
+    text(at[0], at[1], goalText(o), small(th, 10, 'text-anchor="' + at[2] + '"' + at[3]));
 }
+export function goalText(o) { return (has(o.goalLabel) ? o.goalLabel : 'Goal') + ' ' + fmt(num(o.goal, 0), o); }
 export function statOf(v, o, fallback) {
   var k = String(has(o.stat) ? o.stat : fallback || '').toLowerCase();
   if (!k || k === 'none' || !v.length) return null;

@@ -1,6 +1,6 @@
 /** Pure rendering: options in, SVG string out. No DOM needed, so it runs in browsers, Node and build scripts. */
 import { THEMES } from './core/themes.js';
-import { bool } from './core/util.js';
+import { bool, resetIds, stableIds } from './core/util.js';
 /** Every chart type, in the order the full bundle loads them. */
 export const NAMES = ['spark', 'line', 'area', 'bars', 'combo', 'waterfall', 'histogram', 'boxplot', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'bullet', 'heatmap'];
 
@@ -35,7 +35,8 @@ export function render(type, options = {}) {
   o.animate = bool(o.animate);
   o.frame = o.frame === 'none' ? 'none' : 'bezel';
   const mode = o.theme === 'light' || o.theme === 'dark' ? o.theme : o.autoTheme || 'dark';
-  return TYPES[type](o, THEMES[mode]);
+  resetIds();
+  return stableIds(TYPES[type](o, THEMES[mode]), o.id);
 }
 
 /**

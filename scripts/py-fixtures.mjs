@@ -1,5 +1,5 @@
 // Writes the parity fixtures for the Python package: the real JavaScript output for a
-// wide set of inputs. The Python tests then check they draw exactly the same SVG.
+// wide set of inputs. The Python tests then check they draw exactly the same SVG, ids included.
 // Run with `npm run fixtures` after changing a chart, and commit python/tests/fixtures.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { render, toSVG } from '../src/index.js';
@@ -9,15 +9,6 @@ import { niceScale } from '../src/core/series.js';
 const out = new URL('../python/tests/fixtures/', import.meta.url);
 mkdirSync(out, { recursive: true });
 
-// Gradient and clip path ids are random, so they are replaced with stable ones in both languages before comparing.
-const stable = (svg) => {
-  const ids = new Map();
-  return svg.replace(/bzc[gc][0-9a-z]+/g, (id) => {
-    if (!ids.has(id)) ids.set(id, `bzcg-${ids.size + 1}`);
-    return ids.get(id);
-  });
-};
-
 const year = Array.from({ length: 365 }, (_, i) => ((i * 7) % 11 > 6 ? i % 9 : 0)).join(',');
 const long = Array.from({ length: 120 }, (_, i) => Math.round(50 + 40 * Math.sin(i / 7) + (i % 5) * 3.3) / 10);
 
@@ -25,6 +16,7 @@ export const CASES = {
   spark: [
     {},
     { values: '5' },
+    { values: '3,5,4', id: 'my-chart' },
     { values: '17,16,15,15,13,12,14', heading: 'London', suffix: '°C', goal: 15, notes: '3:Dip', 'show-values': '' },
     { values: '-5,-3,0,4,-2', prefix: '£' },
     { values: '1200000,1500000,1900000', compact: '' },
@@ -212,6 +204,17 @@ export const CASES = {
     { values: '4,9|-3,7', stacked: '', horizontal: '', patterns: 'auto', background: '#fff8e7', theme: 'light' },
     { values: '4,9,6', patterns: '' },
     { values: '1,2|3,4', patterns: 'none' },
+    // Goal labels clear of bars and values, and on horizontal bars (1.11.0).
+    { values: '40,72,55,90,66', labels: 'A,B,C,D,E', goal: 70, 'show-values': '' },
+    { values: '80,72,85,90,96', labels: 'A,B,C,D,E', goal: 70, 'show-values': '', background: '#222' },
+    { values: '4,9,6|3,7,8', series: 'X,Y', labels: 'a,b,c', stacked: '', goal: 14, 'show-values': '' },
+    { values: '-4,9,-6', goal: -2, 'show-values': '', 'goal-label': 'Floor' },
+    { values: '40,72,55,90,66', labels: 'Alpha,Beta,Gamma,Delta,Epsilon', goal: 70, horizontal: '' },
+    { values: '4,7', labels: 'A,B', goal: 10, horizontal: '', 'goal-label': 'Target', series: 'Only' },
+    { values: '4,7|3,9', goal: 1, horizontal: '', stacked: '', 'goal-label': 'A long goal label' },
+    // Stable ids, worked out from the chart or named with id (1.11.0).
+    { values: '4,9,6|3,7,8', series: 'A,B', patterns: 'dots,stripes', id: 'oldest trees' },
+    { values: '4,9,6|3,7,8', series: 'A,B', patterns: 'dots,stripes', id: '2026' },
   ],
   scatter: [
     {},
@@ -260,6 +263,13 @@ export const CASES = {
     { values: '1,1,1', width: 520, height: 200, animate: true, stat: 'total' },
     { values: '7,7,7,7,7,7,7', labels: 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', frame: 'none', color: '#111,#222,#333,#444,#555,#666' },
     { values: '0.1,0.2,0.3', decimals: 2, suffix: ' kg', width: 200 },
+    // Centre text that fits the hole (1.11.0).
+    { values: '2200000,1500000,900000', labels: 'Asia,Europe,Africa', compact: '', 'center-label': 'Forest area km²' },
+    { values: '2200000,1500000,900000', compact: '', 'center-label': 'Square kilometres of forest' },
+    { values: '2200000,1500000,900000', compact: '', 'center-label': 'Antidisestablishmentarianism' },
+    { values: '12500000000,3', prefix: '£', 'center-label': 'Revenue across all regions and years', height: 110 },
+    { values: '123456789012,3', decimals: 2, 'center-label': 'x' },
+    { values: '5,3', 'center-label': 'Pounds 🍰 per slice of the cake', height: 90, width: 300 },
   ],
   gauge: [
     {},
@@ -277,6 +287,7 @@ export const CASES = {
   progress: [
     {},
     { values: '72', labels: 'Upload' },
+    { values: '72', labels: 'Upload', id: 'upload' },
     { values: '30,20,10', labels: 'Done,Review,Blocked', max: 100, goal: 75 },
     { values: '500,300', prefix: '£' },
     { values: '200', max: 100 },
@@ -319,9 +330,9 @@ export const CASES = {
 for (const [type, cases] of Object.entries(CASES)) {
   const rows = cases.map((options) => ({
     options,
-    render: stable(render(type, { ...options, animate: false })),
-    animated: stable(render(type, { ...options, animate: true })),
-    static: stable(toSVG(type, options)),
+    render: render(type, { ...options, animate: false }),
+    animated: render(type, { ...options, animate: true }),
+    static: toSVG(type, options),
   }));
   writeFileSync(new URL(`${type}.json`, out), JSON.stringify(rows, null, 1) + '\n');
 }

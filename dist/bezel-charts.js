@@ -1,11 +1,36 @@
-/*! Bezel Charts v1.10.1 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.11.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/util.js
 var SANS = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 var MONO = "ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
-var uid = 0;
+var seq = 0;
+var MARK = "";
 function newId(p) {
-  return "bzc" + p + (++uid).toString(36) + Math.random().toString(36).slice(2, 6);
+  return MARK + "bzc" + p + ++seq + MARK;
+}
+function hash(s) {
+  var h = 2166136261;
+  for (var i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return ("0000000" + h.toString(36)).slice(-7);
+}
+function resetIds() {
+  seq = 0;
+}
+function stableIds(svg, id) {
+  if (svg.indexOf(MARK + "bzc") < 0) return svg;
+  var pre;
+  if (has(id)) {
+    pre = String(id).trim().replace(/[^\w-]/g, "-");
+    if (!/^[A-Za-z_]/.test(pre)) pre = "bzc-" + pre;
+    pre += "-";
+  }
+  var h = pre ? "" : hash(svg);
+  return svg.replace(/\u0001bzc([a-z])(\d+)\u0001/g, function(_, p, n) {
+    return pre ? pre + p + n : "bzc" + p + h + n;
+  });
 }
 function esc(s) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
@@ -74,11 +99,17 @@ function fmt(n, o, short) {
   if ((bool(o.compact) || short) && a >= 1e4) {
     opts = { notation: "compact", maximumFractionDigits: 1 };
   }
-  var s;
+  var s, nf;
   try {
-    s = new Intl.NumberFormat(o.lang || "en-GB", opts).format(a);
+    nf = new Intl.NumberFormat(o.lang || "en-GB", opts);
+    s = nf.format(a);
   } catch (e) {
     s = String(r2(a));
+  }
+  if (opts.notation && nf && /^en-GB\b/.test(nf.resolvedOptions().locale)) {
+    s = s.replace(/(\d)(m|bn|tn)$/, function(_, d2, u) {
+      return d2 + { m: "M", bn: "B", tn: "T" }[u];
+    });
   }
   return (n < 0 ? "\u2212" : "") + (o.prefix || "") + s + (o.suffix || "");
 }
@@ -133,9 +164,12 @@ function parseNotes(o, labels) {
     return i >= 0 && t ? { i, text: t } : null;
   }).filter(Boolean);
 }
-function goalLine(o, th, x1, x2, y) {
-  var label = (has(o.goalLabel) ? o.goalLabel : "Goal") + " " + fmt(num(o.goal, 0), o);
-  return '<line x1="' + r2(x1) + '" x2="' + r2(x2) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.fg + '" stroke-opacity=".55" stroke-width="1.25" stroke-dasharray="4 4"/>' + text(x2, y - 5, label, small(th, 10, 'text-anchor="end"'));
+function goalLine(o, th, x1, x2, y, at2) {
+  at2 = at2 || [x2, y - 5, "end", ""];
+  return '<line x1="' + r2(x1) + '" x2="' + r2(x2) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.fg + '" stroke-opacity=".55" stroke-width="1.25" stroke-dasharray="4 4"/>' + text(at2[0], at2[1], goalText(o), small(th, 10, 'text-anchor="' + at2[2] + '"' + at2[3]));
+}
+function goalText(o) {
+  return (has(o.goalLabel) ? o.goalLabel : "Goal") + " " + fmt(num(o.goal, 0), o);
 }
 function statOf(v, o, fallback) {
   var k = String(has(o.stat) ? o.stat : fallback || "").toLowerCase();
@@ -295,7 +329,8 @@ function render(type, options = {}) {
   o.animate = bool(o.animate);
   o.frame = o.frame === "none" ? "none" : "bezel";
   const mode = o.theme === "light" || o.theme === "dark" ? o.theme : o.autoTheme || "dark";
-  return TYPES[type](o, THEMES[mode]);
+  resetIds();
+  return stableIds(TYPES[type](o, THEMES[mode]), o.id);
 }
 function table(type, options = {}) {
   return TYPES[type].table(prepare(type, options));
@@ -1264,7 +1299,8 @@ function bars(o, th) {
   var rows = stacked ? 1 : k, thin = grouped && !stacked;
   var subH = thin ? 10 : 14, subGap = 3;
   var rowH = horiz ? rows * subH + (rows - 1) * subGap + (thin ? 14 : 16) : 0;
-  var h = horiz ? legendH + Math.max(1, n) * rowH - 6 : num(o.height, 140) + legendH;
+  var goalH = horiz && n && has(o.goal) && +o.goal > 0 ? 16 : 0;
+  var h = horiz ? legendH + goalH + Math.max(1, n) * rowH - 6 : num(o.height, 140) + legendH;
   var best = v0.indexOf(Math.max.apply(null, v0.length ? v0 : [0]));
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!n) return emptyState(th, x0, y0, w, h2);
@@ -1275,6 +1311,7 @@ function bars(o, th) {
       }), pal, th, x0, y0, w, key, key && 15).svg;
       top0 += legendH;
     }
+    top0 += goalH;
     var lo = Math.min(0, Math.min.apply(null, scale)), hi = Math.max(0, top);
     if (has(o.goal)) {
       lo = Math.min(lo, +o.goal);
@@ -1315,8 +1352,10 @@ function bars(o, th) {
         }
         s += hit(x0, ry, w, rowH - 6, tipOf(i), i, at(S, i));
       }
-      if (has(o.goal) && +o.goal > 0) {
-        var gx = bx + +o.goal / span * bw;
+      if (goalH) {
+        var gx = bx + +o.goal / span * bw, glab = goalText(o), gw = tw(glab, 10, true);
+        var glx = Math.max(bx + gw / 2, Math.min(bx + bw - gw / 2, gx));
+        s += text(glx, top0 - goalH + 10, glab, small(th, 10, 'text-anchor="middle"'));
         s += '<line x1="' + r2(gx) + '" x2="' + r2(gx) + '" y1="' + r2(top0 - 2) + '" y2="' + r2(y0 + h2 + 2) + '" stroke="' + th.fg + '" stroke-opacity=".55" stroke-dasharray="3 3"/>';
       }
       return s;
@@ -1360,6 +1399,12 @@ function bars(o, th) {
     };
     var slot = w / n, groupW = Math.min(slot * (thin ? 0.78 : 0.62), thin ? k * 30 : 56);
     var gap = thin ? Math.min(3, groupW / k * 0.15) : 0, bwid = stacked ? groupW : (groupW - gap * (k - 1)) / k, Y0 = Y(0);
+    var boxes = legendH ? [[x0, y0, w, legendH]] : [];
+    if (labels.length) boxes.push([x0, py + ph + negLab + 4, w, h2 - (py + ph + negLab + 4 - y0)]);
+    var valueBox = function(cx, ty, str, size) {
+      var vw = tw(str, size, true);
+      boxes.push([cx - vw / 2, ty - 9, vw, 12]);
+    };
     s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(Y0) + '" y2="' + r2(Y0) + '" stroke="' + th.grid + '"/>';
     for (var c = 0; c < n; c++) {
       var gx0 = x0 + c * slot + (slot - groupW) / 2;
@@ -1371,14 +1416,17 @@ function bars(o, th) {
           var val = ser[c], x = gx0 + j * (bwid + gap), y = Math.min(Y(val), Y0), bh = Math.abs(Y(val) - Y0);
           if (bh > 0.5) {
             s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(6, bwid / 2, bh / 2)) + '" fill="' + colourOf(j, c) + '" fill-opacity="' + opac(val) + '"' + anim(o, val < 0 ? "bzc-gn" : "bzc-g", c * 0.05 + j * 0.03) + "/>";
+            boxes.push([x, y, bwid, bh]);
           }
           if (bool(o.showValues)) {
+            var vy = val < 0 ? Y(val) + 12 : Y(val) - 5, vs = fmt(val, o, true);
             s += text(
               x + bwid / 2,
-              val < 0 ? Y(val) + 12 : Y(val) - 5,
-              fmt(val, o, true),
+              vy,
+              vs,
               'text-anchor="middle" fill="' + th.fg + '" font-family="' + MONO + '" font-size="' + (grouped ? 9 : 10) + '" font-weight="600"'
             );
+            valueBox(x + bwid / 2, vy, vs, grouped ? 9 : 10);
           }
         });
       }
@@ -1388,7 +1436,7 @@ function bars(o, th) {
       }
       s += hit(x0 + c * slot, top0, slot, h2 - (top0 - y0), tipOf(c), c, at(S, c));
     }
-    if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal));
+    if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal), goalSpot(o, th, x0, x0 + w, Y(+o.goal), boxes));
     return s;
     function stackColumn(c2, x) {
       var out = "", up = 0, down = 0;
@@ -1405,16 +1453,18 @@ function bars(o, th) {
         bh = yB - yA;
         if (bh > 0.5) {
           out += '<rect x="' + r2(x) + '" y="' + r2(yA) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(3, bwid / 2, bh / 2)) + '" fill="' + colourOf(j, c2) + '"' + anim(o, val < 0 ? "bzc-gn" : "bzc-g", c2 * 0.05 + j * 0.03) + "/>";
+          boxes.push([x, yA, bwid, bh]);
         }
       });
       if (bool(o.showValues)) {
-        var tot = totals[c2];
+        var tot = totals[c2], ty = tot < 0 ? Y(downs[c2]) + 12 : Y(ups[c2]) - 5, ts = fmt(tot, o, true);
         out += text(
           x + bwid / 2,
-          tot < 0 ? Y(downs[c2]) + 12 : Y(ups[c2]) - 5,
-          fmt(tot, o, true),
+          ty,
+          ts,
           'text-anchor="middle" fill="' + th.fg + '" font-family="' + MONO + '" font-size="10" font-weight="600"'
         );
+        valueBox(x + bwid / 2, ty, ts, 10);
       }
       return out;
     }
@@ -1426,6 +1476,16 @@ function bars(o, th) {
 bars.table = function(o) {
   return seriesTable(o, series(o.values).length > 1 && bool(o.stacked));
 };
+function goalSpot(o, th, x1, x2, y, boxes) {
+  var lw = tw(goalText(o), 10, true), spots = [[x2, y - 5, "end"], [x2, y + 13, "end"], [x1, y - 5, "start"], [x1, y + 13, "start"]];
+  for (var i = 0; i < 4; i++) {
+    var sp = spots[i], a = [sp[2] === "end" ? sp[0] - lw : sp[0], sp[1] - 9, lw, 12];
+    if (!boxes.some(function(b) {
+      return a[0] < b[0] + b[2] + 4 && b[0] < a[0] + a[2] + 4 && a[1] < b[1] + b[3] + 4 && b[1] < a[1] + a[3] + 4;
+    })) return sp.concat("");
+  }
+  return [x2, y - 5, "end", ' stroke="' + (o.background || th.tile) + '" stroke-width="3" stroke-linejoin="round" paint-order="stroke"'];
+}
 
 // src/entries/bars.js
 register("bars", bars);
@@ -2304,6 +2364,48 @@ register("ring", ring);
 define("ring");
 
 // src/charts/donut.js
+function centre(o, th, cx, cy, size, sw, total2) {
+  var ri = size / 2 - sw, big = fmt(total2, o, true), fs = size * 0.17;
+  var chord = function(dy) {
+    return 2 * Math.sqrt(Math.max(0, ri * ri - dy * dy)) - 8;
+  };
+  var wide = function(t, f2) {
+    return t.length * (f2 * 0.6 + 1);
+  };
+  var fit3 = function(t, room2) {
+    return Math.floor((room2 / t.length - 1) / 0.6 * 2) / 2;
+  };
+  var lab = (has(o.centerLabel) ? String(o.centerLabel) : "Total").toUpperCase(), lines = [lab], ls = 9, ty = cy + 2, ly = [cy + 16];
+  if (wide(lab, 9) > chord(16)) {
+    ls = Math.max(7, fit3(lab, chord(16)));
+    var words = lab.split(" ").filter(Boolean);
+    if (ls === 7 && words.length > 1 && wide(lab, 7) > chord(16)) {
+      var best = -1;
+      for (var k = 1; k < words.length; k++) {
+        var a = words.slice(0, k).join(" "), b = words.slice(k).join(" "), f = Math.min(9, fit3(a, chord(10)), fit3(b, chord(19)));
+        if (f > best) {
+          best = f;
+          lines = [a, b];
+        }
+      }
+      if (best < 7) {
+        for (k = words.length - 1; k > 1 && wide(words.slice(0, k).join(" "), 7) > chord(10); k--) ;
+        lines = [words.slice(0, k).join(" "), words.slice(k).join(" ")];
+      }
+      ls = Math.max(7, best);
+      ty = cy - 3;
+      ly = [cy + 10, cy + 19];
+    }
+    lines = lines.map(function(t, i) {
+      return wide(t, ls) > chord(ly[i] - cy) ? trunc(t, Math.max(1, Math.floor(chord(ly[i] - cy) / (ls * 0.6 + 1)))) : t;
+    });
+  }
+  var room = chord(fs * 0.7 + cy - ty);
+  if (big.length * fs * 0.62 > room) fs = Math.max(8, room / (big.length * 0.62));
+  return text(cx, ty, big, 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(fs) + '" font-weight="800"') + lines.map(function(t, i) {
+    return text(cx, ly[i], t, small(th, ls, 'text-anchor="middle" letter-spacing="1"'));
+  }).join("");
+}
 function donut(o, th) {
   var raw = nums(o.values).map(function(n) {
     return Math.max(0, n);
@@ -2342,8 +2444,7 @@ function donut(o, th) {
       s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="' + pal[i % pal.length] + '" stroke-width="' + r2(sw) + '" pathLength="100" stroke-dasharray="' + r2(seg) + " " + r2(100 - seg) + '" stroke-dashoffset="' + r2(-start) + '" transform="rotate(-90 ' + r2(cx) + " " + r2(cy) + ')"' + anim(o, "bzc-a", i * 0.08) + "/>";
       start += len;
     });
-    s += text(cx, cy + 2, fmt(total2, o, true), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(size * 0.17) + '" font-weight="800"');
-    s += text(cx, cy + 2 + 14, (has(o.centerLabel) ? o.centerLabel : "Total").toUpperCase(), small(th, 9, 'text-anchor="middle" letter-spacing="1"'));
+    s += centre(o, th, cx, cy, size, sw, total2);
     var lx = x0 + size + 22, rowH = Math.min(24, h2 / v.length), ly = cy - rowH * v.length / 2;
     v.forEach(function(n, i) {
       var y = ly + i * rowH + rowH / 2, pct = Math.round(n / total2 * 100);
@@ -2683,7 +2784,7 @@ register("heatmap", heatmap);
 define("heatmap");
 
 // src/index.js
-var version = "1.10.1";
+var version = "1.11.0";
 var types = NAMES.slice();
 export {
   BezelChart,

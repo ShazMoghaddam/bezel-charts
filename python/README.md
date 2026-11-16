@@ -258,10 +258,10 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `heading` | `heading="Sales"` | Small title at the top. |
 | `prefix`, `suffix` | `prefix="£"`, `suffix=" kWh"` | Around every number. |
 | `decimals` | `decimals=1` | Fixed decimal places. |
-| `compact` | `compact=True` | 15,500 becomes 15.5k. |
+| `compact` | `compact=True` | 15,500 becomes 15.5k, and 2,200,000 becomes 2.2M. |
 | `stat` | `stat="average"` | Headline number: `last`, `total`, `average`, `max`, `min` or `none`. |
 | `delta`, `delta_label` | `delta="inverse"` | Change since the start. `inverse` makes a fall the good direction. |
-| `goal`, `goal_label` | `goal=50, goal_label="Target"` | A dashed target line. |
+| `goal`, `goal_label` | `goal=50, goal_label="Target"` | A dashed target line, labelled clear of bars and values. |
 | `notes` | `notes={"May": "Launch"}` | Notes on points, keyed by label or, if no label matches, position. |
 | `show_values` | `show_values=True` | A label on every point. |
 | `straight` | `straight=True` | Straight segments instead of curves. |
@@ -285,15 +285,18 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `x_label`, `y_label` | `x_label="Hours"` | Axis titles (scatter). |
 | `start` | `start="2026-01-01"` | The first day (heatmap). |
 | `max` | `max=8` | What a full ring means (ring). |
-| `center_label` | `center_label="Spent"` | The word under the total (donut). |
+| `center_label` | `center_label="Spent"` | The words under the total (donut). Long ones shrink, wrap onto two lines, then shorten to fit. |
 | `min`, `zones` | `min=10, zones=[60, 85]` | The scale and coloured bands (gauge). |
 | `labels`, `series` | `labels=["Q1", "Q2"]` | Set labels and series names by hand. |
 | `color` | `color=["#ff6600", "#0066ff"]` | Series colours. |
 | `theme` | `theme="light"` | `dark` (the default) or `light`. |
 | `width`, `height` | `width=560` | Size in pixels. The tile grows to fit its heading and headline. |
 | `frame`, `corners`, `background` | `frame="none"` | Drop the bezel, change the corner radius or the tile colour. |
+| `id` | `id="sales"` | Names the chart's gradient, pattern and clip path ids (`sales-g1`). Without it, they're worked out from the chart. |
 
-Numbers are formatted for `en-GB` by default (`1.5m`, `2bn`), or `lang="en-US"` for `1.5M`, `2B`. Other locales fall back to `en-GB` for now, with a warning.
+Numbers are formatted for `en-GB` by default (`15k`, `1.5M`, `2B`), or `lang="en-US"` for `15K`, `1.5M`, `2B`. Other locales fall back to `en-GB` for now, with a warning.
+
+The same data and options always give the same SVG, byte for byte, so charts saved in a repository only change when the chart does, and a CI job can check they're up to date.
 
 ## Lower level
 
@@ -305,7 +308,7 @@ bc.to_svg("line", {"values": "1,2,3|3,2,1", "series": "A,B", "show-values": ""})
 
 ## How it stays in step with the JavaScript
 
-`scripts/py-fixtures.mjs` in the main repository runs the real JavaScript charts over a wide set of inputs (empty data, single values, negatives, huge and tiny numbers, notes, goals, both themes) and saves the SVG they draw. The Python tests render the same inputs and check the output is identical. CI regenerates the fixtures on every pull request, so a change to one version that isn't made to the other fails the build.
+`scripts/py-fixtures.mjs` in the main repository runs the real JavaScript charts over a wide set of inputs (empty data, single values, negatives, huge and tiny numbers, notes, goals, both themes) and saves the SVG they draw. The Python tests render the same inputs and check the output is identical, ids included. CI regenerates the fixtures on every pull request, so a change to one version that isn't made to the other fails the build.
 
 ## Development
 
