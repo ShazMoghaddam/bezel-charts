@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 from ._tile import THEMES
-from ._util import Opts, bool_
+from ._util import Opts, bool_, reset_ids, stable_ids
 from .charts import TYPES
 
 
@@ -26,7 +26,8 @@ def render(type: str, options: dict | None = None) -> str:
     mode = o.theme if o.theme in ("light", "dark") else (o.autoTheme or "dark")
     if mode not in THEMES:
         raise ValueError(f'bezel_charts: theme must be "light" or "dark", not "{mode}".')
-    return TYPES[type](o, THEMES[mode])
+    reset_ids()
+    return stable_ids(TYPES[type](o, THEMES[mode]), o.id)
 
 
 def to_static(svg: str) -> str:

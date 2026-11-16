@@ -212,7 +212,8 @@ def pow10(k: int) -> float:
 # Number formatting, Intl.NumberFormat ------------------------------------------------
 
 _COMPACT = {
-    "en-GB": ("", "k", "m", "bn", "tn"),
+    # Intl gives en-GB 2.2m, 3.4bn and 5tn; Bezel Charts uses capitals from millions up, so "m" can't read as metres.
+    "en-GB": ("", "k", "M", "B", "T"),
     "en-US": ("", "K", "M", "B", "T"),
 }
 _ALIASES = {"en": "en-US", "en-us": "en-US", "en-gb": "en-GB", "en-uk": "en-GB"}

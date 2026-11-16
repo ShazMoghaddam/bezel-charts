@@ -1,4 +1,4 @@
-import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, statOf, SANS, MONO, at } from '../core/util.js';
+import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, goalText, statOf, SANS, MONO, at } from '../core/util.js';
 import { legend, seriesTable, styleOf, pattern, PATTERNS } from '../core/series.js';
 import { tile, dims } from '../core/tile.js';
 
@@ -48,7 +48,9 @@ export default function bars(o, th) {
   var rows = stacked ? 1 : k, thin = grouped && !stacked;
   var subH = thin ? 10 : 14, subGap = 3;
   var rowH = horiz ? rows * subH + (rows - 1) * subGap + (thin ? 14 : 16) : 0;
-  var h = horiz ? legendH + Math.max(1, n) * rowH - 6 : num(o.height, 140) + legendH;
+  // Horizontal bars put the goal's label in a strip above the first row.
+  var goalH = horiz && n && has(o.goal) && +o.goal > 0 ? 16 : 0;
+  var h = horiz ? legendH + goalH + Math.max(1, n) * rowH - 6 : num(o.height, 140) + legendH;
   var best = v0.indexOf(Math.max.apply(null, v0.length ? v0 : [0]));
 
   return tile(o, th, h, function (x0, y0, w, h) {
@@ -58,6 +60,7 @@ export default function bars(o, th) {
       s += legend(S.map(function (_, j) { return nameOf(j); }), pal, th, x0, y0, w, key, key && 15).svg;
       top0 += legendH;
     }
+    top0 += goalH;
     var lo = Math.min(0, Math.min.apply(null, scale)), hi = Math.max(0, top);
     if (has(o.goal)) { lo = Math.min(lo, +o.goal); hi = Math.max(hi, +o.goal); }
     if (hi === lo) hi = lo + 1;
@@ -87,8 +90,11 @@ export default function bars(o, th) {
         }
         s += hit(x0, ry, w, rowH - 6, tipOf(i), i, at(S, i));
       }
-      if (has(o.goal) && +o.goal > 0) {
-        var gx = bx + (+o.goal) / span * bw;
+      if (goalH) {
+        // The label sits above the first row, centred on the line but kept inside the bar area.
+        var gx = bx + (+o.goal) / span * bw, glab = goalText(o), gw = tw(glab, 10, true);
+        var glx = Math.max(bx + gw / 2, Math.min(bx + bw - gw / 2, gx));
+        s += text(glx, top0 - goalH + 10, glab, small(th, 10, 'text-anchor="middle"'));
         s += '<line x1="' + r2(gx) + '" x2="' + r2(gx) + '" y1="' + r2(top0 - 2) + '" y2="' + r2(y0 + h + 2) + '" stroke="' + th.fg + '" stroke-opacity=".55" stroke-dasharray="3 3"/>';
       }
       return s;
@@ -128,6 +134,10 @@ export default function bars(o, th) {
     var Y = function (x) { return py + ph - (x - lo) / (hi - lo) * ph; };
     var slot = w / n, groupW = Math.min(slot * (thin ? 0.78 : 0.62), thin ? k * 30 : 56);
     var gap = thin ? Math.min(3, groupW / k * 0.15) : 0, bwid = stacked ? groupW : (groupW - gap * (k - 1)) / k, Y0 = Y(0);
+    // Everything the goal label must keep clear of: the legend, the bars, their values and the labels underneath.
+    var boxes = legendH ? [[x0, y0, w, legendH]] : [];
+    if (labels.length) boxes.push([x0, py + ph + negLab + 4, w, h - (py + ph + negLab + 4 - y0)]);
+    var valueBox = function (cx, ty, str, size) { var vw = tw(str, size, true); boxes.push([cx - vw / 2, ty - 9, vw, 12]); };
     s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(Y0) + '" y2="' + r2(Y0) + '" stroke="' + th.grid + '"/>';
     for (var c = 0; c < n; c++) {
       var gx0 = x0 + c * slot + (slot - groupW) / 2;
@@ -140,10 +150,13 @@ export default function bars(o, th) {
           if (bh > 0.5) {
             s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(6, bwid / 2, bh / 2)) +
               '" fill="' + colourOf(j, c) + '" fill-opacity="' + opac(val) + '"' + anim(o, val < 0 ? 'bzc-gn' : 'bzc-g', c * 0.05 + j * 0.03) + '/>';
+            boxes.push([x, y, bwid, bh]);
           }
           if (bool(o.showValues)) {
-            s += text(x + bwid / 2, val < 0 ? Y(val) + 12 : Y(val) - 5, fmt(val, o, true),
+            var vy = val < 0 ? Y(val) + 12 : Y(val) - 5, vs = fmt(val, o, true);
+            s += text(x + bwid / 2, vy, vs,
               'text-anchor="middle" fill="' + th.fg + '" font-family="' + MONO + '" font-size="' + (grouped ? 9 : 10) + '" font-weight="600"');
+            valueBox(x + bwid / 2, vy, vs, grouped ? 9 : 10);
           }
         });
       }
@@ -155,7 +168,7 @@ export default function bars(o, th) {
       }
       s += hit(x0 + c * slot, top0, slot, h - (top0 - y0), tipOf(c), c, at(S, c));
     }
-    if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal));
+    if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal), goalSpot(o, th, x0, x0 + w, Y(+o.goal), boxes));
     return s;
 
     // A vertical stack: positive parts upwards from zero and negative parts downwards, with a hairline gap.
@@ -174,12 +187,14 @@ export default function bars(o, th) {
         if (bh > 0.5) {
           out += '<rect x="' + r2(x) + '" y="' + r2(yA) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(3, bwid / 2, bh / 2)) +
             '" fill="' + colourOf(j, c) + '"' + anim(o, val < 0 ? 'bzc-gn' : 'bzc-g', c * 0.05 + j * 0.03) + '/>';
+          boxes.push([x, yA, bwid, bh]);
         }
       });
       if (bool(o.showValues)) {
-        var tot = totals[c];
-        out += text(x + bwid / 2, tot < 0 ? Y(downs[c]) + 12 : Y(ups[c]) - 5, fmt(tot, o, true),
+        var tot = totals[c], ty = tot < 0 ? Y(downs[c]) + 12 : Y(ups[c]) - 5, ts = fmt(tot, o, true);
+        out += text(x + bwid / 2, ty, ts,
           'text-anchor="middle" fill="' + th.fg + '" font-family="' + MONO + '" font-size="10" font-weight="600"');
+        valueBox(x + bwid / 2, ty, ts, 10);
       }
       return out;
     }
@@ -190,3 +205,18 @@ export default function bars(o, th) {
 }
 
 bars.table = function (o) { return seriesTable(o, series(o.values).length > 1 && bool(o.stacked)); };
+
+/**
+ * Where the goal label goes on vertical bars: the first of above right, below right, above left and below left that
+ * keeps clear of the [x, y, w, h] boxes already drawn. If none is, above right with an outline in the tile colour,
+ * so it still reads over whatever is behind it.
+ */
+function goalSpot(o, th, x1, x2, y, boxes) {
+  var lw = tw(goalText(o), 10, true), spots = [[x2, y - 5, 'end'], [x2, y + 13, 'end'], [x1, y - 5, 'start'], [x1, y + 13, 'start']];
+  for (var i = 0; i < 4; i++) {
+    var sp = spots[i], a = [sp[2] === 'end' ? sp[0] - lw : sp[0], sp[1] - 9, lw, 12];
+    // Clear means at least 4px from every box.
+    if (!boxes.some(function (b) { return a[0] < b[0] + b[2] + 4 && b[0] < a[0] + a[2] + 4 && a[1] < b[1] + b[3] + 4 && b[1] < a[1] + a[3] + 4; })) return sp.concat('');
+  }
+  return [x2, y - 5, 'end', ' stroke="' + (o.background || th.tile) + '" stroke-width="3" stroke-linejoin="round" paint-order="stroke"'];
+}

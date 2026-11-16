@@ -7,7 +7,6 @@ floating point operations, so the SVG output matches exactly.
 from __future__ import annotations
 
 import math
-import random
 import re
 
 from ._js import (
@@ -58,8 +57,13 @@ class Opts:
         self._d[key] = value
 
 
-_uid = 0
+# Gradient, pattern and clip path ids. While a chart draws, new_id() hands out placeholders; once the SVG is finished,
+# stable_ids() swaps them for ids worked out from the SVG itself, exactly as in JavaScript, so the same chart always
+# gives the same bytes. An `id` option names them instead: id="sales" gives sales-g1, sales-c1.
+_seq = 0
+_MARK = "\u0001"
 _B36 = "0123456789abcdefghijklmnopqrstuvwxyz"
+_PLACEHOLDER = re.compile("\u0001bzc([a-z])(\\d+)\u0001")
 
 
 def _base36(n: int) -> str:
@@ -72,10 +76,38 @@ def _base36(n: int) -> str:
 
 
 def new_id(p: str) -> str:
-    """A unique id, so several charts can share one page without clashing gradients."""
-    global _uid
-    _uid += 1
-    return "bzc" + p + _base36(_uid) + "".join(random.choice(_B36) for _ in range(4))
+    """A placeholder id, made stable by stable_ids() once the chart is drawn."""
+    global _seq
+    _seq += 1
+    return _MARK + "bzc" + p + str(_seq) + _MARK
+
+
+def hash_id(s: str) -> str:
+    """FNV-1a over UTF-16 code units, as 7 base-36 digits, matching hash() in JavaScript."""
+    h = 0x811C9DC5
+    b = s.encode("utf-16-le", errors="surrogatepass")
+    for i in range(0, len(b), 2):
+        h ^= b[i] | (b[i + 1] << 8)
+        h = (h * 16777619) & 0xFFFFFFFF
+    return _base36(h).rjust(7, "0")
+
+
+def reset_ids() -> None:
+    global _seq
+    _seq = 0
+
+
+def stable_ids(svg: str, id=None) -> str:
+    if _MARK + "bzc" not in svg:
+        return svg
+    pre = ""
+    if has(id):
+        pre = re.sub(r"[^A-Za-z0-9_-]", "-", to_string(id).strip())
+        if not re.match(r"[A-Za-z_]", pre):
+            pre = "bzc-" + pre
+        pre += "-"
+    h = "" if pre else hash_id(svg)
+    return _PLACEHOLDER.sub(lambda m: pre + m.group(1) + m.group(2) if pre else "bzc" + m.group(1) + h + m.group(2), svg)
 
 
 _ESC = {"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}
@@ -304,13 +336,18 @@ def parse_notes(o, labels) -> list:
     return out
 
 
-def goal_line(o, th, x1, x2, y) -> str:
-    label = (to_string(o.goalLabel) if has(o.goalLabel) else "Goal") + " " + fmt(num(o.goal, 0), o)
+def goal_line(o, th, x1, x2, y, at=None) -> str:
+    """The dashed goal line and its label, above the line at its right end, or at (x, y, anchor, extra attributes)."""
+    at = at or (x2, y - 5, "end", "")
     return (
         '<line x1="' + R(x1) + '" x2="' + R(x2) + '" y1="' + R(y) + '" y2="' + R(y) + '" stroke="' + th["fg"]
         + '" stroke-opacity=".55" stroke-width="1.25" stroke-dasharray="4 4"/>'
-        + text(x2, y - 5, label, small(th, 10, 'text-anchor="end"'))
+        + text(at[0], at[1], goal_text(o), small(th, 10, 'text-anchor="' + at[2] + '"' + at[3]))
     )
+
+
+def goal_text(o) -> str:
+    return (to_string(o.goalLabel) if has(o.goalLabel) else "Goal") + " " + fmt(num(o.goal, 0), o)
 
 
 def stat_of(v, o, fallback=None):
@@ -402,7 +439,7 @@ def pattern(pid, kind, c, bg) -> str:
 
 __all__ = [
     "DASHES", "INF", "NAN", "MONO", "PATTERNS", "SANS", "SHAPES", "N", "Opts", "R", "anim", "bool_", "clamp", "empty_state", "esc", "finite",
-    "fmt", "goal_line", "has", "hit", "is_num", "jmax", "jmin", "legend", "lst", "marker", "new_id", "nice_scale", "num",
+    "fmt", "goal_line", "goal_text", "has", "hash_id", "hit", "is_num", "jmax", "jmin", "legend", "lst", "marker", "new_id", "nice_scale", "num",
     "nums", "palette", "parse_notes", "path_of", "pattern", "r2", "series", "small", "stat_of", "style_of", "text", "to_number",
     "to_string", "total", "trunc", "truthy", "tw",
 ]

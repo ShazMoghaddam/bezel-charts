@@ -1,14 +1,13 @@
 """The Python charts must draw exactly the same SVG as the JavaScript ones.
 
 The fixtures come from scripts/py-fixtures.mjs, which runs the real JavaScript
-renderers. Gradient and clip path ids are random in both languages, so they are swapped for
-stable ones before comparing.
+renderers. Gradient, pattern and clip path ids are worked out from the chart in both
+languages, so the SVG is compared byte for byte, ids included.
 """
 
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 import pytest
@@ -19,15 +18,6 @@ from bezel_charts._util import Opts, fmt, nice_scale
 
 FIXTURES = Path(__file__).parent / "fixtures"
 CHART_TYPES = ["spark", "line", "area", "bars", "combo", "waterfall", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "bullet", "heatmap"]
-
-
-def stable(svg: str) -> str:
-    ids: dict[str, str] = {}
-
-    def swap(m: re.Match) -> str:
-        return ids.setdefault(m.group(0), f"bzcg-{len(ids) + 1}")
-
-    return re.sub(r"bzc[gc][0-9a-z]+", swap, svg)
 
 
 def load(name: str):
@@ -43,9 +33,9 @@ def chart_cases():
 @pytest.mark.parametrize(("type_", "row"), list(chart_cases()))
 def test_chart_matches_javascript(type_, row):
     opts = row["options"]
-    assert stable(render(type_, **{**opts, "animate": False})) == row["render"]
-    assert stable(render(type_, **{**opts, "animate": True})) == row["animated"]
-    assert stable(to_svg(type_, **opts)) == row["static"]
+    assert render(type_, **{**opts, "animate": False}) == row["render"]
+    assert render(type_, **{**opts, "animate": True}) == row["animated"]
+    assert to_svg(type_, **opts) == row["static"]
 
 
 NUMBERS = load("numbers")

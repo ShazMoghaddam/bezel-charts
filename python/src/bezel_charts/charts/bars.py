@@ -6,7 +6,7 @@ import math
 
 from .._tile import dims, tile
 from .._util import (
-    at, MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, new_id,
+    at, MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, goal_line, goal_text, has, hit, jmax, jmin, legend, lst, new_id,
     num, palette, pattern, series, small, stat_of, style_of, text, to_number, to_string, trunc, truthy, tw,
 )
 
@@ -87,7 +87,10 @@ def bars(o, th) -> str:
     sub_h = 10 if thin else 14
     sub_gap = 3
     row_h = rows * sub_h + (rows - 1) * sub_gap + (14 if thin else 16) if horiz else 0
-    h = legend_h + jmax(1, n) * row_h - 6 if horiz else num(o.height, 140) + legend_h
+    # Horizontal bars put the goal's label in a strip above the first row.
+    goal_h = 16 if horiz and n and has(o.goal) and to_number(o.goal) > 0 else 0
+
+    h = legend_h + goal_h + jmax(1, n) * row_h - 6 if horiz else num(o.height, 140) + legend_h
     best_val = jmax(*(v0 if v0 else [0]))
     best = v0.index(best_val) if best_val in v0 else -1
 
@@ -99,6 +102,7 @@ def bars(o, th) -> str:
         if legend_h:
             s += legend([name_of(j) for j in range(k)], pal, th, x0, y0, w, lkey, lkw)["svg"]
             top0 += legend_h
+        top0 += goal_h
         lo = jmin(0, jmin(*scale))
         hi = jmax(0, top)
         if has(o.goal):
@@ -173,8 +177,13 @@ def bars(o, th) -> str:
                         + N(10 if grouped else 11) + '" font-weight="600"',
                     )
                 s += hit(x0, ry, w, row_h - 6, tip_of(i), i, at(S, i))
-            if has(o.goal) and to_number(o.goal) > 0:
+            if goal_h:
+                # The label sits above the first row, centred on the line but kept inside the bar area.
                 gx = bx + to_number(o.goal) / span * bw
+                glab = goal_text(o)
+                gw = tw(glab, 10, True)
+                glx = jmax(bx + gw / 2, jmin(bx + bw - gw / 2, gx))
+                s += text(glx, top0 - goal_h + 10, glab, small(th, 10, 'text-anchor="middle"'))
                 s += (
                     '<line x1="' + R(gx) + '" x2="' + R(gx) + '" y1="' + R(top0 - 2) + '" y2="' + R(y0 + h + 2)
                     + '" stroke="' + th["fg"] + '" stroke-opacity=".55" stroke-dasharray="3 3"/>'
@@ -249,14 +258,27 @@ def bars(o, th) -> str:
                         + '" rx="' + R(jmin(3, bwid / 2, bh / 2)) + '" fill="' + colour_of(j, c) + '"'
                         + anim(o, "bzc-gn" if val < 0 else "bzc-g", c * 0.05 + j * 0.03) + "/>"
                     )
+                    boxes.append((x, ya, bwid, bh))
             if bool_(o.showValues):
                 tot = totals[c]
+                ty = Y(downs[c]) + 12 if tot < 0 else Y(ups[c]) - 5
+                ts = fmt(tot, o, True)
                 out += text(
-                    x + bwid / 2, Y(downs[c]) + 12 if tot < 0 else Y(ups[c]) - 5, fmt(tot, o, True),
+                    x + bwid / 2, ty, ts,
                     'text-anchor="middle" fill="' + th["fg"] + '" font-family="' + MONO
                     + '" font-size="10" font-weight="600"',
                 )
+                value_box(x + bwid / 2, ty, ts, 10)
             return out
+
+        # Everything the goal label must keep clear of: the legend, the bars, their values and the labels underneath.
+        boxes = [(x0, y0, w, legend_h)] if legend_h else []
+        if labels:
+            boxes.append((x0, py + ph + neg_lab + 4, w, h - (py + ph + neg_lab + 4 - y0)))
+
+        def value_box(cx, ty, sv, size):
+            vw = tw(sv, size, True)
+            boxes.append((cx - vw / 2, ty - 9, vw, 12))
 
         s += (
             '<line x1="' + N(x0) + '" x2="' + N(x0 + w) + '" y1="' + R(Y0) + '" y2="' + R(Y0) + '" stroke="'
@@ -279,12 +301,16 @@ def bars(o, th) -> str:
                         + R(jmin(6, bwid / 2, bh / 2)) + '" fill="' + colour_of(j, c) + '" fill-opacity="'
                         + N(opac(val)) + '"' + anim(o, "bzc-gn" if val < 0 else "bzc-g", c * 0.05 + j * 0.03) + "/>"
                     )
+                    boxes.append((x, y, bwid, bh))
                 if bool_(o.showValues):
+                    vy = Y(val) + 12 if val < 0 else Y(val) - 5
+                    vs = fmt(val, o, True)
                     s += text(
-                        x + bwid / 2, Y(val) + 12 if val < 0 else Y(val) - 5, fmt(val, o, True),
+                        x + bwid / 2, vy, vs,
                         'text-anchor="middle" fill="' + th["fg"] + '" font-family="' + MONO + '" font-size="'
                         + N(9 if grouped else 10) + '" font-weight="600"',
                     )
+                    value_box(x + bwid / 2, vy, vs, 9 if grouped else 10)
             if c < len(labels) and c % every == 0:
                 lx = gx0 + group_w / 2
                 ly = py + ph + neg_lab + (12 if angled else 15)
@@ -297,7 +323,8 @@ def bars(o, th) -> str:
                     s += text(lx, ly, labels[c], small(th, 10, 'text-anchor="middle"'))
             s += hit(x0 + c * slot, top0, slot, h - (top0 - y0), tip_of(c), c, at(S, c))
         if has(o.goal):
-            s += goal_line(o, th, x0, x0 + w, Y(to_number(o.goal)))
+            gy = Y(to_number(o.goal))
+            s += goal_line(o, th, x0, x0 + w, gy, _goal_spot(o, th, x0, x0 + w, gy, boxes))
         return s
 
     if not n:
@@ -310,3 +337,18 @@ def bars(o, th) -> str:
         best_label = labels[best] if 0 <= best < len(labels) and labels[best] else ""
         summary = "highest " + best_label + " " + fmt(v0[best] if 0 <= best < len(v0) else None, o)
     return tile(o, th, h, draw, {"stat": stat_of(v0, o, ""), "summary": summary})
+
+
+def _goal_spot(o, th, x1, x2, y, boxes):
+    """Where the goal label goes on vertical bars: the first spot clear of the boxes drawn, as in JavaScript."""
+    lw = tw(goal_text(o), 10, True)
+    for sx, sy, anchor in ((x2, y - 5, "end"), (x2, y + 13, "end"), (x1, y - 5, "start"), (x1, y + 13, "start")):
+        a = (sx - lw if anchor == "end" else sx, sy - 9, lw, 12)
+        # Clear means at least 4px from every box.
+        if not any(
+            a[0] < b[0] + b[2] + 4 and b[0] < a[0] + a[2] + 4 and a[1] < b[1] + b[3] + 4 and b[1] < a[1] + a[3] + 4
+            for b in boxes
+        ):
+            return (sx, sy, anchor, "")
+    bg = to_string(o.background) if truthy(o.background) else th["tile"]
+    return (x2, y - 5, "end", ' stroke="' + bg + '" stroke-width="3" stroke-linejoin="round" paint-order="stroke"')

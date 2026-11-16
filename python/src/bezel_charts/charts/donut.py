@@ -8,8 +8,63 @@ from .._js import js_round
 from .._tile import tile
 from .._util import (
     ref, MONO, SANS, N, R, anim, empty_state, esc, fmt, has, hit, jmax, jmin, lst, num, nums, palette, small, stat_of,
-    text, to_string, total, trunc,
+    text, to_string, total, trunc, utf16_len,
 )
+
+
+def _centre(o, th, cx, cy, size, sw, tot) -> str:
+    """The total and the centre label, kept inside the hole, exactly as in JavaScript."""
+    ri = size / 2 - sw
+    big = fmt(tot, o, True)
+    fs = size * 0.17
+
+    def chord(dy):
+        return 2 * math.sqrt(jmax(0, ri * ri - dy * dy)) - 8
+
+    def wide(t, f):
+        return utf16_len(t) * (f * 0.6 + 1)
+
+    def fit(t, room):
+        return math.floor((room / utf16_len(t) - 1) / 0.6 * 2) / 2
+
+    lab = (to_string(o.centerLabel) if has(o.centerLabel) else "Total").upper()
+    lines = [lab]
+    ls = 9
+    ty = cy + 2
+    ly = [cy + 16]
+    if wide(lab, 9) > chord(16):
+        ls = jmax(7, fit(lab, chord(16)))
+        words = [wd for wd in lab.split(" ") if wd]
+        if ls == 7 and len(words) > 1 and wide(lab, 7) > chord(16):
+            # Two lines, split where the larger one needs the least shrinking, and the whole centre moves up.
+            best = -1
+            for k in range(1, len(words)):
+                a = " ".join(words[:k])
+                b = " ".join(words[k:])
+                f = jmin(9, fit(a, chord(10)), fit(b, chord(19)))
+                if f > best:
+                    best = f
+                    lines = [a, b]
+            if best < 7:
+                # Still too long at 7px: fill the first line with whole words, and only the second is shortened.
+                k = len(words) - 1
+                while k > 1 and wide(" ".join(words[:k]), 7) > chord(10):
+                    k -= 1
+                lines = [" ".join(words[:k]), " ".join(words[k:])]
+            ls = jmax(7, best)
+            ty = cy - 3
+            ly = [cy + 10, cy + 19]
+        lines = [
+            trunc(t, jmax(1, math.floor(chord(ly[i] - cy) / (ls * 0.6 + 1)))) if wide(t, ls) > chord(ly[i] - cy) else t
+            for i, t in enumerate(lines)
+        ]
+    room = chord(fs * 0.7 + cy - ty)
+    if utf16_len(big) * fs * 0.62 > room:
+        fs = jmax(8, room / (utf16_len(big) * 0.62))
+    return text(
+        cx, ty, big,
+        'text-anchor="middle" fill="' + th["fg"] + '" font-family="' + SANS + '" font-size="' + R(fs) + '" font-weight="800"',
+    ) + "".join(text(cx, ly[i], t, small(th, ls, 'text-anchor="middle" letter-spacing="1"')) for i, t in enumerate(lines))
 
 
 def donut(o, th) -> str:
@@ -58,13 +113,7 @@ def donut(o, th) -> str:
                 + anim(o, "bzc-a", i * 0.08) + "/>"
             )
             start += length
-        s += text(
-            cx, cy + 2, fmt(tot, o, True),
-            'text-anchor="middle" fill="' + th["fg"] + '" font-family="' + SANS + '" font-size="' + R(size * 0.17)
-            + '" font-weight="800"',
-        )
-        centre = to_string(o.centerLabel) if has(o.centerLabel) else "Total"
-        s += text(cx, cy + 2 + 14, centre.upper(), small(th, 9, 'text-anchor="middle" letter-spacing="1"'))
+        s += _centre(o, th, cx, cy, size, sw, tot)
         lx = x0 + size + 22
         row_h = jmin(24, h / len(v))
         ly = cy - row_h * len(v) / 2

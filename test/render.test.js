@@ -503,7 +503,7 @@ test('areas take max, and a min at or below zero, but never cut their base', () 
 });
 
 test('log scales step in powers of ten, with 2 and 5 between when the range is short', () => {
-  assert.deepEqual(ticksOf(render('line', { values: '120,2400000', log: '' }), 'end'), ['100', '1,000', '10k', '100k', '1m', '10m']);
+  assert.deepEqual(ticksOf(render('line', { values: '120,2400000', log: '' }), 'end'), ['100', '1,000', '10k', '100k', '1M', '10M']);
   assert.deepEqual(ticksOf(render('line', { values: '3,40', log: '' }), 'end'), ['1', '2', '5', '10', '20', '50', '100']);
 });
 
@@ -558,4 +558,125 @@ test('bullet with one target for every row, unnamed bands, and no targets at all
   assert.match(plain, /2 measures</);
   assert.doesNotMatch(plain, /Target/);
   assert.deepEqual(table('bullet', { values: '3,4' }).head, ['Measure', 'Actual']);
+});
+
+// 1.11.0: stable ids, goal labels, compact letters and the donut centre.
+
+test('the same input gives byte-identical SVG twice, for every type and case', () => {
+  for (const [type, cases] of Object.entries(CASES)) {
+    cases.forEach((opts, i) => {
+      assert.equal(toSVG(type, opts), toSVG(type, opts), `${type}#${i} static`);
+      assert.equal(render(type, { ...opts, animate: true }), render(type, { ...opts, animate: true }), `${type}#${i} animated`);
+      assert.doesNotMatch(render(type, opts), /\u0001/, `${type}#${i} has no placeholder left`);
+    });
+  }
+});
+
+const texts = (svg) => [...svg.matchAll(/<text [^>]*>([^<]*)<\/text>/g)].map((m) => m[1]);
+const idsOf = (svg) => [...svg.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
+
+test('ids come from the chart, so different charts get different ids and each id is used', () => {
+  const o = { values: '4,9,6|3,7,8', series: 'A,B', patterns: 'dots,stripes' };
+  const a = idsOf(toSVG('bars', o)), b = idsOf(toSVG('bars', { ...o, values: '4,9,6|3,7,9' }));
+  assert.equal(a.length, 2);
+  assert.equal(new Set(a).size, 2, 'unique within a chart');
+  assert.ok(a.every((id) => /^bzcg[0-9a-z]{7}\d+$/.test(id)), a.join());
+  assert.ok(a.every((id) => !b.includes(id)), 'different data, different ids');
+  const svg = toSVG('bars', o);
+  for (const id of a) assert.ok(svg.includes(`url(#${id})`), `${id} is referenced`);
+  assert.notEqual(idsOf(toSVG('spark', { values: '1,2,3' }))[0], idsOf(toSVG('spark', { values: '1,2,3', theme: 'light' }))[0]);
+});
+
+test('an id option names the ids instead', () => {
+  const o = { values: '4,9,6|3,7,8', series: 'A,B', patterns: 'dots,stripes' };
+  assert.deepEqual(idsOf(toSVG('bars', { ...o, id: 'oldest-trees' })), ['oldest-trees-g1', 'oldest-trees-g2']);
+  assert.deepEqual(idsOf(toSVG('bars', { ...o, id: 'oldest trees' })), ['oldest-trees-g1', 'oldest-trees-g2'], 'spaces become hyphens');
+  assert.deepEqual(idsOf(toSVG('progress', { values: '3,4', id: '2026' })), ['bzc-2026-c1'], 'an id must start with a letter');
+  assert.deepEqual(idsOf(toSVG('spark', { values: '1,2', id: '' })).length, 1);
+});
+
+// Text positions with their estimated boxes, as [x, y, w, h], for checking overlaps.
+const textBoxes = (svg) => [...svg.matchAll(/<text x="([\d.-]+)" y="([\d.-]+)" ([^>]*)>([^<]*)<\/text>/g)].map(([, x, y, attrs, t]) => {
+  const size = +(attrs.match(/font-size="([\d.]+)"/) || [0, 10])[1], w = t.length * size * 0.6;
+  const anchor = (attrs.match(/text-anchor="(\w+)"/) || [0, 'start'])[1];
+  const left = anchor === 'end' ? +x - w : anchor === 'middle' ? +x - w / 2 : +x;
+  return { t, box: [left, +y - size * 0.9, w, size * 1.2], attrs };
+});
+const clash = (a, b) => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
+
+test('the goal label on vertical bars stays clear of the values', () => {
+  for (const o of [
+    { values: '40,72,55,90,66', labels: 'A,B,C,D,E', goal: 70, 'show-values': '' },
+    { values: '4,9,6|3,7,8', series: 'X,Y', labels: 'a,b,c', stacked: '', goal: 14, 'show-values': '' },
+    { values: '4,9,6|3,7,8', series: 'X,Y', labels: 'a,b,c', goal: 5, 'show-values': '' },
+  ]) {
+    const all = textBoxes(toSVG('bars', o)), goal = all.find((b) => b.t.startsWith('Goal'));
+    assert.ok(goal, 'the goal is labelled');
+    for (const other of all) if (other !== goal) assert.ok(!clash(goal.box, other.box), `"${goal.t}" overlaps "${other.t}"`);
+  }
+});
+
+test('with nowhere free, the goal label gets an outline so it still reads', () => {
+  const svg = toSVG('bars', { values: '80,72,85,90,96', goal: 70, 'show-values': '', background: '#222' });
+  assert.match(svg, /<text [^>]*stroke="#222" stroke-width="3"[^>]*paint-order="stroke"[^>]*>Goal 70</);
+});
+
+test('horizontal bars label the goal above the first row', () => {
+  const o = { values: '40,72,55,90,66', labels: 'Alpha,Beta,Gamma,Delta,Epsilon', horizontal: '' };
+  const plain = toSVG('bars', o), withGoal = toSVG('bars', { ...o, goal: 70, 'goal-label': 'Target' });
+  const height = (svg) => +svg.match(/height="(\d+)"/)[1];
+  assert.equal(height(withGoal) - height(plain), 16);
+  const label = textBoxes(withGoal).find((b) => b.t === 'Target 70');
+  assert.ok(label, 'the goal is labelled');
+  const firstRow = textBoxes(withGoal).find((b) => b.t === 'Alpha');
+  assert.ok(label.box[1] + label.box[3] <= firstRow.box[1] + 2, 'above the first row');
+  const line = withGoal.match(/<line x1="([\d.]+)" x2="\1"[^>]*stroke-dasharray="3 3"/);
+  assert.ok(Math.abs(label.box[0] + label.box[2] / 2 - +line[1]) < 0.01, 'centred on the line');
+  assert.match(toSVG('bars', { ...o, goal: 1000 }), />Goal 1,000</, 'kept inside the bar area at the far end');
+});
+
+test('compact numbers use k, M, B and T in British English, and US English is unchanged', () => {
+  const show = (lang) => [15000, 2200000, 3.4e9, 5e12].map((v) => texts(toSVG('bars', { values: String(v), compact: '', 'show-values': '', lang }))
+    .find((t) => /\d/.test(t)));
+  assert.deepEqual(show(undefined), ['15k', '2.2M', '3.4B', '5T']);
+  assert.deepEqual(show('en-GB'), ['15k', '2.2M', '3.4B', '5T']);
+  assert.deepEqual(show('en-US'), ['15K', '2.2M', '3.4B', '5T']);
+  assert.match(toSVG('spark', { values: '1,-2200000', compact: '', prefix: '£', suffix: ' saved' }), />−£2.2M saved</);
+});
+
+test('the donut centre label fits the hole: smaller, then two lines, then shortened', () => {
+  const v = { values: '2200000,1500000,900000', compact: '' };
+  const labelsOf = (svg) => textBoxes(svg).filter((b) => /letter-spacing="1"/.test(b.attrs));
+  const hole = (svg) => {
+    const c = svg.match(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)" fill="none" stroke="[^"]+" stroke-width="([\d.]+)"/);
+    return { cx: +c[1], r: +c[3] - +c[4] / 2 };
+  };
+  const inside = (svg) => {
+    const { cx, r } = hole(svg);
+    for (const { box, t } of [...labelsOf(svg), textBoxes(svg).find((b) => /font-weight="800"/.test(b.attrs))]) {
+      assert.ok(box[0] >= cx - r && box[0] + box[2] <= cx + r, `"${t}" fits the hole`);
+    }
+  };
+  const short = toSVG('donut', { ...v, 'center-label': 'Total' });
+  assert.deepEqual(labelsOf(short).map((b) => b.t), ['TOTAL']);
+  assert.match(short, /font-size="9" text-anchor="middle" letter-spacing="1">TOTAL/, 'short labels are unchanged');
+
+  const smaller = toSVG('donut', { ...v, 'center-label': 'Forest area km²' });
+  assert.equal(labelsOf(smaller).length, 1);
+  inside(smaller);
+
+  const wrapped = toSVG('donut', { ...v, 'center-label': 'Square kilometres of forest' });
+  assert.deepEqual(labelsOf(wrapped).map((b) => b.t), ['SQUARE KILOMETRES', 'OF FOREST']);
+  inside(wrapped);
+
+  const cut = toSVG('donut', { values: '12500000000,3', prefix: '£', 'center-label': 'Revenue across all regions and years', height: 110 });
+  const lines = labelsOf(cut).map((b) => b.t);
+  assert.equal(lines.length, 2);
+  assert.equal(lines[0], 'REVENUE', 'the first line keeps whole words');
+  assert.ok(lines[1].endsWith('…'));
+  inside(cut);
+
+  const oneWord = toSVG('donut', { ...v, 'center-label': 'Antidisestablishmentarianism' });
+  assert.ok(labelsOf(oneWord)[0].t.endsWith('…'));
+  inside(oneWord);
 });
