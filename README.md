@@ -49,7 +49,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.10.1` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.11.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -367,7 +367,7 @@ How a total splits into parts. More than six slices are grouped into "Other".
 | -------------- | ---------------------------- | -------- |
 | `values`       | one number per slice         |          |
 | `labels`       | one per slice                |          |
-| `center-label` | the word under the total     | `Total`  |
+| `center-label` | the words under the total. Long ones shrink, wrap onto two lines, then shorten to fit the hole | `Total` |
 | `height`       | chart height in px           | `150`    |
 
 ### `<bezel-gauge>`
@@ -453,7 +453,7 @@ Any of the above, picked with `type`: `<bezel-chart type="donut" values="3,2,1">
 | `prefix`        | text before numbers, e.g. `£`                                   |               |
 | `suffix`        | text after numbers, e.g. `%` or ` kg`                           |               |
 | `decimals`      | decimal places, `0` to `6`                                      | automatic     |
-| `compact`       | boolean, writes big numbers short, e.g. `12.5k`                 | off           |
+| `compact`       | boolean, writes big numbers short: `12.5k`, `2.2M`, `3.4B`, `5T` | off           |
 | `lang`          | a locale for numbers and dates, e.g. `fr-FR`, `fa-IR`           | `en-GB`       |
 | `theme`         | `auto`, `dark`, `light`                                         | `auto`        |
 | `frame`         | `bezel`, `none`                                                 | `bezel`       |
@@ -464,7 +464,7 @@ Any of the above, picked with `type`: `<bezel-chart type="donut" values="3,2,1">
 | `delta`         | with `stat="last"`: `inverse` when falling is good, `none` to hide the change |  |
 | `delta-label`   | wording after the change                                        | `since start` |
 | `goal`          | a dashed goal line, or a marker on gauges and progress bars     |               |
-| `goal-label`    | wording for the goal line                                       | `Goal`        |
+| `goal-label`    | wording for the goal line. Its label moves to stay clear of bars and values | `Goal` |
 | `notes`         | `point:text` pairs separated by `;`, e.g. `Jun:Launch;9:Peak`. A point is a label or, if no label matches, a position counted from 0 | |
 | `show-values`   | boolean, writes each value on the chart                         | off           |
 | `width`         | a fixed width in px instead of filling the container            |               |
@@ -585,6 +585,8 @@ import { writeFileSync } from 'node:fs';
 
 writeFileSync('downloads.svg', toSVG('bars', { heading: 'Downloads', values: [120, 340, 410], labels: 'Jan,Feb,Mar', width: 480 }));
 ```
+
+The same options always give the same SVG, byte for byte, so a CI job can rebuild your charts and fail if a committed file is out of date. Gradients, patterns and clip paths get ids worked out from the chart itself, so different charts on one page never clash. To choose the ids yourself, pass `id`: `toSVG('bars', { id: 'downloads', ... })` names them `downloads-g1`, `downloads-c1` and so on.
 
 ## Python
 

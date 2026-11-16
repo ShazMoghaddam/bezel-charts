@@ -1,5 +1,13 @@
 # Changelog (Python package)
 
+## 1.11.0 (2026-11-16)
+
+- **Stable SVGs:** the same data and options now give the same SVG, byte for byte. Ids used to be random, so `chart.save()` rewrote unchanged charts and notebooks showed changes that weren't there. They're now worked out from the chart, so different charts in one notebook still never clash. Pass `id="sales"` to name them yourself (`sales-g1`).
+- **Goal labels:** on vertical bars the label moves clear of the bar values, and horizontal bars now show it, above the first row.
+- **Changed:** compact numbers in British English use `2.2M`, `3.4B` and `5T` instead of `2.2m`, `3.4bn` and `5tn`, so millions can't be read as metres. Thousands stay `15k`, and `lang="en-US"` is unchanged.
+- **Donut centre:** a long `center_label` shrinks, wraps onto two lines, then shortens to fit inside the hole, and a wide total shrinks too.
+- All of it matches the web components byte for byte. The parity tests now compare the SVG as it is, ids included, with 17 new cases.
+
 ## 1.10.1 (2026-11-11)
 
 - Version bump only, to stay in step with the npm package, whose README image was fixed. No code changes.

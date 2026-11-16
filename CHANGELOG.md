@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.11.0 (2026-11-16)
+
+Stable SVGs, clearer goal labels, capital M and a donut centre that fits.
+
+- **Stable ids:** the same options now give the same SVG, byte for byte, every time. Gradients, patterns and clip paths used to get random ids, so a rebuilt chart always looked changed and CI couldn't check that committed charts were up to date. Ids are now worked out from the chart itself (`bzcg` plus a short hash), so different charts on one page still never clash.
+- `id`: names the ids yourself. `toSVG('bars', { id: 'oldest-trees', ... })` gives `oldest-trees-g1`, `oldest-trees-c1` and so on. Anything other than letters, digits, `-` and `_` becomes `-`, and an id that doesn't start with a letter gets `bzc-` in front.
+- **Goal label on vertical bars:** it no longer sits on top of `show-values` numbers. It takes the first free spot of above right, below right, above left and below left. If every spot is taken, it gets an outline in the tile colour so it still reads.
+- **Goal label on horizontal bars:** the dashed line had no label at all. It now has one above the first row, centred on the line and kept inside the bar area. The chart is 16px taller when it has a goal.
+- **Changed, compact numbers:** British English wrote millions as `2.2m`, which reads like metres, and billions and trillions as `bn` and `tn`. They're now `2.2M`, `3.4B` and `5T`, with thousands still `15k`. US English is unchanged (`15K`, `2.2M`, `3.4B`, `5T`), as are other languages. This changes how existing `en-GB` charts look wherever numbers are shortened: `compact`, the values on bars and the donut total.
+- **Donut centre:** a long `center-label` used to spill out of the hole. It now shrinks to as small as 7px, then wraps onto two lines, then is shortened with "…". The total in the middle also shrinks if it's too wide, which mostly helps narrow donuts.
+- The Python package matches all of this byte for byte. Its parity tests now compare the raw SVG, ids included, instead of renaming ids first.
+- Size: about 1 kB more for the full bundle (27.5 kB), mostly the donut and goal label code. The bars budget is now 12 kB and the area budget 14 kB, as the shared code both load grew.
+
 ## 1.10.1 (2026-11-11)
 
 README image fix for npm.
