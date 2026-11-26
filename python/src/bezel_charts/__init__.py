@@ -27,6 +27,7 @@ from ._render import render as _render
 from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
 from ._util import Opts, fmt, lst, series
+from ._util import fmtv as _fmtv
 from .charts import TYPES
 from .charts.waterfall import walk as _walk
 
@@ -88,14 +89,18 @@ class Chart:
         S = series(o.values) if self.type in ("spark", "line", "area", "bars", "donut", "progress", "bullet") else []
         if len(S) == 1:
             labels = lst(o.labels)
-            parts = [(labels[i] + " " if i < len(labels) and labels[i] else "") + fmt(v, o) for i, v in enumerate(S[0])]
+            parts = [(labels[i] + " " if i < len(labels) and labels[i] else "") + _fmtv(v, o) for i, v in enumerate(S[0])]
             more = len(parts) - 12
             out += ". " + ", ".join(parts[:12]) + (f" and {more} more" if more > 0 else "")
         elif self.type == "waterfall":
             # Totals read as the running total they show, changes as signed steps.
             steps = _walk((series(o.values) or [[]])[0], lst(o.labels), o.totals)
             parts = [
-                st["name"] + (" total " + fmt(st["to"], o) if st["kind"] == "total" else " " + ("+" if st["change"] > 0 else "") + fmt(st["change"], o))
+                st["name"] + (
+                    " no data" if st["kind"] == "gap"
+                    else " total " + fmt(st["to"], o) if st["kind"] == "total"
+                    else " " + ("+" if st["change"] > 0 else "") + fmt(st["change"], o)
+                )
                 for st in steps
             ]
             more = len(parts) - 12

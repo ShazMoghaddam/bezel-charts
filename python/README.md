@@ -119,7 +119,7 @@ bc.waterfall(df, x="step", y="change", totals=["Opening", "Closing"])  # from a 
 bc.waterfall([120, 30, -12, 0], totals=[0, 3])                          # totals by position
 ```
 
-A total adds its own value first, then shows the running total, so give the opening amount for a start and `0` for a subtotal. A missing value is drawn as 0 with a warning, so use `.fillna(0)` on total rows. `color=[rise, fall, total]` changes the colours.
+A total adds its own value first, then shows the running total, so give the opening amount for a start and `0` for a subtotal. A missing value draws a dashed "No data" step that keeps the level, and later totals say how many steps they leave out. A total row can be left blank (`NaN`), as it just shows the running total. `color=[rise, fall, total]` changes the colours.
 
 ### Histogram
 
@@ -247,7 +247,7 @@ print(f"![{chart.alt}](docs/commits.svg)")
 | A dict like `{"Team A": [...], "Team B": [...]}` | One series per key, named in the legend. |
 | A list of lists | One series per inner list. |
 
-Dates become `2026-03-01`, or anything you like with `x_format="%b %Y"`. Missing values are drawn as 0, like the browser version, with a warning so they never go unnoticed. Call `.dropna()` or `.fillna()` first if you'd rather handle them yourself.
+Dates become `2026-03-01`, or anything you like with `x_format="%b %Y"`. Missing values (`None`, `NaN`, `pd.NA`) are never drawn as 0. Lines break, bars leave a marked empty slot, histograms and box plots leave them out, and tooltips say "No data", the same as the web components. See [Missing values](https://github.com/ShazMoghaddam/bezel-charts#missing-values) for every chart. Call `.fillna()` first if a gap really means 0.
 
 ## Options
 

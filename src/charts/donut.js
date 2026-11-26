@@ -1,4 +1,4 @@
-import { esc, r2, num, has, nums, list, sum, trunc, fmt, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO, ref } from '../core/util.js';
+import { esc, r2, num, has, nums, list, sum, trunc, fmt, ok, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO, ref } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 /**
@@ -41,7 +41,11 @@ function centre(o, th, cx, cy, size, sw, total) {
 }
 
 export default function donut(o, th) {
-  var raw = nums(o.values).map(function (n) { return Math.max(0, n); }), lab = list(o.labels), pal = palette(o, th);
+  // A missing part has no size to show, so it's left out of the ring and the legend, and listed in the data table.
+  var all = nums(o.values), keep0 = all.map(function (n, i) { return i; }).filter(function (i) { return ok(all[i]); });
+  var lab0 = list(o.labels), missing = all.length - keep0.length, gappy = missing > 0;
+  var raw = keep0.map(function (i) { return Math.max(0, all[i]); }), pal = palette(o, th);
+  var lab = gappy ? keep0.map(function (i) { return lab0[i] || '#' + (i + 1); }) : lab0;
   var v = raw.slice(), labels = lab.slice();
   if (v.length > 6) {
     var idx = v.map(function (n, i) { return i; }).sort(function (a, b) { return raw[b] - raw[a]; });
@@ -84,13 +88,13 @@ export default function donut(o, th) {
       start += len;
     });
     return s;
-  }, { stat: st, summary: 'total ' + fmt(total, o) + ' across ' + v.length + ' parts' });
+  }, { stat: st, summary: 'total ' + fmt(total, o) + ' across ' + v.length + ' parts' + (missing ? ', ' + missing + ' missing' : '') });
 }
 
 // Every part is listed, including the small ones the chart groups as "Other".
 donut.table = function (o) {
-  var v = nums(o.values).map(function (n) { return Math.max(0, n); }), labels = list(o.labels), total = sum(v);
+  var v = nums(o.values).map(function (n) { return Math.max(0, n); }), labels = list(o.labels), total = sum(v.filter(ok));
   return { head: ['Label', 'Value', 'Share'], rows: v.map(function (n, i) {
-    return [labels[i] || '#' + (i + 1), fmt(n, o), (total ? Math.round(n / total * 100) : 0) + '%'];
+    return [labels[i] || '#' + (i + 1), fmt(n, o), ok(n) ? (total ? Math.round(n / total * 100) : 0) + '%' : '–'];
   }) };
 };

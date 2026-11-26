@@ -5,7 +5,13 @@ export const MAX_ROWS = 5000;
 
 const cleanNum = (s) => String(s).trim().replace(/[£$€¥%\s]/g, '').replace(/,(?=\d{3}\b)/g, '');
 export const isNum = (s) => s != null && cleanNum(s) !== '' && Number.isFinite(Number(cleanNum(s)));
-export const toNum = (s) => (isNum(s) ? Number(cleanNum(s)) : 0);
+/** A cell's number, or null when it's blank or not a number, so charts show a gap there instead of 0. */
+export const toNum = (s) => (isNum(s) ? Number(cleanNum(s)) : null);
+/**
+ * Numbers as an attribute value, with a blank between commas for each gap. A gap at the very end is written as null,
+ * since a trailing comma is ignored.
+ */
+export const joinNums = (v) => v.map((n, i) => (n != null ? n : i === v.length - 1 ? 'null' : '')).join(',');
 
 /* ---------- dates ---------- */
 
@@ -250,12 +256,18 @@ export function describe(rows) {
   };
 }
 
-/** Adds up values per day from the first to the last date, filling missing days with 0. Keeps the latest two years. */
+/**
+ * Adds up values per day from the first to the last date, filling days with no rows with 0. A day whose rows are all
+ * blank is a gap (null); blanks beside real values on the same day are left out of its total. Keeps the latest two years.
+ */
 export function daily(table, numberCol) {
   const sums = new Map();
   for (const r of table.body) {
     const d = parseDate(table.cell(r, table.date));
-    if (d) sums.set(d, (sums.get(d) || 0) + toNum(table.cell(r, numberCol)));
+    if (!d) continue;
+    const n = toNum(table.cell(r, numberCol));
+    if (n != null) sums.set(d, (sums.get(d) || 0) + n);
+    else if (!sums.has(d)) sums.set(d, null);
   }
   const days = [...sums.keys()].sort();
   if (!days.length) return null;
@@ -264,6 +276,6 @@ export function daily(table, numberCol) {
   const span = Math.round((end - start) / 864e5) + 1;
   if (span > 731) start = new Date(end.getTime() - 730 * 864e5);
   const values = [];
-  for (let t = start.getTime(); t <= end.getTime(); t += 864e5) values.push(sums.get(new Date(t).toISOString().slice(0, 10)) || 0);
+  for (let t = start.getTime(); t <= end.getTime(); t += 864e5) { const k = new Date(t).toISOString().slice(0, 10); values.push(sums.has(k) ? sums.get(k) : 0); }
   return { start: start.toISOString().slice(0, 10), values, clipped: span > 731 };
 }

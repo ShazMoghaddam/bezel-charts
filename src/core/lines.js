@@ -1,5 +1,5 @@
 /** Series lines, their markers and legend samples, shared by line, area and combo charts. */
-import { r2, anim } from './util.js';
+import { r2, anim, pathOf } from './util.js';
 import { marker, DASHES } from './series.js';
 
 /** A legend swatch for a line: a short sample with its dash and marker. */
@@ -27,4 +27,19 @@ export function pointMarks(o, mk, ys, X, Y, c, bg, k) {
     if (i % every === 0 || i === ys.length - 1) s += marker(mk, X(i), Y(y), 3.5, ' fill="' + c + '" stroke="' + bg + '" stroke-width="1.5"' + anim(o, 'bzc-a', 0.6 + k * 0.15));
   });
   return s;
+}
+
+/** The path through runs of points, one piece per run, so a line breaks at each gap. */
+export function runsPath(runs, straight) {
+  return runs.map(function (r) { return pathOf(r, straight); }).join('');
+}
+
+/**
+ * A small dot on each value that sits on its own between gaps, since it has no line to show it. All means every run,
+ * including the last, which otherwise gets the end-of-line marker instead.
+ */
+export function loneDots(runs, c, all) {
+  return runs.map(function (r, q) {
+    return r.length === 1 && (all || q < runs.length - 1) ? '<circle cx="' + r2(r[0][0]) + '" cy="' + r2(r[0][1]) + '" r="2.5" fill="' + c + '"/>' : '';
+  }).join('');
 }

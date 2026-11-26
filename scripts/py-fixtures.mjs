@@ -327,6 +327,32 @@ export const CASES = {
   ],
 };
 
+// Missing values (1.12.0): gaps in every chart, from strings and from arrays with null.
+const GAPS = {
+  spark: [{ values: '3,,5,null,4,6' }, { values: ',2' }, { values: '1,,3', notes: '1:x;2:y', 'show-values': '', stat: 'last' }, { values: [4, null, 6], theme: 'light' }],
+  line: [{ values: '1,2,,4,5,,7,6|3,4,2,,3,4,,5', series: 'A,B', labels: 'a,b,c,d,e,f,g,h', notes: 'c:Gap', stat: 'last' }, { values: '1,,100,1000', log: '' },
+    { values: '5,null,6,7', markers: '', 'show-values': '' }, { values: '1,,3', dates: '2026-01-01,2026-01-02,2026-01-05', straight: '' },
+    { values: [1, 2, null, 4, null, 6, 7], animate: true }, { values: 'null,null' }],
+  area: [{ values: '3,4,,5,6|2,2,2,3,3', stacked: '', series: 'A,B', 'show-values': '' }, { values: '1,,3|2,1,1', stacked: 'percent' },
+    { values: '1,,3,4|2,2,,2', markers: '', patterns: '' }, { values: '5,,7', theme: 'light', animate: true }],
+  bars: [{ values: '4,7,,6,5', labels: 'a,b,c,d,e', 'show-values': '', goal: 5 }, { values: '4,,6', horizontal: '', labels: 'x,y,z' },
+    { values: '1,2|3,null', stacked: '', 'show-values': '' }, { values: '1,2|null,4', stacked: '', horizontal: '' }, { values: '1,null|2,3', series: 'A,B', patterns: '' }],
+  combo: [{ values: '4,,6,7', line: '3.1,3.4,,4.2', labels: 'Q1,Q2,Q3,Q4' }, { values: '1,2|null,3', line: 'null,null', stacked: '' }, { values: '1,2,3', line: '5,,6', markers: '' }],
+  waterfall: [{ values: '120,30,,-25,0', labels: 'Start,Sales,Costs,Tax,Profit', totals: 'Start,Profit' }, { values: '-5,,null,-3', totals: '3', series: 'Up,Down,Sum,Unknown' },
+    { values: '120,30,-12,null', labels: 'Start,Sales,Costs,Profit', totals: 'Start,Profit' }],
+  histogram: [{ values: '1,2,,3,4,5,null', mark: 'mean,median' }, { values: 'null,1|1,2,2', percent: '', series: 'A,B' }],
+  boxplot: [{ values: '1,2,3,,9', mark: 'mean' }, { values: '1,2,3|null,null|4,5', series: 'A,B,C', horizontal: '' }],
+  scatter: [{ x: '1,2,,4,5', y: '3,,5,6,7', labels: 'a,b,c,d,e', notes: 'd:Last', trend: '' }, { x: '1,2|3,null', y: '1,2|3,4', series: 'A,B' }],
+  ring: [{ values: '40,,70', labels: 'A,B,C' }, { values: '40,null', max: 200 }],
+  donut: [{ values: '3,,2', labels: 'A,B,C' }, { values: '3,,2,1,1,1,1,1', labels: 'a,b,c,d,e,f,g,h' }],
+  gauge: [{ values: 'null' }, { values: '50', zones: '30,,70' }],
+  progress: [{ values: '30,,20', labels: 'A,B,C' }, { values: 'null' }, { values: '30,null', max: 100, goal: 40 }],
+  bullet: [{ values: '182,,7.4', targets: '200,60,', labels: 'Revenue,Margin,NPS', zones: '150,180|40,,55|6,7', 'zone-labels': 'Poor,Fair,Good' }],
+  heatmap: [{ values: Array.from({ length: 70 }, (_, i) => (i % 9 === 4 ? null : i % 5)), start: '2026-01-05' }, { values: '1,,3,0', start: '2026-01-01', theme: 'light' }],
+};
+for (const [type, cases] of Object.entries(GAPS)) CASES[type].push(...cases);
+
+
 for (const [type, cases] of Object.entries(CASES)) {
   const rows = cases.map((options) => ({
     options,

@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import re
 
-from .._js import to_fixed
+from .._js import finite, to_fixed
 from .._tile import tile
 from .._util import (
     SHAPES, N, Opts, R, bool_, clamp, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, marker,
@@ -46,13 +46,24 @@ def scatter(o, th) -> str:
     X, Y = series(o.x), series(o.y)
     names, labels, pal = lst(o.series), lst(o.labels), palette(o, th)
     groups = []
+    seen = 0
     for g in range(max(len(X), len(Y))):
         xs = X[g] if g < len(X) else []
         ys = Y[g] if g < len(Y) else []
         m = min(len(xs), len(ys))
-        groups.append({"xs": xs[:m], "ys": ys[:m]})
-    groups = [gr for gr in groups if gr["xs"]]
+        # A point missing its x or y can't be placed, so it's left out. ix keeps each point's position across all
+        # groups, which labels and notes count by.
+        gr = {"xs": [], "ys": [], "ix": []}
+        for i in range(m):
+            if finite(xs[i]) and finite(ys[i]):
+                gr["xs"].append(xs[i])
+                gr["ys"].append(ys[i])
+                gr["ix"].append(seen + i)
+        seen += m
+        groups.append(gr)
     count = sum(len(gr["xs"]) for gr in groups)
+    missing = seen - count
+    groups = [gr for gr in groups if gr["xs"]]
     h = num(o.height, 210)
     multi = len(groups) > 1 or len(names) > 0
     trend = bool_(o.trend)
@@ -153,7 +164,6 @@ def scatter(o, th) -> str:
                     small(th, 10, 'text-anchor="end" font-weight="600"', c),
                 )
 
-        idx = 0
         r = 3 if count > 150 else 4.5
         stroke = to_string(o.background) if truthy(o.background) else th["tile"]
         x_name = to_string(o.xLabel) if has(o.xLabel) else "x"
@@ -161,6 +171,7 @@ def scatter(o, th) -> str:
         for j, gr in enumerate(groups):
             c = pal[j % len(pal)]
             for i, xv in enumerate(gr["xs"]):
+                idx = gr["ix"][i]
                 cx, cy = PX(xv), PY(gr["ys"][i])
                 lead = (
                     labels[idx] + "\n" if idx < len(labels) and labels[idx]
@@ -173,12 +184,11 @@ def scatter(o, th) -> str:
                     + (' class="bzc-a" style="animation-delay:' + R(jmin(0.8, idx * 0.012)) + 's"' if o.animate else ""),
                 )
                 s += hit(cx - 8, cy - 8, 16, 16, tip, idx, [xv, gr["ys"][i]], j)
-                idx += 1
 
         # Notes point at a point by its position across all groups, or by its label.
-        flat = [[PX(xv), PY(gr["ys"][i])] for gr in groups for i, xv in enumerate(gr["xs"])]
+        flat = {gr["ix"][i]: [PX(xv), PY(gr["ys"][i])] for gr in groups for i, xv in enumerate(gr["xs"])}
         for nt in notes:
-            if nt["i"] >= len(flat):
+            if nt["i"] not in flat:
                 continue
             p = flat[nt["i"]]
             s += (
@@ -188,5 +198,7 @@ def scatter(o, th) -> str:
             )
         return s
 
-    summary = str(count) + " points" + (" in " + str(len(groups)) + " groups" if multi else "")
+    summary = str(count) + " points" + (" in " + str(len(groups)) + " groups" if multi else "") + (
+        ", " + str(missing) + " missing left out" if missing else ""
+    )
     return tile(o, th, h, draw, {"summary": summary})

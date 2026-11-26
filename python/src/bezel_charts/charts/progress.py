@@ -5,7 +5,7 @@ from __future__ import annotations
 from .._js import js_round
 from .._tile import dims, tile
 from .._util import (
-    MONO, SANS, N, R, anim, clamp, empty_state, esc, fmt, has, hit, jmax, jmin, lst, new_id, num, nums, palette,
+    MONO, SANS, N, R, anim, clamp, empty_state, esc, fmt, has, ok, real, hit, jmax, jmin, lst, new_id, num, nums, palette,
     stat_of, text, to_number, to_string, total, truthy, tw,
 )
 
@@ -15,14 +15,14 @@ def progress(o, th) -> str:
     labels = lst(o.labels)
     pal = palette(o, th)
     single = len(v) == 1
-    tot = total(v)
+    tot = total(real(v))
     mx = num(o.max, 100) if has(o.max) else 100 if single else tot
     if not mx > 0:
         mx = 1
     auto = not has(o.prefix) and not has(o.suffix) and mx == 100 and single
 
     def show(n):
-        return fmt(n, o) + ("%" if auto else "")
+        return fmt(n, o) + ("%" if auto else "") if ok(n) else "No data"
 
     def label_of(i):
         return labels[i] if i < len(labels) and labels[i] else None
@@ -35,7 +35,7 @@ def progress(o, th) -> str:
         rows = 1
         for i, n in enumerate(v):
             lb = label_of(i) or "#" + str(i + 1)
-            wd = 14 + tw(lb, 12) + 6 + tw(fmt(n, o), 11, True) + 18
+            wd = 14 + tw(lb, 12) + 6 + tw(show(n), 11, True) + 18
             if x > 0 and x + wd > w0:
                 x = 0
                 rows += 1
@@ -43,7 +43,9 @@ def progress(o, th) -> str:
             x += wd
     h = 22 + 14 + (12 + rows * 20 if rows else 0)
     st = stat_of(v, o, "")
-    head_text = (show(v[0]) + ("" if auto else " of " + fmt(mx, o))) if single else fmt(tot, o) + " of " + fmt(mx, o)
+    head_text = (show(v[0]) + ("" if auto or not ok(v[0]) else " of " + fmt(mx, o))) if single else fmt(tot, o) + " of " + fmt(mx, o)
+    gaps = len(v) - len(real(v))
+    summary = head_text + (", " + str(gaps) + " missing" if gaps and not single else "")
 
     def draw(x0, y0, w, h):
         if not v:
@@ -68,6 +70,8 @@ def progress(o, th) -> str:
         bg = to_string(o.background) if truthy(o.background) else th["tile"]
         acc = 0
         for i, n in enumerate(v):
+            if not ok(n):
+                continue
             length = jmin(n, jmax(0, mx - acc)) / mx * w
             if length > 0:
                 s += (
@@ -88,6 +92,8 @@ def progress(o, th) -> str:
             )
         acc = 0
         for i, n in enumerate(v):
+            if not ok(n):
+                continue
             length = jmin(n, jmax(0, mx - acc)) / mx * w
             if length > 0:
                 name = label_of(i) or ("Progress" if single else "#" + str(i + 1))
@@ -101,8 +107,8 @@ def progress(o, th) -> str:
                 '<circle cx="' + R(lx + 4) + '" cy="' + R(ly) + '" r="4" fill="' + pal[i % len(pal)] + '"/>'
                 + '<text x="' + R(lx + 14) + '" y="' + R(ly + 4) + '" fill="' + th["fg"] + '" font-family="' + SANS
                 + '" font-size="12">' + esc(it["l"]) + '<tspan dx="6" fill="' + th["muted"] + '" font-family="' + MONO
-                + '" font-size="11">' + esc(fmt(v[i], o)) + "</tspan></text>"
+                + '" font-size="11">' + esc(fmt(v[i], o) if ok(v[i]) else "No data") + "</tspan></text>"
             )
         return s
 
-    return tile(o, th, h, draw, {"stat": st, "summary": head_text})
+    return tile(o, th, h, draw, {"stat": st, "summary": summary})

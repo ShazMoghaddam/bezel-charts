@@ -7,12 +7,12 @@ import math
 from .._js import NAN, finite
 from .._tile import dims, tile
 from .._util import (
-    MONO, SANS, R, anim, empty_state, fmt, has, hit, jmax, jmin, legend, lst, num, nums, palette, series, text, trunc, tw,
+    MONO, SANS, R, anim, empty_state, fmt, has, ok, real, hit, jmax, jmin, legend, lst, num, nums, palette, series, text, trunc, tw,
 )
 
 
 def _zones_of(Z, i):
-    return sorted(Z[i] if len(Z) > 1 and i < len(Z) else Z[0] if len(Z) == 1 else [])
+    return sorted(real(Z[i] if len(Z) > 1 and i < len(Z) else Z[0] if len(Z) == 1 else []))
 
 
 def _row_of(o, val, t, zs, zone_names):
@@ -21,7 +21,7 @@ def _row_of(o, val, t, zs, zone_names):
     while j < len(zs) and val >= zs[j]:
         j += 1
     d = val - t
-    band = (zone_names[j] if j < len(zone_names) and zone_names[j] else str(j + 1) + " of " + str(nb)) if zs else ""
+    band = (zone_names[j] if j < len(zone_names) and zone_names[j] else str(j + 1) + " of " + str(nb)) if zs and ok(val) else ""
     return [fmt(val, o), fmt(t, o), ("+" if d > 0 else "") + fmt(d, o) if finite(d) else "–", band]
 
 
@@ -64,6 +64,8 @@ def bullet(o, th) -> str:
 
     def tip_of(i):
         row = _row_of(o, v[i], target_of(i), _zones_of(Z, i), zone_names)
+        if not ok(v[i]):
+            return name_of(i) + "\n" + key_names[0] + ": no data" + ("\n" + key_names[1] + " " + row[1] if has_t(i) else "")
         return (
             name_of(i) + "\n" + key_names[0] + " " + row[0]
             + ("\n" + key_names[1] + " " + row[1] + "\nDifference " + row[2] if has_t(i) else "")
@@ -85,7 +87,8 @@ def bullet(o, th) -> str:
             val, t, zs = v[i], target_of(i), _zones_of(Z, i)
             ry = top0 + i * row_h
             cy = ry + 12
-            ends = [0, val] + zs + ([t] if has_t(i) else [])
+            # A missing value draws no bar, and its row still shows its target and bands.
+            ends = [0] + ([val] if ok(val) else []) + zs + ([t] if has_t(i) else [])
             lo = jmin(*ends)
             # A little room past the largest value, so a target there doesn't sit on the edge.
             hi = num(o.max, 1) if has(o.max) else jmax(*ends) * 1.08
@@ -115,10 +118,12 @@ def bullet(o, th) -> str:
                 s += '<line x1="' + R(X(t)) + '" x2="' + R(X(t)) + '" y1="' + R(cy - 8) + '" y2="' + R(cy + 8) + '" stroke="' + th["fg"] + '" stroke-width="2.5"/>'
             if i < len(labels):
                 s += text(x0, cy + 4, trunc(labels[i], math.floor(lab_w / 6.7)), 'fill="' + th["fg"] + '" font-family="' + SANS + '" font-size="12"')
-            s += text(x0 + w, cy + 4, fmt(val, o), 'text-anchor="end" fill="' + th["fg"] + '" font-family="' + MONO + '" font-size="11" font-weight="600"')
+            s += text(x0 + w, cy + 4, fmt(val, o) if ok(val) else "–", 'text-anchor="end" fill="' + th["fg"] + '" font-family="' + MONO + '" font-size="11" font-weight="600"')
             s += hit(x0, ry, w, row_h - 8, tip_of(i), i, val)
         return s
 
     measures = " measure" if n == 1 else " measures"
-    summary = "no data" if not n else str(met) + " of " + str(n) + measures + " at or above target" if any_t else str(n) + measures
+    summary = "no data" if not n else (str(met) + " of " + str(n) + measures + " at or above target" if any_t else str(n) + measures) + (
+        ", " + str(n - len(real(v))) + " missing" if len(real(v)) < n else ""
+    )
     return tile(o, th, h, draw, {"summary": summary})

@@ -6,7 +6,7 @@ import math
 
 from .._tile import dims, tile
 from .._util import (
-    at, MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, goal_line, goal_text, has, hit, jmax, jmin, legend, lst, new_id,
+    at, MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, fmtv, gap_note, goal_line, ok, real, goal_text, has, hit, jmax, jmin, legend, lst, new_id,
     num, palette, pattern, series, small, stat_of, style_of, text, to_number, to_string, trunc, truthy, tw,
 )
 
@@ -28,6 +28,7 @@ def bars(o, th) -> str:
     many = not grouped and len([c for c in lst(o.color) if c]) > 1
     v0 = S[0] if S else []
     flat = [x for s in S for x in s]
+    all_ = real(flat)
 
     # A stack's height is its parts added up, positive parts upwards and negative parts downwards.
     def sum_of(i, sign):
@@ -39,8 +40,12 @@ def bars(o, th) -> str:
 
     ups = [sum_of(i, 1) for i in range(n)] if stacked else []
     downs = [sum_of(i, -1) for i in range(n)] if stacked else []
-    totals = [ups[i] + downs[i] for i in range(n)] if stacked else []
-    scale = ups + downs if stacked else flat
+    # A stack with a missing part has no known total.
+    def whole(i):
+        return all(i >= len(s) or ok(s[i]) for s in S)
+
+    totals = [ups[i] + downs[i] if whole(i) else math.nan for i in range(n)] if stacked else []
+    scale = ups + downs if stacked else all_
     top = jmax(*scale) if scale else 0
 
     def name_of(j):
@@ -74,10 +79,10 @@ def bars(o, th) -> str:
 
     def tip_of(i):
         if not grouped:
-            return label_of(i) + ": " + fmt(v0[i], o)
+            return label_of(i) + ": " + fmtv(v0[i], o)
         return label_of(i) + "".join(
-            "\n" + name_of(j) + ": " + fmt(s[i], o) if i < len(s) else "" for j, s in enumerate(S)
-        ) + ("\nTotal: " + fmt(totals[i], o) if stacked else "")
+            "\n" + name_of(j) + ": " + fmtv(s[i], o) if i < len(s) else "" for j, s in enumerate(S)
+        ) + ("\nTotal: " + fmtv(totals[i], o) if stacked else "")
 
     # Horizontal rows need their height up front, and so does a legend that may wrap.
     d0 = dims(o)
@@ -91,11 +96,11 @@ def bars(o, th) -> str:
     goal_h = 16 if horiz and n and has(o.goal) and to_number(o.goal) > 0 else 0
 
     h = legend_h + goal_h + jmax(1, n) * row_h - 6 if horiz else num(o.height, 140) + legend_h
-    best_val = jmax(*(v0 if v0 else [0]))
+    best_val = jmax(*(real(v0) if real(v0) else [0]))
     best = v0.index(best_val) if best_val in v0 else -1
 
     def draw(x0, y0, w, h):
-        if not n:
+        if not all_:
             return empty_state(th, x0, y0, w, h)
         s = "<defs>" + defs + "</defs>" if defs else ""
         top0 = y0
@@ -121,7 +126,7 @@ def bars(o, th) -> str:
             for j, ser in enumerate(S):
                 val = ser[i] if i < len(ser) else 0
                 length = jmax(0, val) / span * bw
-                if length <= 0:
+                if not length > 0:
                     continue
                 gap_l = 1.5 if at > 0 else 0
                 out += (
@@ -234,7 +239,7 @@ def bars(o, th) -> str:
             down = 0
             for j, ser in enumerate(S):
                 val = ser[c] if c < len(ser) else 0
-                if not val:
+                if not truthy(val):
                     continue
                 frm = up if val > 0 else down
                 to = frm + val
@@ -262,7 +267,7 @@ def bars(o, th) -> str:
             if bool_(o.showValues):
                 tot = totals[c]
                 ty = Y(downs[c]) + 12 if tot < 0 else Y(ups[c]) - 5
-                ts = fmt(tot, o, True)
+                ts = fmt(tot, o, True) if ok(tot) else "–"
                 out += text(
                     x + bwid / 2, ty, ts,
                     'text-anchor="middle" fill="' + th["fg"] + '" font-family="' + MONO
@@ -295,6 +300,13 @@ def bars(o, th) -> str:
                 x = gx0 + j * (bwid + gap)
                 y = jmin(Y(val), Y0)
                 bh = abs(Y(val) - Y0)
+                # A missing value gets a short dash on the zero line, so its empty slot doesn't read as 0.
+                if not ok(val):
+                    s += (
+                        '<line x1="' + R(x + bwid * 0.3) + '" x2="' + R(x + bwid * 0.7) + '" y1="' + R(Y0 - 3) + '" y2="'
+                        + R(Y0 - 3) + '" stroke="' + th["muted"] + '" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>'
+                    )
+                    continue
                 if bh > 0.5:
                     s += (
                         '<rect x="' + R(x) + '" y="' + R(y) + '" width="' + R(bwid) + '" height="' + R(bh) + '" rx="'
@@ -335,7 +347,7 @@ def bars(o, th) -> str:
         summary = str(k) + " series across " + str(n) + " groups"
     else:
         best_label = labels[best] if 0 <= best < len(labels) and labels[best] else ""
-        summary = "highest " + best_label + " " + fmt(v0[best] if 0 <= best < len(v0) else None, o)
+        summary = "highest " + best_label + " " + fmt(v0[best] if 0 <= best < len(v0) else None, o) + gap_note(flat)
     return tile(o, th, h, draw, {"stat": stat_of(v0, o, ""), "summary": summary})
 
 

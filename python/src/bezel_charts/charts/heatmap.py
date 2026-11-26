@@ -8,7 +8,7 @@ import re
 
 from .._js import full_date, month_short, weekday_short
 from .._tile import dims, tile
-from .._util import ref, N, R, empty_state, esc, fmt, has, jmax, jmin, nums, palette, small, stat_of, text, to_string, total, truthy
+from .._util import ref, N, R, empty_state, esc, fmt, fmtv, has, ok, real, jmax, jmin, nums, palette, small, stat_of, text, to_string, total, truthy
 
 _ISO = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
 
@@ -46,7 +46,8 @@ def heatmap(o, th) -> str:
     gap = 1 if pitch < 8 else 3
     cell = pitch - gap
     h = 16 + 7 * pitch + 26
-    mx = jmax(*v) if v else 0
+    mx = jmax(*real(v)) if real(v) else 0
+    missing = len(v) - len(real(v))
     st = stat_of(v, o, "")
 
     def draw(x0, y0, w, h):
@@ -68,19 +69,24 @@ def heatmap(o, th) -> str:
             if (day.day == 1 or i == 0) and x - last_month_x > 30:
                 s += text(x, y0 + 9, month_short(day, lang), small(th, 9))
                 last_month_x = x
-            lvl = 0 if val <= 0 or not mx else math.ceil(val / mx * 4)
+            lvl = 0 if not ok(val) or val <= 0 or not mx else math.ceil(val / mx * 4)
             fill = c if lvl else th["grid"]
             fo = op[lvl - 1] if lvl else 0.7
+            # A missing day is an empty outline, so it can't be mistaken for a day of 0.
+            look = (
+                '" fill="' + fill + '" fill-opacity="' + N(fo) + '"' if ok(val)
+                else '" fill="none" stroke="' + th["muted"] + '" stroke-opacity=".6" stroke-width="1" stroke-dasharray="2 2"'
+            )
             s += (
                 '<rect x="' + R(x) + '" y="' + R(y) + '" width="' + R(cell) + '" height="' + R(cell) + '" rx="'
-                + R(cell * 0.24) + '" fill="' + fill + '" fill-opacity="' + N(fo) + '"'
+                + R(cell * 0.24) + look
                 + (' class="bzc-a" style="animation-delay:' + R(col * 0.012) + 's"' if o.animate else "")
-                + ' data-tip="' + esc(full_date(day, lang) + ": " + fmt(val, o)) + '"' + ref(i, val) + "/>"
+                + ' data-tip="' + esc(full_date(day, lang) + ": " + fmtv(val, o)) + '"' + ref(i, val) + "/>"
             )
         ly = gy + 7 * pitch + 14
         lc = 10
         lx = x0 + w - 5 * (lc + 3) - 30
-        s += text(x0, ly + 8, fmt(total(v), o, True) + " in " + str(len(v)) + " days", small(th, 10))
+        s += text(x0, ly + 8, fmt(total(real(v)), o, True) + " in " + str(len(v)) + " days" + (", " + str(missing) + " missing" if missing else ""), small(th, 10))
         s += text(lx - 6, ly + 8, "Less", small(th, 9, 'text-anchor="end"'))
         for j in range(5):
             s += (
@@ -90,4 +96,4 @@ def heatmap(o, th) -> str:
         s += text(lx + 5 * (lc + 3) + 3, ly + 8, "More", small(th, 9))
         return s
 
-    return tile(o, th, h, draw, {"stat": st, "summary": fmt(total(v), o) + " across " + str(len(v)) + " days"})
+    return tile(o, th, h, draw, {"stat": st, "summary": fmt(total(real(v)), o) + " across " + str(len(v)) + " days" + (", " + str(missing) + " missing" if missing else "")})

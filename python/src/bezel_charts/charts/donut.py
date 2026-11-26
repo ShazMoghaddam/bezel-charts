@@ -7,7 +7,7 @@ import math
 from .._js import js_round
 from .._tile import tile
 from .._util import (
-    ref, MONO, SANS, N, R, anim, empty_state, esc, fmt, has, hit, jmax, jmin, lst, num, nums, palette, small, stat_of,
+    ref, MONO, SANS, N, R, anim, empty_state, esc, fmt, has, ok, hit, jmax, jmin, lst, num, nums, palette, small, stat_of,
     text, to_string, total, trunc, utf16_len,
 )
 
@@ -68,8 +68,13 @@ def _centre(o, th, cx, cy, size, sw, tot) -> str:
 
 
 def donut(o, th) -> str:
-    raw = [jmax(0, n) for n in nums(o.values)]
-    lab = lst(o.labels)
+    # A missing part has no size to show, so it's left out of the ring and the legend.
+    every = nums(o.values)
+    keep0 = [i for i, n in enumerate(every) if ok(n)]
+    lab0 = lst(o.labels)
+    missing = len(every) - len(keep0)
+    raw = [jmax(0, every[i]) for i in keep0]
+    lab = [lab0[i] if i < len(lab0) and lab0[i] else "#" + str(i + 1) for i in keep0] if missing else lab0
     pal = palette(o, th)
 
     def lab_of(i):
@@ -148,4 +153,6 @@ def donut(o, th) -> str:
             start += length
         return s
 
-    return tile(o, th, h, draw, {"stat": st, "summary": "total " + fmt(tot, o) + " across " + str(len(v)) + " parts"})
+    return tile(o, th, h, draw, {
+        "stat": st, "summary": "total " + fmt(tot, o) + " across " + str(len(v)) + " parts" + (", " + str(missing) + " missing" if missing else ""),
+    })

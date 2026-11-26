@@ -1,11 +1,11 @@
-import { r2, clamp, num, has, nums, list, fmt, text, small, hit, anim, palette, emptyState, SANS } from '../core/util.js';
+import { r2, clamp, num, has, nums, list, fmt, real, text, small, hit, anim, palette, emptyState, SANS } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 export default function gauge(o, th) {
   var v = nums(o.values), val = v.length ? v[0] : num(o.value, NaN), labels = list(o.labels);
   var mn = num(o.min, 0), mx = num(o.max, 100), h = num(o.height, 130);
   if (mx === mn) mx = mn + 1;
-  var zones = nums(o.zones), pal = palette(o, th);
+  var zones = real(nums(o.zones)), pal = palette(o, th);
   var zc = list(o.color).filter(Boolean).length > 1 ? pal : [th.up, th.palette[3], th.down];
   var colour = pal[0];
   if (zones.length && isFinite(val)) {

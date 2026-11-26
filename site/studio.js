@@ -1,7 +1,7 @@
 // The Studio: pick a chart, edit its data and look, copy the code or save an SVG.
 // State is a flat map of HTML attributes, exactly what the generated code contains.
 import { toast, copyText, saveFile, sampleYear } from './ui.js';
-import { readFile, describe, daily, parseDelimited, parseDate, toNum } from './table.js';
+import { readFile, describe, daily, parseDelimited, parseDate, toNum, joinNums } from './table.js';
 
 const CDN = 'https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/bezel-charts.min.js';
 const SCRIPT = `<script type="module" src="${CDN}"></script>`;
@@ -156,13 +156,20 @@ const FIELDS = [
 /* ---------- small parsing helpers ---------- */
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const tokens = (text) => String(text ?? '').split(/[\s,;]+/).filter(Boolean);
+// Split the same way the charts read numbers: a blank between commas is a gap, and blanks at the end are ignored.
+const tokens = (text) => {
+  const t = String(text ?? '').trim().split(/\s*[,;]\s*|\s+/);
+  while (t.length && t[t.length - 1] === '') t.pop();
+  return t;
+};
+// Ways to write a gap on purpose, which get no warning.
+const GAP = /^(|null|nan|-|–|n\/a|na)$/i;
 const cleanNum = (s) => String(s).trim().replace(/[£$€¥%\s]/g, '').replace(/,(?=\d{3}\b)/g, '');
 const isNum = (s) => cleanNum(s) !== '' && Number.isFinite(Number(cleanNum(s)));
-const numbersFrom = (text) => tokens(text).map((t) => (isNum(t) ? String(Number(cleanNum(t))) : t)).join(',');
+const numbersFrom = (text) => tokens(text).map((t) => (isNum(t) ? String(Number(cleanNum(t))) : GAP.test(t) ? (t ? 'null' : '') : t)).join(',');
 const listFrom = (text) => String(text ?? '').split(/\n|,/).map((s) => s.trim()).filter((s, i, arr) => s || i < arr.length - 1).join(',');
 const listOf = (v) => (v ? String(v).split(',') : []);
-const badTokens = (text) => tokens(text).filter((t) => !isNum(t));
+const badTokens = (text) => tokens(text).filter((t) => !isNum(t) && !GAP.test(t));
 
 /** A tidy title from a file name: "monthly-sales_2026.csv" becomes "Monthly sales 2026". */
 const titleFrom = (name) => {
@@ -366,8 +373,8 @@ export function createStudio(root) {
     switch (ui) {
       case 'combo': {
         if (N.length < 2) return '!Bars and a line need two number columns: one for the bars and one for the line.';
-        attrs.values = col(N[0]).join(',');
-        attrs.line = col(N[1]).join(',');
+        attrs.values = joinNums(col(N[0]));
+        attrs.line = joinNums(col(N[1]));
         attrs.series = (N[0].name || 'Bars').replace(/,/g, ' ');
         attrs['line-series'] = (N[1].name || 'Line').replace(/,/g, ' ');
         return `${rows}.${from} bars from ${name(N[0])}, the line from ${name(N[1])}.`;
@@ -380,7 +387,7 @@ export function createStudio(root) {
           if (days.every(Boolean)) { attrs.dates = days.join(','); delete attrs.labels; }
         }
         const use = N.slice(0, 6);
-        attrs.values = use.map((c) => col(c).join(',')).join('|');
+        attrs.values = use.map((c) => joinNums(col(c))).join('|');
         if (use.length > 1) attrs.series = use.map((c, i) => (c.name || `Series ${i + 1}`).replace(/,/g, ' ')).join(',');
         const extra = N.length > 6 ? ` The first 6 of ${N.length} number columns are shown.` : '';
         return `${rows}.${from} ${use.length > 1 ? 'series' : 'values'} from ${listNames(use.map(name))}.${extra}`;
@@ -396,14 +403,14 @@ export function createStudio(root) {
         if (!attrs['y-label']) delete attrs['y-label'];
         if (t.group) {
           const names = [...new Set(B.map((r) => t.cell(r, t.group)))];
-          const pick = (g, c) => B.filter((r) => t.cell(r, t.group) === g).map((r) => toNum(t.cell(r, c))).join(',');
-          attrs.x = names.map((g) => pick(g, cx)).join('|');
-          attrs.y = names.map((g) => pick(g, cy)).join('|');
+          const pick = (g, c) => B.filter((r) => t.cell(r, t.group) === g).map((r) => toNum(t.cell(r, c)));
+          attrs.x = names.map((g) => joinNums(pick(g, cx))).join('|');
+          attrs.y = names.map((g) => joinNums(pick(g, cy))).join('|');
           attrs.series = names.map((g) => g.replace(/,/g, ' ') || 'Other').join(',');
           if (L) attrs.labels = names.flatMap((g) => B.filter((r) => t.cell(r, t.group) === g).map((r) => t.cell(r, L).replace(/,/g, ' '))).join(',');
           return `${rows}.${from} across from ${name(cx)}, up from ${name(cy)}, grouped by ${t.group.name || 'the text column'}.`;
         }
-        attrs.x = col(cx).join(','); attrs.y = col(cy).join(',');
+        attrs.x = joinNums(col(cx)); attrs.y = joinNums(col(cy));
         return `${rows}.${from} across from ${name(cx)}, up from ${name(cy)}.`;
       }
       case 'heatmap': {
@@ -411,15 +418,15 @@ export function createStudio(root) {
         const c = N[0];
         if (t.date) {
           const d = daily(t, c);
-          attrs.start = d.start; attrs.values = d.values.join(',');
+          attrs.start = d.start; attrs.values = joinNums(d.values);
           return `${rows}. ${name(c)} added up per day from ${d.start}${d.clipped ? ', showing the latest two years' : ''}.`;
         }
-        attrs.values = col(c).join(',');
+        attrs.values = joinNums(col(c));
         return `${rows}. One square per row from ${name(c)}, ending today. Add a date column to place them on the right days.`;
       }
       case 'gauge': {
         delete attrs.labels;
-        const vals = col(N[0]), last = vals[vals.length - 1];
+        const vals = col(N[0]).filter((v) => v != null), last = vals[vals.length - 1];
         if (N[0].name) attrs.labels = N[0].name.replace(/,/g, ' ');
         const lo = Math.min(0, ...vals), hi = Math.max(...vals);
         const percent = N[0].suffix === '%' || /percent|%/i.test(N[0].name);
@@ -429,19 +436,19 @@ export function createStudio(root) {
         return `${rows}. Showing the last value of ${name(N[0])}.`;
       }
       case 'waterfall': {
-        attrs.values = col(N[0]).join(',');
+        attrs.values = joinNums(col(N[0]));
         delete attrs.totals;
         return `${rows}.${from} changes from ${name(N[0])}. Mark any totals under Totals.`;
       }
       case 'bullet': {
-        attrs.values = col(N[0]).join(',');
+        attrs.values = joinNums(col(N[0]));
         delete attrs.zones; delete attrs['zone-labels'];
-        if (N[1]) attrs.targets = col(N[1]).join(','); else delete attrs.targets;
+        if (N[1]) attrs.targets = joinNums(col(N[1])); else delete attrs.targets;
         return `${rows}.${from} values from ${name(N[0])}${N[1] ? `, targets from ${name(N[1])}` : ''}.`;
       }
       case 'ring': {
-        const vals = col(N[0]).slice(0, 6), top = Math.max(...vals);
-        attrs.values = vals.join(',');
+        const vals = col(N[0]).slice(0, 6), top = Math.max(...vals.filter((v) => v != null));
+        attrs.values = joinNums(vals);
         if (labels.length) attrs.labels = labels.slice(0, 6).join(',');
         // Percentages fill against 100. Anything else fills against a round number just above the largest value.
         const percent = N[0].suffix === '%' || /percent|%/i.test(N[0].name);
@@ -449,7 +456,7 @@ export function createStudio(root) {
         return `${rows}.${from} values from ${name(N[0])}.${B.length > 6 ? ' Rings show the first 6.' : ''}`;
       }
       default: {
-        attrs.values = col(N[0]).join(',');
+        attrs.values = joinNums(col(N[0]));
         return `${rows}.${from} values from ${name(N[0])}.${N.length > 1 ? ` This chart uses one number column; try Line or Grouped bars to see all ${N.length}.` : ''}`;
       }
     }
@@ -664,7 +671,7 @@ export function createStudio(root) {
     if (!warn) return;
     const bad = badTokens(textarea.value);
     warn.hidden = !bad.length;
-    warn.textContent = bad.length ? `“${bad[0]}” isn't a number, so it's drawn as 0.` : '';
+    warn.textContent = bad.length ? `“${bad[0]}” isn't a number, so it's left as a gap.` : '';
   }
   function validateAll() {
     root.querySelectorAll('[data-numbers], [data-svalues], [data-num]').forEach(warnFor);
@@ -674,7 +681,7 @@ export function createStudio(root) {
       const warn = row.querySelector('.warn'), nx = tokens(gx.value).length, ny = tokens(gy.value).length;
       const bad = badTokens(gx.value + ' ' + gy.value);
       warn.hidden = nx === ny && !bad.length;
-      warn.textContent = bad.length ? `“${bad[0]}” isn't a number, so it's drawn as 0.` : nx !== ny ? `Across has ${nx} values and up has ${ny}. Points need one of each, so ${Math.abs(nx - ny)} will be left out.` : '';
+      warn.textContent = bad.length ? `“${bad[0]}” isn't a number, so it's left as a gap.` : nx !== ny ? `Across has ${nx} values and up has ${ny}. Points need one of each, so ${Math.abs(nx - ny)} will be left out.` : '';
     });
   }
 

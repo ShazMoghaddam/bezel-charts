@@ -36,10 +36,40 @@ export function r2(n) { return Math.round(n * 100) / 100; }
 export function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 export function num(v, d) { var n = parseFloat(v); return isFinite(n) ? n : d; }
 export function has(v) { return v != null && v !== ''; }
+/**
+ * Numbers from a list or a string. A missing value stays missing as NaN, and is never drawn as 0: in a string that's a
+ * blank slot (4,,6), null, NaN, a dash or anything else that isn't a number; in an array it's also null and undefined.
+ * Blanks at the very end are ignored, so a trailing comma doesn't add a gap.
+ */
 export function nums(v) {
-  if (Array.isArray(v)) return v.map(function (x) { var n = +x; return isFinite(n) ? n : 0; });
+  if (Array.isArray(v)) return v.map(numOf);
   if (!has(v)) return [];
-  return String(v).split(/[\s,;]+/).filter(Boolean).map(function (x) { var n = +x; return isFinite(n) ? n : 0; });
+  var t = String(v).trim().split(/\s*[,;]\s*|\s+/);
+  while (t.length && t[t.length - 1] === '') t.pop();
+  return t.map(numOf);
+}
+function numOf(x) { return x == null || x === '' ? NaN : +x; }
+/** Whether a value is a real number, not a gap. */
+export function ok(v) { return typeof v === 'number' && isFinite(v); }
+/** The real numbers in a list, gaps left out. */
+export function real(v) { return v.filter(ok); }
+/** A number for a tooltip or label: "No data" for a gap. */
+export function fmtv(n, o) { return ok(n) ? fmt(n, o) : 'No data'; }
+/** A short dash on the zero line where a bar is missing, so its empty slot doesn't read as 0. */
+export function gapMark(x, w, y, th) {
+  return '<line x1="' + r2(x + w * 0.3) + '" x2="' + r2(x + w * 0.7) + '" y1="' + r2(y - 3) + '" y2="' + r2(y - 3) + '" stroke="' + th.muted + '" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>';
+}
+/** For summaries: ", 2 missing" when a list has gaps, otherwise nothing. */
+export function gapNote(v) { var m = v.length - real(v).length; return m ? ', ' + m + ' missing' : ''; }
+/**
+ * Splits [x, y] points into runs wherever a point can't be placed, so a line breaks at a gap (or, on a log scale, at
+ * zero and below) instead of joining across it.
+ */
+export function runsOf(P) {
+  return P.reduce(function (r, p) {
+    if (isFinite(p[1])) r[r.length - 1].push(p); else if (r[r.length - 1].length) r.push([]);
+    return r;
+  }, [[]]).filter(function (r) { return r.length; });
 }
 export function list(v) {
   if (Array.isArray(v)) return v.map(String);
@@ -95,10 +125,10 @@ export function small(th, size, extra, fill) {
 }
 /**
  * Which item a hover area stands for, so a click can say: its position (data-i), its series when it has just one
- * (data-s) and its numbers (data-v, one per series, blank where a series is shorter).
+ * (data-s) and its numbers (data-v, one per series, blank where a series is shorter or a value is missing).
  */
 export function ref(i, v, s) {
-  return ' data-i="' + i + '"' + (s == null ? '' : ' data-s="' + s + '"') + ' data-v="' + [].concat(v).join(',') + '"';
+  return ' data-i="' + i + '"' + (s == null ? '' : ' data-s="' + s + '"') + ' data-v="' + [].concat(v).map(function (x) { return typeof x === 'number' && !isFinite(x) ? '' : x; }).join(',') + '"';
 }
 /** Each series' value at position i, kept in series order. */
 export function at(S, i) {
@@ -141,8 +171,10 @@ export function goalLine(o, th, x1, x2, y, at) {
     text(at[0], at[1], goalText(o), small(th, 10, 'text-anchor="' + at[2] + '"' + at[3]));
 }
 export function goalText(o) { return (has(o.goalLabel) ? o.goalLabel : 'Goal') + ' ' + fmt(num(o.goal, 0), o); }
+/** The headline number. Gaps are left out, so "last" is the last real value and its change runs from the first. */
 export function statOf(v, o, fallback) {
   var k = String(has(o.stat) ? o.stat : fallback || '').toLowerCase();
+  v = real(v);
   if (!k || k === 'none' || !v.length) return null;
   var s = sum(v);
   var map = { last: v[v.length - 1], total: s, sum: s, average: s / v.length, avg: s / v.length, max: Math.max.apply(null, v), min: Math.min.apply(null, v) };

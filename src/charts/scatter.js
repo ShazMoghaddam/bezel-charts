@@ -1,4 +1,4 @@
-import { r2, clamp, num, has, list, series, bool, fmt, text, small, hit, palette, emptyState, parseNotes, goalLine } from '../core/util.js';
+import { r2, clamp, num, has, list, series, bool, fmt, ok, text, small, hit, palette, emptyState, parseNotes, goalLine } from '../core/util.js';
 import { niceScale, legend, axisWidth, styleOf, marker, SHAPES } from '../core/series.js';
 import { tile } from '../core/tile.js';
 
@@ -22,13 +22,18 @@ export function fit(xs, ys) {
  */
 export default function scatter(o, th) {
   var X = series(o.x), Y = series(o.y), names = list(o.series), labels = list(o.labels), pal = palette(o, th);
-  var groups = [];
+  var groups = [], seen = 0;
   for (var g = 0; g < Math.max(X.length, Y.length); g++) {
     var xs = X[g] || [], ys = Y[g] || [], m = Math.min(xs.length, ys.length);
-    groups.push({ xs: xs.slice(0, m), ys: ys.slice(0, m) });
+    // A point missing its x or y can't be placed, so it's left out. ix keeps each point's position across all groups,
+    // which labels and notes count by.
+    var gr = { xs: [], ys: [], ix: [] };
+    for (var i = 0; i < m; i++) if (ok(xs[i]) && ok(ys[i])) { gr.xs.push(xs[i]); gr.ys.push(ys[i]); gr.ix.push(seen + i); }
+    seen += m;
+    groups.push(gr);
   }
+  var count = groups.reduce(function (a, gr) { return a + gr.xs.length; }, 0), missing = seen - count;
   groups = groups.filter(function (gr) { return gr.xs.length; });
-  var count = groups.reduce(function (a, gr) { return a + gr.xs.length; }, 0);
   var h = num(o.height, 210), multi = groups.length > 1 || names.length > 0, trend = bool(o.trend);
   var nameOf = function (j) { return names[j] || 'Group ' + (j + 1); };
   var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang };
@@ -92,23 +97,22 @@ export default function scatter(o, th) {
       });
     }
 
-    var idx = 0, r = count > 150 ? 3 : 4.5;
+    var r = count > 150 ? 3 : 4.5;
     groups.forEach(function (gr, j) {
       var c = pal[j % pal.length];
       gr.xs.forEach(function (xv, i) {
-        var cx = PX(xv), cy = PY(gr.ys[i]);
+        var idx = gr.ix[i], cx = PX(xv), cy = PY(gr.ys[i]);
         var tip = (labels[idx] ? labels[idx] + '\n' : multi ? nameOf(j) + '\n' : '') +
           (has(o.xLabel) ? o.xLabel : 'x') + ': ' + fmt(xv, xo) + '\n' + (has(o.yLabel) ? o.yLabel : 'y') + ': ' + fmt(gr.ys[i], o);
         s += marker(shapeOf(j), cx, cy, r, ' fill="' + c + '" fill-opacity=".85" stroke="' + bg + '" stroke-width="1.5"' +
           (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : ''));
         s += hit(cx - 8, cy - 8, 16, 16, tip, idx, [xv, gr.ys[i]], j);
-        idx++;
       });
     });
 
     // Notes point at a point by its position across all groups, or by its label.
     var flat = [];
-    groups.forEach(function (gr) { gr.xs.forEach(function (xv, i) { flat.push([PX(xv), PY(gr.ys[i])]); }); });
+    groups.forEach(function (gr) { gr.xs.forEach(function (xv, i) { flat[gr.ix[i]] = [PX(xv), PY(gr.ys[i])]; }); });
     notes.forEach(function (nt) {
       var p = flat[nt.i];
       if (!p) return;
@@ -116,7 +120,7 @@ export default function scatter(o, th) {
         text(clamp(p[0], px + 30, px + pw - 30), p[1] - r - 9, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
     });
     return s;
-  }, { summary: count + ' points' + (multi ? ' in ' + groups.length + ' groups' : '') });
+  }, { summary: count + ' points' + (multi ? ' in ' + groups.length + ' groups' : '') + (missing ? ', ' + missing + ' missing left out' : '') });
 }
 
 scatter.table = function (o) {

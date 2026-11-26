@@ -33,6 +33,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 - [The Studio](#the-studio)
 - [The charts](#the-charts)
 - [Options for every chart](#options-for-every-chart)
+- [Missing values](#missing-values)
 - [Colours and dark mode](#colours-and-dark-mode)
 - [Accessibility](#accessibility)
 - [Charts in a README](#charts-in-a-readme)
@@ -473,6 +474,32 @@ Any of the above, picked with `type`: `<bezel-chart type="donut" values="3,2,1">
 | `clickable`     | boolean, a pointer over each value and an Enter hint for screen readers, when you handle `bezel-click` | off |
 
 Not every option suits every chart: `notes` works on spark, line, area and scatter; `show-values` on spark, line, area and bars; `goal-label` on spark, line, area, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
+
+## Missing values
+
+A missing value is never drawn as 0. Leave the slot blank, or write `null`, `NaN` or `-`:
+
+```html
+<bezel-line heading="Readings" values="12,14,,15,null,18" labels="Mon,Tue,Wed,Thu,Fri,Sat"></bezel-line>
+```
+
+From JavaScript, `null`, `undefined` and `NaN` in an array do the same, and from Python so do `None`, `NaN` and `pd.NA`. Anything else that isn't a number is a gap too. A trailing comma is ignored, so to leave the last value out, end with `null`.
+
+Each chart shows a gap in the way that suits it, and the tooltip says "No data":
+
+| Chart | A missing value |
+| --- | --- |
+| Spark, line, combo lines | The line breaks. A value on its own between two gaps gets a small dot. |
+| Area | The area breaks. In a stack, the whole column breaks, since its total isn't known. |
+| Bars, combo bars | No bar, and a short dash on the zero line so the slot doesn't read as 0. A stacked total with a missing part shows as unknown. |
+| Waterfall | A dashed "No data" step that keeps the level where it was. Totals after it say how many steps they leave out. A blank total just shows the running total. |
+| Histogram, box plot, scatter | Left out, and the summary says how many. A scatter point needs both its x and its y. |
+| Ring, progress, bullet | That item shows "No data" and draws nothing. A bullet row keeps its target and bands. |
+| Donut | The slice is left out, and the data table lists it. |
+| Gauge | "No data yet", as with no value at all. |
+| Heatmap | An empty dashed outline, so it can't be mistaken for a day of 0. |
+
+The summary screen readers hear counts the gaps ("1 series over 6 points, 2 missing"), the data table shows "–" for each one, and `bezel-click` gives `null` as its value. The Studio keeps blank cells from a file as gaps too.
 
 ## Colours and dark mode
 

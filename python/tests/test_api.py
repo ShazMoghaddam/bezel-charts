@@ -82,10 +82,54 @@ def test_dict_and_list_of_lists_make_series():
     assert "2 series" in bc.line([[1, 2, 3], [3, 2, 1]]).svg
 
 
-def test_missing_values_warn_and_draw_as_zero():
-    with pytest.warns(UserWarning, match="1 missing"):
+def test_missing_values_are_gaps_not_zeros():
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         chart = bc.spark(pd.Series([1.0, None, 3.0]))
-    assert "latest 3" in chart.svg
+    assert "latest 3, 1 missing" in chart.svg
+    # NaN, None, pd.NA and NaT all draw the same gap as null does in JavaScript.
+    js = bc.to_svg("line", values="1,,3,4")
+    for gap in (float("nan"), None, pd.NA, np.nan):
+        assert bc.line([1, gap, 3, 4]).svg == js
+    df = pd.DataFrame({"m": ["Jan", "Feb", "Mar"], "a": [1.0, np.nan, 3.0], "b": [2.0, 2.0, np.nan]})
+    svg = bc.line(df, x="m", y=["a", "b"]).svg
+    assert ", 2 missing" in svg
+    assert "M" in svg and "NaN" not in svg
+
+
+def test_missing_values_in_every_chart():
+    gaps = [4.0, np.nan, 6.0]
+    for chart in (bc.spark, bc.line, bc.area, bc.bars, bc.histogram, bc.boxplot, bc.ring, bc.donut, bc.progress, bc.bullet, bc.waterfall):
+        svg = chart(gaps).svg
+        assert "NaN" not in svg and "None" not in svg, chart.__name__
+    assert "1 missing" in bc.waterfall(gaps).svg
+    assert "No data" in bc.ring(gaps).svg
+
+
+def test_blank_waterfall_total_shows_the_running_total():
+    df = pd.DataFrame({"step": ["Start", "Sales", "Costs", "Profit"], "v": [120, 30, -12, np.nan]})
+    chart = bc.waterfall(df, x="step", y="v", totals=["Start", "Profit"])
+    assert "Profit total 138" in chart.alt
+    assert "missing" not in chart.svg
+
+
+def test_alt_text_says_no_data():
+    assert bc.bars([4, None, 6], labels=["a", "b", "c"]).alt.endswith("a 4, b No data, c 6")
+    assert "b no data" in bc.waterfall([4, None, 6], labels=["a", "b", "c"]).alt
+
+
+def test_heatmap_day_with_only_missing_values_is_a_gap():
+    df = pd.DataFrame({"d": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-02", "2026-01-04"]), "n": [1.0, np.nan, 2.0, np.nan]})
+    from bezel_charts import _data
+
+    values, start = _data.daily(df, x="d", y="n")
+    # 2 January keeps its real value, 3 January had no rows so it's 0, and 4 January is missing.
+    assert values[:3] == [1.0, 2.0, 0.0] and values[3] != values[3]
+    svg = bc.heatmap(df, x="d", y="n").svg
+    assert "3 across 4 days, 1 missing" in svg
+    assert svg.count('fill="none" stroke=') == 1
 
 
 def test_notes_on_year_labels():

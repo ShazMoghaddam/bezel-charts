@@ -49,21 +49,11 @@ def _number(v) -> float:
 
 
 def numbers(seq, what: str = "values") -> list:
-    """Floats, with missing values drawn as 0 like the browser version, plus a warning."""
-    out, missing = [], 0
-    for v in _to_list(seq):
-        n = _number(v)
-        if not math.isfinite(n):
-            missing += 1
-            n = 0.0
-        out.append(n)
-    if missing:
-        warnings.warn(
-            f"bezel_charts: {missing} missing or non-numeric {what} drawn as 0. "
-            "Use .dropna() or .fillna() first if that is not what you want.",
-            stacklevel=4,
-        )
-    return out
+    """Floats, with missing values (None, NaN, pd.NA, NaT or anything that isn't a number) kept as NaN.
+
+    The charts draw a gap there, never a 0. ``what`` names the values in error messages.
+    """
+    return [_number(v) for v in _to_list(seq)]
 
 
 def label(v, x_format: str | None = None) -> str:
@@ -282,7 +272,8 @@ def daily(data, x=None, y=None):
     """Values per day from dated data. Returns (values, start date) or None for plain numbers.
 
     Totals come from a value column or a Series with a date index; with dates alone, each day counts its rows.
-    Days with nothing get 0, so the calendar has no gaps.
+    Days with no rows get 0, as nothing happened. A day whose rows are all missing values is missing (NaN), and
+    shows as an empty outline; missing values beside real ones on the same day are left out of its total.
     """
     import datetime as dt
 
@@ -306,7 +297,11 @@ def daily(data, x=None, y=None):
         if d is None or type(d).__name__ == "NaTType":
             continue
         day = to_date(d)
-        per_day[day] = per_day.get(day, 0.0) + a
+        if math.isfinite(a):
+            prev = per_day.get(day, 0.0)
+            per_day[day] = (0.0 if prev != prev else prev) + a
+        elif day not in per_day:
+            per_day[day] = math.nan
     if not per_day:
         return [], None
     first, last = min(per_day), max(per_day)
