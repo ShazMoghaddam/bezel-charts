@@ -69,6 +69,11 @@ function real(v) {
 function fmtv(n, o) {
   return ok(n) ? fmt(n, o) : "No data";
 }
+function fillOf(o) {
+  var f = o.fill;
+  if (f === false || f === "false" || f === "none" || f === "off") return "none";
+  return f === "all" ? "all" : "first";
+}
 function gapMark(x, w, y, th) {
   return '<line x1="' + r2(x + w * 0.3) + '" x2="' + r2(x + w * 0.7) + '" y1="' + r2(y - 3) + '" y2="' + r2(y - 3) + '" stroke="' + th.muted + '" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>';
 }
@@ -285,11 +290,12 @@ function spark(o, th) {
     var d = runs.map(function(r) {
       return pathOf(r, straight);
     }).join("");
-    var s = '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".32"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>';
+    var filled = fillOf(o) !== "none";
+    var s = !filled ? "" : '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".32"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>';
     [1 / 3, 2 / 3].forEach(function(f) {
       s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(y0 + h2 * f) + '" y2="' + r2(y0 + h2 * f) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>';
     });
-    s += '<path d="' + runs.map(function(r) {
+    if (filled) s += '<path d="' + runs.map(function(r) {
       return pathOf(r, straight) + "L" + r2(r[r.length - 1][0]) + "," + (y0 + h2) + "L" + (r[0] === P[0] ? x0 : r2(r[0][0])) + "," + (y0 + h2) + "Z";
     }).join("") + '" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
     s += '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1"' + anim(o, "bzc-d") + "/>";
@@ -444,7 +450,8 @@ var ATTRIBUTES = [
   "targets",
   "zone-labels",
   "totals",
-  "clickable"
+  "clickable",
+  "fill"
 ];
 var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}.c{outline:none}:host([clickable]) .bzc-hit{cursor:pointer}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}`;
 var STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
@@ -1069,7 +1076,7 @@ function line(o, th) {
     return v > 0;
   });
   if (has(o.goal) && +o.goal > 0) pos.push(+o.goal);
-  var log = bool(o.log) && pos.length > 0;
+  var log = bool(o.log) && pos.length > 0, fill = fillOf(o);
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!all.length) return emptyState(th, x0, y0, w, h2);
     var f = xyFrame(o, th, {
@@ -1106,9 +1113,9 @@ function line(o, th) {
       if (!runs.length) return;
       var d = runsPath(runs, bool(o.straight));
       P = [].concat.apply([], runs);
-      if (k === 0 && !log) {
+      if ((fill === "all" || fill === "first" && k === 0) && !log) {
         var g = newId("g");
-        s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".26"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs><path d="' + runs.map(function(r) {
+        s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity="' + (fill === "all" && S.length > 1 ? ".16" : ".26") + '"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs><path d="' + runs.map(function(r) {
           return pathOf(r, bool(o.straight)) + "L" + r2(r[r.length - 1][0]) + "," + r2(top + ph) + "L" + r2(r[0][0]) + "," + r2(top + ph) + "Z";
         }).join("") + '" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
       }

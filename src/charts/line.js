@@ -1,4 +1,4 @@
-import { newId, r2, num, has, list, series, bool, fmt, fmtv, real, runsOf, gapNote, pathOf, text, small, anim, palette, emptyState, parseNotes, statOf } from '../core/util.js';
+import { newId, r2, num, has, list, series, bool, fmt, fmtv, real, runsOf, gapNote, fillOf, pathOf, text, small, anim, palette, emptyState, parseNotes, statOf } from '../core/util.js';
 import { seriesTable, styleOf, DASHES, SHAPES } from '../core/series.js';
 import { xyFrame, xyFinish } from '../core/xy.js';
 import { lineKey, seriesLine, pointMarks, runsPath, loneDots } from '../core/lines.js';
@@ -19,7 +19,7 @@ export default function line(o, th) {
   // A log scale needs positive values; zero and negative ones leave gaps. With none at all, the axis stays linear.
   var flat = [].concat.apply([], S), all = real(flat), pos = all.filter(function (v) { return v > 0; });
   if (has(o.goal) && +o.goal > 0) pos.push(+o.goal);
-  var log = bool(o.log) && pos.length > 0;
+  var log = bool(o.log) && pos.length > 0, fill = fillOf(o);
   return tile(o, th, h, function (x0, y0, w, h) {
     if (!all.length) return emptyState(th, x0, y0, w, h);
     var f = xyFrame(o, th, {
@@ -38,10 +38,10 @@ export default function line(o, th) {
       if (!runs.length) return;
       var d = runsPath(runs, bool(o.straight));
       P = [].concat.apply([], runs);
-      // The soft fill under the first line has no floor to reach on a log scale, so it's left out there.
-      if (k === 0 && !log) {
+      // A soft fill under the first line, every line or none. It has no floor to reach on a log scale, so it's left out there.
+      if ((fill === 'all' || fill === 'first' && k === 0) && !log) {
         var g = newId('g');
-        s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".26"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>' +
+        s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity="' + (fill === 'all' && S.length > 1 ? '.16' : '.26') + '"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>' +
           '<path d="' + runs.map(function (r) {
             return pathOf(r, bool(o.straight)) + 'L' + r2(r[r.length - 1][0]) + ',' + r2(top + ph) + 'L' + r2(r[0][0]) + ',' + r2(top + ph) + 'Z';
           }).join('') + '" fill="url(#' + g + ')"' + anim(o, 'bzc-a') + '/>';

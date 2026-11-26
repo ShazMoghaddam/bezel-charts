@@ -56,7 +56,7 @@ const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
 const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
-  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'dash', 'markers', 'patterns', 'zones', 'zone-labels', 'targets', 'totals',
+  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'fill', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'dash', 'markers', 'patterns', 'zones', 'zone-labels', 'targets', 'totals',
   'center-label', 'theme', 'frame', 'corners', 'height', 'color', 'background', 'no-tooltips', 'static'];
 
 const all = CHARTS.map((c) => c.id);
@@ -134,6 +134,8 @@ const FIELDS = [
   { tab: 'extras', key: 'angle-labels', kind: 'toggle', label: 'Slant labels so every one fits', only: only('bars', 'grouped'), when: (a) => !('horizontal' in a) },
   { tab: 'extras', key: 'highlight', kind: 'toggle', invert: 'none', label: 'Highlight the highest bar', only: only('bars') },
   { tab: 'extras', key: 'straight', kind: 'toggle', label: 'Straight lines instead of curves', only: only('spark', 'line', 'area') },
+  { tab: 'extras', key: 'fill', kind: 'seg', label: 'Shading under the line', options: [['', 'First line'], ['all', 'Every line'], ['none', 'None']], only: only('line') },
+  { tab: 'extras', key: 'fill', kind: 'toggle', invert: 'none', label: 'Shading under the line', only: only('spark') },
   { tab: 'extras', key: 'zero', kind: 'toggle', label: 'Start the axis at zero', only: only('line', 'scatter') },
   { tab: 'extras', kind: 'pair', only: only('line', 'area'), fields: [{ key: 'min', kind: 'number', label: 'Axis from', placeholder: 'Auto' }, { key: 'max', kind: 'number', label: 'Axis to', placeholder: 'Auto' }] },
   { tab: 'extras', key: 'log', kind: 'toggle', label: 'Log scale, for values that grow fast', only: only('line') },

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .._tile import tile
 from .._util import (
-    N, R, anim, bool_, clamp, empty_state, fmt, fmtv, gap_note, goal_line, ok, real, runs_of, has, hit, jmax, jmin, lst, new_id, num, nums,
+    N, R, anim, bool_, clamp, empty_state, fill_of, fmt, fmtv, gap_note, goal_line, ok, real, runs_of, has, hit, jmax, jmin, lst, new_id, num, nums,
     palette, parse_notes, path_of, small, stat_of, text, to_number, truthy,
 )
 
@@ -47,7 +47,8 @@ def spark(o, th) -> str:
         g = new_id("g")
         last = P[1 if len(v) == 1 else last_ok]
         d = "".join(path_of(r, straight) for r in runs)
-        s = (
+        filled = fill_of(o) != "none"
+        s = "" if not filled else (
             '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c
             + '" stop-opacity=".32"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>'
         )
@@ -56,12 +57,13 @@ def spark(o, th) -> str:
                 '<line x1="' + N(x0) + '" x2="' + N(x0 + w) + '" y1="' + R(y0 + h * f) + '" y2="' + R(y0 + h * f)
                 + '" stroke="' + th["grid"] + '" stroke-dasharray="2 4"/>'
             )
-        s += (
-            '<path d="' + "".join(
-                path_of(r, straight) + "L" + R(r[-1][0]) + "," + N(y0 + h) + "L" + (N(x0) if r[0] is P[0] else R(r[0][0])) + "," + N(y0 + h) + "Z"
-                for r in runs
-            ) + '" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>"
-        )
+        if filled:
+            s += (
+                '<path d="' + "".join(
+                    path_of(r, straight) + "L" + R(r[-1][0]) + "," + N(y0 + h) + "L" + (N(x0) if r[0] is P[0] else R(r[0][0])) + "," + N(y0 + h) + "Z"
+                    for r in runs
+                ) + '" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>"
+            )
         s += (
             '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" '
             'stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1"' + anim(o, "bzc-d") + "/>"

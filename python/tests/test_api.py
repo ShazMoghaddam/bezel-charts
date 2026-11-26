@@ -108,6 +108,14 @@ def test_missing_values_in_every_chart():
     assert "No data" in bc.ring(gaps).svg
 
 
+def test_fill_turns_the_line_shading_off_or_on_for_every_line():
+    df = pd.DataFrame({"a": [1, 3, 2], "b": [2, 2, 4]})
+    assert bc.line(df).svg.count('fill="url(#') == 1
+    assert bc.line(df, fill=False).svg.count('fill="url(#') == 0
+    assert bc.line(df, fill="all").svg.count('fill="url(#') == 2
+    assert bc.line(df, fill=False).svg == bc.to_svg("line", values="1,3,2|2,2,4", series="a,b", fill="none")
+
+
 def test_blank_waterfall_total_shows_the_running_total():
     df = pd.DataFrame({"step": ["Start", "Sales", "Costs", "Profit"], "v": [120, 30, -12, np.nan]})
     chart = bc.waterfall(df, x="step", y="v", totals=["Start", "Profit"])

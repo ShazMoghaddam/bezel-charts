@@ -1,4 +1,4 @@
-import { newId, r2, clamp, num, has, nums, list, bool, fmt, fmtv, ok, real, runsOf, gapNote, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf } from '../core/util.js';
+import { newId, r2, clamp, num, has, nums, list, bool, fmt, fmtv, ok, real, runsOf, gapNote, fillOf, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 export default function spark(o, th) {
@@ -19,11 +19,12 @@ export default function spark(o, th) {
     // A missing value breaks the line, and each piece gets its own fill.
     var runs = runsOf(P), straight = bool(o.straight), g = newId('g'), last = P[v.length === 1 ? 1 : lastOk];
     var d = runs.map(function (r) { return pathOf(r, straight); }).join('');
-    var s = '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".32"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>';
+    var filled = fillOf(o) !== 'none';
+    var s = !filled ? '' : '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".32"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>';
     [1 / 3, 2 / 3].forEach(function (f) {
       s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(y0 + h * f) + '" y2="' + r2(y0 + h * f) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>';
     });
-    s += '<path d="' + runs.map(function (r) {
+    if (filled) s += '<path d="' + runs.map(function (r) {
       return pathOf(r, straight) + 'L' + r2(r[r.length - 1][0]) + ',' + (y0 + h) + 'L' + (r[0] === P[0] ? x0 : r2(r[0][0])) + ',' + (y0 + h) + 'Z';
     }).join('') + '" fill="url(#' + g + ')"' + anim(o, 'bzc-a') + '/>';
     s += '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1"' + anim(o, 'bzc-d') + '/>';

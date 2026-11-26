@@ -8,7 +8,7 @@ from .._series import line_key, point_marks, series_line, xy_finish, xy_frame
 from .._time import has_times, parse_dates, point_name
 from .._tile import tile
 from .._util import (
-    DASHES, SHAPES, R, bool_, empty_state, fmt, fmtv, gap_note, has, real, runs_of, jmax, jmin, lst, new_id, num, palette, parse_notes, path_of, series,
+    DASHES, SHAPES, R, bool_, empty_state, fill_of, fmt, fmtv, gap_note, has, real, runs_of, jmax, jmin, lst, new_id, num, palette, parse_notes, path_of, series,
     small, stat_of, style_of, text, to_number, to_string, truthy,
 )
 
@@ -42,6 +42,7 @@ def line(o, th) -> str:
     if has(o.goal) and to_number(o.goal) > 0:
         pos.append(to_number(o.goal))
     log = bool_(o.log) and len(pos) > 0
+    fill = fill_of(o)
 
     def draw(x0, y0, w, h):
         if not all_:
@@ -65,12 +66,13 @@ def line(o, th) -> str:
                 continue
             d = "".join(path_of(r, bool_(o.straight)) for r in runs)
             P = [p for r in runs for p in r]
-            # The soft fill under the first line has no floor to reach on a log scale, so it's left out there.
-            if k == 0 and not log:
+            # A soft fill under the first line, every line or none. It has no floor to reach on a log scale, so it's
+            # left out there.
+            if (fill == "all" or (fill == "first" and k == 0)) and not log:
                 g = new_id("g")
                 s += (
                     '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'
-                    + c + '" stop-opacity=".26"/><stop offset="1" stop-color="' + c
+                    + c + '" stop-opacity="' + (".16" if fill == "all" and len(S) > 1 else ".26") + '"/><stop offset="1" stop-color="' + c
                     + '" stop-opacity="0"/></linearGradient></defs>'
                     + '<path d="' + "".join(
                         path_of(r, bool_(o.straight)) + "L" + R(r[-1][0]) + "," + R(top + ph) + "L" + R(r[0][0]) + "," + R(top + ph) + "Z"

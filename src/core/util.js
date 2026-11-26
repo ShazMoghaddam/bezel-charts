@@ -55,6 +55,15 @@ export function ok(v) { return typeof v === 'number' && isFinite(v); }
 export function real(v) { return v.filter(ok); }
 /** A number for a tooltip or label: "No data" for a gap. */
 export function fmtv(n, o) { return ok(n) ? fmt(n, o) : 'No data'; }
+/**
+ * Which lines get the soft fill underneath: "first" (the default), "all", or "none" (also false, "false" and "off").
+ * A bare fill attribute means the default.
+ */
+export function fillOf(o) {
+  var f = o.fill;
+  if (f === false || f === 'false' || f === 'none' || f === 'off') return 'none';
+  return f === 'all' ? 'all' : 'first';
+}
 /** A short dash on the zero line where a bar is missing, so its empty slot doesn't read as 0. */
 export function gapMark(x, w, y, th) {
   return '<line x1="' + r2(x + w * 0.3) + '" x2="' + r2(x + w * 0.7) + '" y1="' + r2(y - 3) + '" y2="' + r2(y - 3) + '" stroke="' + th.muted + '" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>';

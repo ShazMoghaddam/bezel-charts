@@ -265,6 +265,7 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `notes` | `notes={"May": "Launch"}` | Notes on points, keyed by label or, if no label matches, position. |
 | `show_values` | `show_values=True` | A label on every point. |
 | `straight` | `straight=True` | Straight segments instead of curves. |
+| `fill` | `fill=False` or `fill="all"` | The soft shading under the first line (the default), under every line (`"all"`), or none (`False`) (line, spark). |
 | `zero` | `zero=True` | Start the axis at zero (line). |
 | `horizontal` | `horizontal=True` | Bars run sideways, good for long labels (bars). |
 | `stacked` | `stacked=True` or `stacked="percent"` | Pile several series up, with the total in the tooltip (bars, area). `"percent"` scales each column to 100% (area). |

@@ -352,6 +352,16 @@ const GAPS = {
 };
 for (const [type, cases] of Object.entries(GAPS)) CASES[type].push(...cases);
 
+// fill (1.12.0): shading under the first line, every line or none.
+CASES.line.push(
+  { values: '1,3,2|2,2,4', series: 'A,B', fill: 'none' },
+  { values: '1,3,2|2,2,4|3,1,1', series: 'A,B,C', fill: 'all', labels: 'a,b,c' },
+  { values: '1,2,,4,5|2,,3,3,3', fill: 'all', theme: 'light' },
+  { values: '4,6,5', fill: false, animate: true },
+  { values: '4,6,5', fill: 'all' },
+);
+CASES.spark.push({ values: '3,5,4', fill: 'none' }, { values: '3,,5,4', fill: 'off', theme: 'light' });
+
 
 for (const [type, cases] of Object.entries(CASES)) {
   const rows = cases.map((options) => ({

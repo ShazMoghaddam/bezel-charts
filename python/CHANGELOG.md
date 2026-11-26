@@ -3,6 +3,7 @@
 ## 1.12.0 (unreleased)
 
 - **Missing values:** `None`, `NaN`, `pd.NA` and anything that isn't a number used to be drawn as 0 with a warning. They're now gaps, exactly as in the web components: lines break, bars leave a marked empty slot, histograms, box plots and scatter plots leave them out, and so on for every chart. There's no warning any more, since nothing is changed behind your back. `chart.alt` says "No data" for each gap.
+- `fill=False` turns off the shading under a line chart's first line, and `fill="all"` shades every line (line, spark).
 - **Waterfall:** a blank (`NaN`) total row shows the running total, so there's no need for `.fillna(0)` on totals. A blank change draws a dashed "No data" step.
 - **Heatmap from dates:** a day whose rows are all missing is a gap; days with no rows are still 0, as nothing happened.
 - All of it matches the web components byte for byte, with 43 new parity cases.

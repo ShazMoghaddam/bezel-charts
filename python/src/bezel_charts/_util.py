@@ -190,6 +190,14 @@ def fmtv(n, o) -> str:
     return fmt(n, o) if finite(n) else "No data"
 
 
+def fill_of(o) -> str:
+    """Which lines get the soft fill underneath: "first" (the default), "all", or "none" (also False, "false" and "off")."""
+    f = o.fill
+    if f is False or f in ("false", "none", "off"):
+        return "none"
+    return "all" if f == "all" else "first"
+
+
 def gap_note(v) -> str:
     """For summaries: ", 2 missing" when a list has gaps, otherwise nothing."""
     m = len(v) - len(real(v))
@@ -487,7 +495,7 @@ def pattern(pid, kind, c, bg) -> str:
 
 __all__ = [
     "DASHES", "INF", "NAN", "MONO", "PATTERNS", "SANS", "SHAPES", "N", "Opts", "R", "anim", "bool_", "clamp", "empty_state", "esc", "finite",
-    "fmt", "fmtv", "gap_note", "goal_line", "goal_text", "has", "hash_id", "hit", "is_num", "jmax", "jmin", "legend", "lst", "marker", "new_id", "nice_scale", "num",
+    "fill_of", "fmt", "fmtv", "gap_note", "goal_line", "goal_text", "has", "hash_id", "hit", "is_num", "jmax", "jmin", "legend", "lst", "marker", "new_id", "nice_scale", "num",
     "nums", "ok", "palette", "parse_notes", "path_of", "pattern", "r2", "real", "runs_of", "series", "small", "stat_of", "style_of", "text", "to_number",
     "to_string", "total", "trunc", "truthy", "tw",
 ]

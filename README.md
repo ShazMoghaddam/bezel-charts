@@ -143,7 +143,7 @@ A sparkline with the latest value up front and its change since the start.
 | `height`      | chart height in px                          | `64`    |
 | `straight`    | boolean, straight lines instead of curves   | off     |
 
-Also takes `stat`, `goal`, `notes` and `show-values` from [the shared options](#options-for-every-chart). `stat` is `last` by default here.
+Also takes `stat`, `goal`, `notes` and `show-values` from [the shared options](#options-for-every-chart). `stat` is `last` by default here. `fill="none"` removes the shading under the line.
 
 ### `<bezel-line>`
 
@@ -163,6 +163,7 @@ One or more lines over time, with an axis, a legend and notes on key moments. Se
 | `height`      | chart height in px                          | `170`   |
 | `zero`        | boolean, start the axis at zero             | off     |
 | `straight`    | boolean, straight lines instead of curves   | off     |
+| `fill`        | the soft shading underneath: `first` line, `all` lines, or `none` | `first` |
 | `dash`        | a line style per series: `solid`, `dashed`, `dotted`, `dashdot`. On its own, gives each series the next style | off |
 | `markers`     | a shape on each point, per series: `circle`, `square`, `triangle`, `diamond`, `none`. On its own, gives each series the next shape | off |
 | `dates`       | one date per point, `2026-01-05` or `2026-01-05T14:30`: points sit where they fall in time | evenly spaced |
