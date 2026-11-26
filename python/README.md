@@ -282,7 +282,7 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `stat` | `stat="average"` | Headline number: `last`, `total`, `average`, `max`, `min` or `none`. |
 | `delta`, `delta_label` | `delta="inverse"` | Change since the start. `inverse` makes a fall the good direction. |
 | `goal`, `goal_label` | `goal=50, goal_label="Target"` | A dashed target line, labelled clear of bars and values. |
-| `notes` | `notes={"May": "Launch"}` | Notes on points, keyed by label or, if no label matches, position. |
+| `notes` | `notes={"May": "Launch", ("2022", "2023"): "Rate rises"}` | A dashed marker on a point, or a pair of keys for a shaded span, keyed by label or, if no label matches, position. Works on spark, line, area, bars, combo, waterfall and scatter (points only). |
 | `show_values` | `show_values=True` | A label on every point. |
 | `straight` | `straight=True` | Straight segments instead of curves. |
 | `fill` | `fill=False` or `fill="all"` | The soft shading under the first line (the default), under every line (`"all"`), or none (`False`) (line, spark). |

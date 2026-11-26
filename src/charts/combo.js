@@ -1,7 +1,8 @@
-import { newId, r2, num, has, list, series, bool, fmt, fmtv, ok, real, runsOf, gapNote, gapMark, tw, text, small, hit, anim, palette, emptyState, pathOf, at } from '../core/util.js';
+import { newId, r2, num, has, list, series, bool, fmt, fmtv, ok, real, runsOf, gapNote, gapMark, tw, text, small, hit, anim, palette, emptyState, pathOf, at, parseNotes } from '../core/util.js';
 import { niceScale, legend, styleOf, pattern, marker, DASHES, SHAPES, PATTERNS } from '../core/series.js';
 import { seriesLine, pointMarks, runsPath, loneDots } from '../core/lines.js';
 import { tile } from '../core/tile.js';
+import { noteLayout, noteMarks } from '../core/notes.js';
 
 /**
  * Bars and lines with different units on one chart: bars read against the left axis, lines against the right.
@@ -65,9 +66,14 @@ export default function combo(o, th) {
     var lw = Math.max.apply(null, tl.map(function (t) { return tw(t, 10, true); })) + 10;
     var rw = sc2 ? Math.max.apply(null, tr.map(function (t) { return tw(t, 10, true); })) + 10 : 0;
     var px = x0 + lw, pw = w - lw - rw, ph = h - (top - y0) - (labels.length ? 20 : 4), band = pw / n;
+    // Notes take a strip under the legend, above the axis titles, so no label sits on a bar.
+    var nl = noteLayout(parseNotes(o, labels), n, function (i) { return { c: px + band * (i + 0.5), l: px + band * i, r: px + band * (i + 1) }; }, px, pw);
+    var noteTop = top - (titled ? 16 : 0);
+    if (nl.rows) { top += nl.height + 4; ph -= nl.height + 4; }
     var X = function (i) { return px + band * (i + 0.5); };
     var Y = function (v) { return top + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph; };
     var Y2 = function (v) { return top + ph - (v - sc2.lo) / (sc2.hi - sc2.lo) * ph; };
+    if (nl.rows) s += noteMarks(th, nl, noteTop, top + ph);
     sc.ticks.forEach(function (t, i) {
       var y = Y(t);
       s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '"' + (t === 0 ? '' : ' stroke-dasharray="2 4"') + '/>' +

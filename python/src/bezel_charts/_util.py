@@ -372,20 +372,33 @@ def empty_state(th, x, y, w, h) -> str:
 
 
 def parse_notes(o, labels) -> list:
+    """Notes as {i, text} for a point, or {i, j, text} for a span from point i to point j: "Jun:Launch;2022..2023:Rate
+    rises". A point is a label or, if no label matches, a position counting from 0."""
     if not has(o.notes):
         return []
+    names = [to_string(label) for label in labels]
+
+    # A label wins, so a note on "1976" finds the year. Otherwise a whole number is a position.
+    def find(key):
+        i = names.index(key) if key in names else -1
+        return int(parse_int(key)) if i < 0 and js_str(parse_int(key)) == key else i
+
     out = []
     for part in to_string(o.notes).split(";"):
         k = part.find(":")
         if k < 0:
             continue
         key, t = part[:k].strip(), part[k + 1:].strip()
-        # A label wins, so a note on "1976" finds the year. Otherwise a whole number is a position.
-        names = [to_string(label) for label in labels]
-        i = names.index(key) if key in names else -1
-        if i < 0 and js_str(parse_int(key)) == key:
-            i = parse_int(key)
-        if i >= 0 and t:
+        i, dots = find(key), key.find("..")
+        if not t:
+            continue
+        # A span, unless the whole key is a label that happens to contain "..".
+        if i < 0 and dots > 0:
+            a, b = find(key[:dots].strip()), find(key[dots + 2:].strip())
+            if a >= 0 and b >= 0:
+                out.append({"i": min(a, b), "j": max(a, b), "text": t})
+            continue
+        if i >= 0:
             out.append({"i": int(i), "text": t})
     return out
 

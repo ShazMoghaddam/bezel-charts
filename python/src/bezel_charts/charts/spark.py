@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from .._notes import note_layout, note_marks
 from .._tile import tile
 from .._util import (
     N, R, anim, bool_, clamp, empty_state, fill_of, fmt, fmtv, gap_note, goal_line, ok, real, runs_of, has, hit, jmax, jmin, lst, new_id, num, nums,
@@ -57,6 +58,10 @@ def spark(o, th) -> str:
                 '<line x1="' + N(x0) + '" x2="' + N(x0 + w) + '" y1="' + R(y0 + h * f) + '" y2="' + R(y0 + h * f)
                 + '" stroke="' + th["grid"] + '" stroke-dasharray="2 4"/>'
             )
+        # Spans shade the stretch they cover, labelled along the top, underneath the line. Point notes sit on the line.
+        spans = [n for n in notes if n.get("j") is not None]
+        if spans:
+            s += note_marks(th, note_layout(spans, len(v), lambda i: {"c": X(i), "l": X(i), "r": X(i)}, x0, w), y0, y0 + h)
         if filled:
             s += (
                 '<path d="' + "".join(
@@ -75,7 +80,7 @@ def spark(o, th) -> str:
         if has(o.goal):
             s += goal_line(o, th, x0, x0 + w, Y(to_number(o.goal)))
         for n in notes:
-            if n["i"] >= len(v) or not ok(v[n["i"]]):
+            if n.get("j") is not None or n["i"] >= len(v) or not ok(v[n["i"]]):
                 continue
             p = P[n["i"]]
             s += (

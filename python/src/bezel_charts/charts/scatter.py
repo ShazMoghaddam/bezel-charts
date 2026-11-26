@@ -82,7 +82,8 @@ def scatter(o, th) -> str:
     def key(j, x, y):
         return marker(shape_of(j), x + 4, y + 6, 4, ' fill="' + pal[j % len(pal)] + '"')
 
-    notes = parse_notes(o, labels)
+    # Scatter notes point at single points; spans need an axis of positions, which a scatter plot doesn't have.
+    notes = [nt for nt in parse_notes(o, labels) if nt.get("j") is None]
 
     def draw(x0, y0, w, h):
         if not count:

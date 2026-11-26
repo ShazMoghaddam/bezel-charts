@@ -488,14 +488,16 @@ Any of the above, picked with `type`: `<bezel-chart type="donut" values="3,2,1">
 | `delta-label`   | wording after the change                                        | `since start` |
 | `goal`          | a dashed goal line, or a marker on gauges and progress bars     |               |
 | `goal-label`    | wording for the goal line. Its label moves to stay clear of bars and values | `Goal` |
-| `notes`         | `point:text` pairs separated by `;`, e.g. `Jun:Launch;9:Peak`. A point is a label or, if no label matches, a position counted from 0 | |
+| `notes`         | `point:text` pairs separated by `;`, e.g. `Jun:Launch;9:Peak`, for a dashed marker. `from..to:text` shades a span, e.g. `2022..2023:Rate rises`. A point is a label or, if no label matches, a position counted from 0 | |
 | `show-values`   | boolean, writes each value on the chart                         | off           |
 | `width`         | a fixed width in px instead of filling the container            |               |
 | `no-tooltips`   | boolean, turns off hover, tap and keyboard values, and leaves the chart out of the Tab order | off |
 | `static`        | boolean, skips the entrance animation                           | off           |
 | `clickable`     | boolean, a pointer over each value and an Enter hint for screen readers, when you handle `bezel-click` | off |
 
-Not every option suits every chart: `notes` works on spark, line, area and scatter; `show-values` on spark, line, area and bars; `goal-label` on spark, line, area, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
+Not every option suits every chart: `notes` works on spark, line, area, bars (upright), combo, waterfall and scatter, and spans on all of those but scatter; `show-values` on spark, line, area and bars; `goal-label` on spark, line, area, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
+
+**Notes and spans.** Mark events on any chart with an x-axis: `notes="2020:2020 shock;2022..2023:Rate rises"` draws a dashed marker at 2020 and shades 2022 to 2023, each labelled along the top. Labels that would overlap move down a row, up to three, and long ones stay inside the chart. On bars, combo charts and waterfalls a span covers whole columns, and the labels get their own strip above the bars so they never sit on one. A span's end that doesn't match a label is a position, so one past the end runs to the last point.
 
 ## Missing values
 

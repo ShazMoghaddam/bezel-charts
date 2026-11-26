@@ -83,14 +83,23 @@ def labels(seq, x_format: str | None = None) -> list:
 
 
 def notes(value):
-    """Accepts {"Mar": "Launch", 4: "Peak"} or [(key, text), ...] as well as the "key:text;..." string."""
+    """Accepts {"Mar": "Launch", 4: "Peak", ("2022", "2023"): "Rate rises"} or [(key, text), ...] as well as the
+    "key:text;..." string. A pair of keys is a span, shaded from the first to the second."""
     if value is None or isinstance(value, str):
         return value
     items = value.items() if isinstance(value, Mapping) else value
     parts = []
     for key, text in items:
-        key_s, text_s = label(key), to_string(text)
-        if ":" in key_s or ";" in key_s or ";" in text_s:
+        if isinstance(key, (tuple, list)):
+            if len(key) != 2:
+                raise ValueError(f"bezel_charts: a span note needs two points, such as ('2022', '2023'), not {key!r}.")
+            ends = [label(k) for k in key]
+            key_s = ends[0] + ".." + ends[1]
+        else:
+            ends = [label(key)]
+            key_s = ends[0]
+        text_s = to_string(text)
+        if any(":" in e or ";" in e for e in ends) or ";" in text_s:
             raise ValueError(
                 f"bezel_charts: note {key_s!r}: {text_s!r} cannot contain ';', and its key cannot contain ':'."
             )

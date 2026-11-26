@@ -1,5 +1,6 @@
 import { newId, r2, clamp, num, has, nums, list, bool, fmt, fmtv, ok, real, runsOf, gapNote, fillOf, pathOf, text, small, hit, anim, palette, emptyState, parseNotes, goalLine, statOf } from '../core/util.js';
 import { tile } from '../core/tile.js';
+import { noteLayout, noteMarks } from '../core/notes.js';
 
 export default function spark(o, th) {
   var v = nums(o.values), c = palette(o, th)[0], h = num(o.height, 64);
@@ -24,6 +25,9 @@ export default function spark(o, th) {
     [1 / 3, 2 / 3].forEach(function (f) {
       s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(y0 + h * f) + '" y2="' + r2(y0 + h * f) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>';
     });
+    // Spans shade the stretch they cover, labelled along the top, underneath the line. Point notes sit on the line itself.
+    var spans = notes.filter(function (n) { return n.j != null; });
+    if (spans.length) s += noteMarks(th, noteLayout(spans, v.length, function (i) { var x = X(i); return { c: x, l: x, r: x }; }, x0, w), y0, y0 + h);
     if (filled) s += '<path d="' + runs.map(function (r) {
       return pathOf(r, straight) + 'L' + r2(r[r.length - 1][0]) + ',' + (y0 + h) + 'L' + (r[0] === P[0] ? x0 : r2(r[0][0])) + ',' + (y0 + h) + 'Z';
     }).join('') + '" fill="url(#' + g + ')"' + anim(o, 'bzc-a') + '/>';
@@ -32,7 +36,7 @@ export default function spark(o, th) {
     runs.forEach(function (r) { if (r.length === 1 && r[0] !== last) s += '<circle cx="' + r2(r[0][0]) + '" cy="' + r2(r[0][1]) + '" r="2.5" fill="' + c + '"/>'; });
     if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal));
     notes.forEach(function (n) {
-      if (n.i >= v.length || !ok(v[n.i])) return;
+      if (n.j != null || n.i >= v.length || !ok(v[n.i])) return;
       var p = P[n.i];
       s += '<circle cx="' + r2(p[0]) + '" cy="' + r2(p[1]) + '" r="3.5" fill="' + th.fg + '"/>' +
         text(clamp(p[0], x0 + 30, x0 + w - 30), p[1] - 9, n.text, small(th, 10, 'text-anchor="middle"', th.fg));

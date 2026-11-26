@@ -37,7 +37,8 @@ export default function scatter(o, th) {
   var h = num(o.height, 210), multi = groups.length > 1 || names.length > 0, trend = bool(o.trend);
   var nameOf = function (j) { return names[j] || 'Group ' + (j + 1); };
   var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang };
-  var notes = parseNotes(o, labels);
+  // Scatter notes point at single points; spans need an axis of positions, which a scatter plot doesn't have.
+  var notes = parseNotes(o, labels).filter(function (nt) { return nt.j == null; });
   // Each group can have its own point shape; "none" in the list keeps that group's circles.
   var markOf = styleOf(o.markers, SHAPES, 'circle'), bg = o.background || th.tile;
   var shapeOf = function (j) { var m = markOf ? markOf(j) : 'circle'; return m === 'none' ? 'circle' : m; };

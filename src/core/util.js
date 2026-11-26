@@ -158,15 +158,29 @@ export function palette(o, th) {
 export function emptyState(th, x, y, w, h) {
   return text(x + w / 2, y + h / 2 + 4, 'No data yet', 'text-anchor="middle" fill="' + th.muted + '" font-family="' + SANS + '" font-size="13"');
 }
+/**
+ * Notes as { i, text } for a point, or { i, j, text } for a span from point i to point j: "Jun:Launch;2022..2023:Rate
+ * rises". A point is a label or, if no label matches, a position counting from 0.
+ */
 export function parseNotes(o, labels) {
   if (!has(o.notes)) return [];
+  var names = labels.map(String);
+  // A label wins, so a note on "1976" finds the year. Otherwise a whole number is a position.
+  var find = function (key) {
+    var i = names.indexOf(key);
+    return i < 0 && String(parseInt(key, 10)) === key ? parseInt(key, 10) : i;
+  };
   return String(o.notes).split(';').map(function (part) {
     var k = part.indexOf(':');
     if (k < 0) return null;
-    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = labels.map(String).indexOf(key);
-    // A label wins, so a note on "1976" finds the year. Otherwise a whole number is a position.
-    if (i < 0 && String(parseInt(key, 10)) === key) i = parseInt(key, 10);
-    return i >= 0 && t ? { i: i, text: t } : null;
+    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = find(key), dots = key.indexOf('..');
+    if (!t) return null;
+    // A span, unless the whole key is a label that happens to contain "..".
+    if (i < 0 && dots > 0) {
+      var a = find(key.slice(0, dots).trim()), b = find(key.slice(dots + 2).trim());
+      return a >= 0 && b >= 0 ? { i: Math.min(a, b), j: Math.max(a, b), text: t } : null;
+    }
+    return i >= 0 ? { i: i, text: t } : null;
   }).filter(Boolean);
 }
 /**

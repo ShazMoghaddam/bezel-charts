@@ -190,6 +190,21 @@ def test_notes_on_year_labels():
     assert "Boycott" in str(bc.line(df, x="year", y="n", notes={"1980": "Boycott"}))
 
 
+def test_span_notes_from_a_dict():
+    years = [2019, 2020, 2021, 2022, 2023, 2024]
+    chart = bc.line([3, 1, 4, 5, 6, 7], labels=years, notes={2020: "2020 shock", (2022, 2023): "Rate rises"})
+    assert "Rate rises" in texts(chart.svg) and "2020 shock" in texts(chart.svg)
+    assert chart.svg == bc.to_svg("line", values="3,1,4,5,6,7", labels="2019,2020,2021,2022,2023,2024", notes="2020:2020 shock;2022..2023:Rate rises")
+    assert 'fill-opacity=".07"' in chart.svg
+    for chart_type in (bc.bars, bc.waterfall, bc.area, bc.spark):
+        svg = chart_type([3, 1, 4, 5, 6, 7], labels=years, notes={(2022, 2023): "Rate rises"}).svg
+        assert "Rate rises" in texts(svg), chart_type.__name__
+    svg = bc.combo(bars=[3, 1, 4, 5, 6, 7], line=[1, 2, 3, 2, 3, 4], labels=years, notes={(2022, 2023): "Rate rises", 2020: "Dip"}).svg
+    assert "Rate rises" in texts(svg) and "Dip" in texts(svg)
+    with pytest.raises(ValueError, match="two points"):
+        bc.line([1, 2, 3], notes={(1, 2, 3): "Too many"})
+
+
 def test_notes_from_a_dict():
     chart = bc.line([1, 3, 2], labels=["Jan", "Feb", "Mar"], notes={"Feb": "Launch", 2: "Calm"})
     assert {"Launch", "Calm"} <= set(texts(chart.svg))

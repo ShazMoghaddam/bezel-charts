@@ -1,6 +1,7 @@
 /** The axis frame line and area charts share: dates, fixed ranges and log scales included. Other charts don't load it. */
 import { newId, r2, clamp, has, tw, text, small, hit, goalLine, at } from './util.js';
 import { niceScale, legend } from './series.js';
+import { noteLayout, noteMarks } from './notes.js';
 import { dateTicks } from './time.js';
 
 /**
@@ -65,12 +66,7 @@ export function xyFrame(o, th, c, x0, y0, w, h) {
       s += text(X(i), top + ph + 15, labels[i], small(th, 10, 'text-anchor="' + anchor + '"'));
     }
   }
-  c.notes.forEach(function (nt) {
-    if (nt.i >= n) return;
-    var x = X(nt.i);
-    s += '<line x1="' + r2(x) + '" x2="' + r2(x) + '" y1="' + r2(top + 12) + '" y2="' + r2(top + ph) + '" stroke="' + th.fg + '" stroke-opacity=".4" stroke-dasharray="3 3"/>' +
-      text(clamp(x, px + 30, px + pw - 30), top + 8, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
-  });
+  s += noteMarks(th, noteLayout(c.notes, n, function (i) { var x = X(i); return { c: x, l: x, r: x }; }, px, pw), top, top + ph);
   return { svg: s, X: X, Y: Y, px: px, pw: pw, top: top, ph: ph, clip: clip, uneven: !!T };
 }
 

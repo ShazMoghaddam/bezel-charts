@@ -362,6 +362,27 @@ CASES.line.push(
 );
 CASES.spark.push({ values: '3,5,4', fill: 'none' }, { values: '3,,5,4', fill: 'off', theme: 'light' });
 
+// Spans and notes on more charts (1.12.0).
+const yrs = '2018,2019,2020,2021,2022,2023,2024', yv = '3,4,2,5,6,6.5,7', many = '2020:A long first note;2021:A long second note;2022:And a third;2023:Fourth';
+CASES.line.push(
+  { values: yv, labels: yrs, notes: '2020:2020 shock;2022..2023:Rate rises' },
+  { values: yv, labels: yrs, notes: many, theme: 'light' },
+  { values: yv, labels: yrs, notes: '2024:A rather long note right at the end;0..1:Start', width: 300 },
+);
+CASES.area.push({ values: yv + '|1,1,1,1,1,1,1', labels: yrs, stacked: '', notes: '2019..2021:Slow years;2023:Peak', animate: true });
+CASES.spark.push({ values: yv, labels: yrs, notes: '2020:Dip;2022..2024:Recovery' });
+CASES.bars.push(
+  { values: yv, labels: yrs, notes: '2020:2020 shock;2022..2023:Rate rises', 'show-values': '', goal: 5 },
+  { values: yv, labels: yrs, notes: many, 'angle-labels': '', width: 300 },
+  { values: yv, labels: yrs, notes: '1..3:Ignored sideways', horizontal: '' },
+);
+CASES.combo.push(
+  { values: yv, line: '1,2,3,2,3,4,5', labels: yrs, notes: '2020:Shock;2022..2023:Rate rises', 'y-label': 'Sales', 'line-label': 'Rate' },
+  { values: yv + '|1,1,1,1,1,1,1', line: '1,2,3,2,3,4,5', labels: yrs, notes: many, stacked: '' },
+);
+CASES.waterfall.push({ values: '120,30,-12,-25,0', labels: 'Start,Sales,Costs,Tax,Profit', totals: 'Start,Profit', notes: 'Costs..Tax:Outgoings;Sales:Best month' });
+CASES.scatter.push({ x: '1,2,3', y: '1,2,3', notes: '1:Middle;0..2:Not on a scatter' });
+
 // Bands (1.12.0): fan charts, from attributes and from a bands array.
 const hist = '24,26,25,31,29,37,34,41,47,52', ahead = ',,,,,,,,,52';
 CASES.line.push(

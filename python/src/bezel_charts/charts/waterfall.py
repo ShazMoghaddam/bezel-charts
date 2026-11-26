@@ -5,8 +5,9 @@ from __future__ import annotations
 import math
 
 from .._js import js_str, parse_int, to_number
+from .._notes import note_layout, note_marks
 from .._tile import dims, tile
-from .._util import R, anim, empty_state, fmt, goal_line, ok, has, hit, jmax, jmin, legend, lst, nice_scale, num, nums, small, text, tw
+from .._util import R, parse_notes, anim, empty_state, fmt, goal_line, ok, has, hit, jmax, jmin, legend, lst, nice_scale, num, nums, small, text, tw
 
 _KINDS = ["up", "down", "total", "gap"]
 _NAMES = {"up": "Rise", "down": "Fall", "total": "Total", "gap": "No data"}
@@ -111,14 +112,20 @@ def waterfall(o, th) -> str:
         show_tags = jmax(*[tw(t, 10, True) for t in tags]) <= slot - 2
         lab_max = jmax(*[tw(l, 10, True) for l in labels]) if labels else 0
         every = jmax(1, math.ceil(n * (lab_max + 8) / pw)) if labels else 1
+        # Notes take a strip above the bars, one row per line of labels, so no label sits on a bar.
+        nl = note_layout(
+            parse_notes(o, labels), n, lambda i: {"c": px + slot * (i + 0.5), "l": px + slot * i, "r": px + slot * (i + 1)}, px, pw
+        )
         neg_tag = 14 if show_tags and sc.lo < 0 else 0
-        top_pad = 16 if show_tags else 4
+        top_pad = (16 if show_tags else 4) + (nl["height"] + 4 if nl["rows"] else 0)
         py = top0 + top_pad
         ph = h - (top0 - y0) - top_pad - (20 if labels else 2) - neg_tag
 
         def Y(x):
             return py + ph - (x - sc.lo) / (sc.hi - sc.lo) * ph
 
+        if nl["rows"]:
+            s += note_marks(th, nl, top0, py + ph)
         for i, t in enumerate(sc.ticks):
             s += (
                 '<line x1="' + R(px) + '" x2="' + R(px + pw) + '" y1="' + R(Y(t)) + '" y2="' + R(Y(t)) + '" stroke="' + th["grid"] + '"'

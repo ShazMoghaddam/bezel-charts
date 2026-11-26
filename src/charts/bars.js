@@ -1,6 +1,7 @@
-import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, fmtv, ok, real, gapNote, gapMark, text, small, hit, anim, palette, emptyState, goalLine, goalText, statOf, SANS, MONO, at } from '../core/util.js';
+import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, fmtv, ok, real, gapNote, gapMark, text, small, hit, anim, palette, emptyState, goalLine, goalText, statOf, SANS, MONO, at, parseNotes } from '../core/util.js';
 import { legend, seriesTable, styleOf, pattern, PATTERNS } from '../core/series.js';
 import { tile, dims } from '../core/tile.js';
+import { noteLayout, noteMarks } from '../core/notes.js';
 
 /** How far angled labels lean, and the longest label they show before shortening it. */
 var ANGLE = 40, ANGLE_MAX_CHARS = 24;
@@ -131,7 +132,9 @@ export default function bars(o, th) {
     }
     var negLab = bool(o.showValues) && lo < 0 ? 14 : 0;
     var labDrop = angled ? Math.ceil(Math.sin(rad) * Math.min(labMax, tw('x'.repeat(ANGLE_MAX_CHARS), 10, true))) + 18 : 20;
-    var bottom = (labels.length ? labDrop : 2) + negLab, topPad = bool(o.showValues) ? 16 : 4;
+    // Notes take a strip above the bars, one row per line of labels, so no label sits on a bar.
+    var slotW = w / n, nl = noteLayout(parseNotes(o, labels), n, function (i) { return { c: x0 + slotW * (i + 0.5), l: x0 + slotW * i, r: x0 + slotW * (i + 1) }; }, x0, w);
+    var bottom = (labels.length ? labDrop : 2) + negLab, topPad = (bool(o.showValues) ? 16 : 4) + (nl.rows ? nl.height + 4 : 0);
     var ph = h - (top0 - y0) - bottom - topPad, py = top0 + topPad;
     var Y = function (x) { return py + ph - (x - lo) / (hi - lo) * ph; };
     var slot = w / n, groupW = Math.min(slot * (thin ? 0.78 : 0.62), thin ? k * 30 : 56);
@@ -140,6 +143,7 @@ export default function bars(o, th) {
     var boxes = legendH ? [[x0, y0, w, legendH]] : [];
     if (labels.length) boxes.push([x0, py + ph + negLab + 4, w, h - (py + ph + negLab + 4 - y0)]);
     var valueBox = function (cx, ty, str, size) { var vw = tw(str, size, true); boxes.push([cx - vw / 2, ty - 9, vw, 12]); };
+    if (nl.rows) s += noteMarks(th, nl, top0, py + ph);
     s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(Y0) + '" y2="' + r2(Y0) + '" stroke="' + th.grid + '"/>';
     for (var c = 0; c < n; c++) {
       var gx0 = x0 + c * slot + (slot - groupW) / 2;

@@ -6,9 +6,10 @@ import math
 
 from .._js import pow10, to_fixed_number
 from .._series import point_marks, series_line
+from .._notes import note_layout, note_marks
 from .._tile import tile
 from .._util import (
-    at, DASHES, PATTERNS, SHAPES, Opts, R, anim, bool_, empty_state, fmt, fmtv, gap_note, has, ok, real, runs_of, hit, jmax, jmin, legend, lst, marker,
+    at, DASHES, PATTERNS, SHAPES, Opts, R, anim, bool_, empty_state, fmt, fmtv, gap_note, has, ok, real, runs_of, hit, jmax, jmin, legend, lst, marker, parse_notes,
     new_id, nice_scale, num, palette, path_of, pattern, series, small, style_of, text, to_string, truthy, tw,
 )
 
@@ -115,6 +116,14 @@ def combo(o, th) -> str:
         pw = w - lw - rw
         ph = h - (top - y0) - (20 if labels else 4)
         band = pw / n
+        # Notes take a strip under the legend, above the axis titles, so no label sits on a bar.
+        nl = note_layout(
+            parse_notes(o, labels), n, lambda i: {"c": px + band * (i + 0.5), "l": px + band * i, "r": px + band * (i + 1)}, px, pw
+        )
+        note_top = top - (16 if has(o.yLabel) or has(o.lineLabel) else 0)
+        if nl["rows"]:
+            top += nl["height"] + 4
+            ph -= nl["height"] + 4
 
         def X(i):
             return px + band * (i + 0.5)
@@ -125,6 +134,8 @@ def combo(o, th) -> str:
         def Y2(v):
             return top + ph - (v - sc2["lo"]) / (sc2["hi"] - sc2["lo"]) * ph
 
+        if nl["rows"]:
+            s += note_marks(th, nl, note_top, top + ph)
         for i, t in enumerate(sc.ticks):
             y = Y(t)
             s += (

@@ -1,6 +1,7 @@
-import { r2, has, list, nums, tw, fmt, ok, text, small, hit, anim, emptyState, goalLine, num } from '../core/util.js';
+import { r2, has, list, nums, tw, fmt, ok, parseNotes, text, small, hit, anim, emptyState, goalLine, num } from '../core/util.js';
 import { niceScale, legend } from '../core/series.js';
 import { tile, dims } from '../core/tile.js';
+import { noteLayout, noteMarks } from '../core/notes.js';
 
 /**
  * A waterfall: how a starting value rises and falls, step by step, to where it ends up.
@@ -42,10 +43,13 @@ export default function waterfall(o, th) {
     var showTags = Math.max.apply(null, tags.map(function (t) { return tw(t, 10, true); })) <= slot - 2;
     var labMax = labels.length ? Math.max.apply(null, labels.map(function (l) { return tw(l, 10, true); })) : 0;
     var every = labels.length ? Math.max(1, Math.ceil(n * (labMax + 8) / pw)) : 1;
-    var negTag = showTags && sc.lo < 0 ? 14 : 0, topPad = showTags ? 16 : 4;
+    // Notes take a strip above the bars, one row per line of labels, so no label sits on a bar.
+    var nl = noteLayout(parseNotes(o, labels), n, function (i) { return { c: px + slot * (i + 0.5), l: px + slot * i, r: px + slot * (i + 1) }; }, px, pw);
+    var negTag = showTags && sc.lo < 0 ? 14 : 0, topPad = (showTags ? 16 : 4) + (nl.rows ? nl.height + 4 : 0);
     var py = top0 + topPad, ph = h - (top0 - y0) - topPad - (labels.length ? 20 : 2) - negTag;
     var Y = function (x) { return py + ph - (x - sc.lo) / (sc.hi - sc.lo) * ph; };
 
+    if (nl.rows) s += noteMarks(th, nl, top0, py + ph);
     sc.ticks.forEach(function (t, i) {
       s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(Y(t)) + '" y2="' + r2(Y(t)) + '" stroke="' + th.grid + '"' + (t === 0 ? '' : ' stroke-dasharray="2 4"') + '/>' +
         text(px - 8, Y(t) + 3.5, tl[i], small(th, 10, 'text-anchor="end"'));

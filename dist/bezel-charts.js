@@ -187,12 +187,21 @@ function emptyState(th, x, y, w, h) {
 }
 function parseNotes(o, labels) {
   if (!has(o.notes)) return [];
+  var names = labels.map(String);
+  var find = function(key) {
+    var i = names.indexOf(key);
+    return i < 0 && String(parseInt(key, 10)) === key ? parseInt(key, 10) : i;
+  };
   return String(o.notes).split(";").map(function(part) {
     var k = part.indexOf(":");
     if (k < 0) return null;
-    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = labels.map(String).indexOf(key);
-    if (i < 0 && String(parseInt(key, 10)) === key) i = parseInt(key, 10);
-    return i >= 0 && t ? { i, text: t } : null;
+    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = find(key), dots = key.indexOf("..");
+    if (!t) return null;
+    if (i < 0 && dots > 0) {
+      var a = find(key.slice(0, dots).trim()), b = find(key.slice(dots + 2).trim());
+      return a >= 0 && b >= 0 ? { i: Math.min(a, b), j: Math.max(a, b), text: t } : null;
+    }
+    return i >= 0 ? { i, text: t } : null;
   }).filter(Boolean);
 }
 function goalLine(o, th, x1, x2, y, at2) {
@@ -259,6 +268,45 @@ function tile(o, th, h, draw, meta) {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + esc(label) + '"><title>' + esc(label) + "</title>" + (o.animate ? "<style>" + CSS + "</style>" : "") + bg + head + body + "</svg>";
 }
 
+// src/core/notes.js
+var ROW = 12;
+var ROWS = 3;
+function noteLayout(notes, n, at2, px, pw) {
+  var items = [], rows = 0;
+  notes.forEach(function(nt) {
+    if (nt.i >= n) return;
+    var a = at2(nt.i), span = nt.j != null && nt.j !== nt.i, l = a.l, r = a.r;
+    if (span) {
+      var b = at2(Math.min(nt.j, n - 1));
+      l = Math.min(a.l, b.l);
+      r = Math.max(a.r, b.r);
+    }
+    var half = tw(nt.text, 10, true) / 2, room = Math.max(30, half);
+    var x = clamp(span ? (l + r) / 2 : a.c, px + room, px + pw - room), row = 0;
+    var clash = function(p) {
+      return p.row === row && x - half < p.x + p.half + 6 && p.x - p.half < x + half + 6;
+    };
+    while (row < ROWS - 1 && items.some(clash)) row++;
+    rows = Math.max(rows, row + 1);
+    items.push({ x, half, row, text: nt.text, span, c: a.c, l, r });
+  });
+  return { items, rows, height: rows ? rows * ROW : 0 };
+}
+function noteMarks(th, lay, top, bottom) {
+  var s = "";
+  lay.items.forEach(function(p) {
+    if (p.span) {
+      s += '<rect x="' + r2(p.l) + '" y="' + r2(top) + '" width="' + r2(Math.max(1, p.r - p.l)) + '" height="' + r2(bottom - top) + '" fill="' + th.fg + '" fill-opacity=".07"/><path d="M' + r2(p.l) + "," + r2(top + 12 + p.row * ROW) + "V" + r2(bottom) + "M" + r2(p.r) + "," + r2(top + 12 + p.row * ROW) + "V" + r2(bottom) + '" stroke="' + th.fg + '" stroke-opacity=".18"/>';
+    }
+  });
+  lay.items.forEach(function(p) {
+    var y = top + 8 + p.row * ROW;
+    if (!p.span) s += '<line x1="' + r2(p.c) + '" x2="' + r2(p.c) + '" y1="' + r2(y + 4) + '" y2="' + r2(bottom) + '" stroke="' + th.fg + '" stroke-opacity=".4" stroke-dasharray="3 3"/>';
+    s += text(p.x, y, p.text, small(th, 10, 'text-anchor="middle"', th.fg));
+  });
+  return s;
+}
+
 // src/charts/spark.js
 function spark(o, th) {
   var v = nums(o.values), c = palette(o, th)[0], h = num(o.height, 64);
@@ -295,6 +343,13 @@ function spark(o, th) {
     [1 / 3, 2 / 3].forEach(function(f) {
       s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(y0 + h2 * f) + '" y2="' + r2(y0 + h2 * f) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>';
     });
+    var spans = notes.filter(function(n) {
+      return n.j != null;
+    });
+    if (spans.length) s += noteMarks(th, noteLayout(spans, v.length, function(i) {
+      var x = X(i);
+      return { c: x, l: x, r: x };
+    }, x0, w), y0, y0 + h2);
     if (filled) s += '<path d="' + runs.map(function(r) {
       return pathOf(r, straight) + "L" + r2(r[r.length - 1][0]) + "," + (y0 + h2) + "L" + (r[0] === P[0] ? x0 : r2(r[0][0])) + "," + (y0 + h2) + "Z";
     }).join("") + '" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
@@ -304,7 +359,7 @@ function spark(o, th) {
     });
     if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal));
     notes.forEach(function(n) {
-      if (n.i >= v.length || !ok(v[n.i])) return;
+      if (n.j != null || n.i >= v.length || !ok(v[n.i])) return;
       var p = P[n.i];
       s += '<circle cx="' + r2(p[0]) + '" cy="' + r2(p[1]) + '" r="3.5" fill="' + th.fg + '"/>' + text(clamp(p[0], x0 + 30, x0 + w - 30), p[1] - 9, n.text, small(th, 10, 'text-anchor="middle"', th.fg));
     });
@@ -991,11 +1046,10 @@ function xyFrame(o, th, c, x0, y0, w, h) {
       s += text(X(i), top + ph + 15, labels[i], small(th, 10, 'text-anchor="' + anchor + '"'));
     }
   }
-  c.notes.forEach(function(nt) {
-    if (nt.i >= n) return;
-    var x = X(nt.i);
-    s += '<line x1="' + r2(x) + '" x2="' + r2(x) + '" y1="' + r2(top + 12) + '" y2="' + r2(top + ph) + '" stroke="' + th.fg + '" stroke-opacity=".4" stroke-dasharray="3 3"/>' + text(clamp(x, px + 30, px + pw - 30), top + 8, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
-  });
+  s += noteMarks(th, noteLayout(c.notes, n, function(i2) {
+    var x = X(i2);
+    return { c: x, l: x, r: x };
+  }, px, pw), top, top + ph);
   return { svg: s, X, Y, px, pw, top, ph, clip, uneven: !!T };
 }
 function fixedScale(lo, hi, hasMin, hasMax) {
@@ -1590,7 +1644,10 @@ function bars(o, th) {
     }
     var negLab = bool(o.showValues) && lo < 0 ? 14 : 0;
     var labDrop = angled ? Math.ceil(Math.sin(rad) * Math.min(labMax, tw("x".repeat(ANGLE_MAX_CHARS), 10, true))) + 18 : 20;
-    var bottom = (labels.length ? labDrop : 2) + negLab, topPad = bool(o.showValues) ? 16 : 4;
+    var slotW = w / n, nl = noteLayout(parseNotes(o, labels), n, function(i2) {
+      return { c: x0 + slotW * (i2 + 0.5), l: x0 + slotW * i2, r: x0 + slotW * (i2 + 1) };
+    }, x0, w);
+    var bottom = (labels.length ? labDrop : 2) + negLab, topPad = (bool(o.showValues) ? 16 : 4) + (nl.rows ? nl.height + 4 : 0);
     var ph = h2 - (top0 - y0) - bottom - topPad, py = top0 + topPad;
     var Y = function(x) {
       return py + ph - (x - lo) / (hi - lo) * ph;
@@ -1603,6 +1660,7 @@ function bars(o, th) {
       var vw = tw(str, size, true);
       boxes.push([cx - vw / 2, ty - 9, vw, 12]);
     };
+    if (nl.rows) s += noteMarks(th, nl, top0, py + ph);
     s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(Y0) + '" y2="' + r2(Y0) + '" stroke="' + th.grid + '"/>';
     for (var c = 0; c < n; c++) {
       var gx0 = x0 + c * slot + (slot - groupW) / 2;
@@ -1777,6 +1835,14 @@ function combo(o, th) {
       return tw(t2, 10, true);
     })) + 10 : 0;
     var px = x0 + lw, pw = w - lw - rw, ph = h2 - (top - y0) - (labels.length ? 20 : 4), band = pw / n;
+    var nl = noteLayout(parseNotes(o, labels), n, function(i2) {
+      return { c: px + band * (i2 + 0.5), l: px + band * i2, r: px + band * (i2 + 1) };
+    }, px, pw);
+    var noteTop = top - (titled ? 16 : 0);
+    if (nl.rows) {
+      top += nl.height + 4;
+      ph -= nl.height + 4;
+    }
     var X = function(i2) {
       return px + band * (i2 + 0.5);
     };
@@ -1786,6 +1852,7 @@ function combo(o, th) {
     var Y2 = function(v) {
       return top + ph - (v - sc2.lo) / (sc2.hi - sc2.lo) * ph;
     };
+    if (nl.rows) s += noteMarks(th, nl, noteTop, top + ph);
     sc.ticks.forEach(function(t2, i2) {
       var y = Y(t2);
       s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '"' + (t2 === 0 ? "" : ' stroke-dasharray="2 4"') + "/>" + text(px - 8, y + 3.5, tl[i2], small(th, 10, 'text-anchor="end"')) + (sc2 ? text(px + pw + 8, y + 3.5, tr[i2], small(th, 10, 'text-anchor="start"')) : "");
@@ -1976,11 +2043,15 @@ function waterfall(o, th) {
       return tw(l, 10, true);
     })) : 0;
     var every = labels.length ? Math.max(1, Math.ceil(n * (labMax + 8) / pw)) : 1;
-    var negTag = showTags && sc.lo < 0 ? 14 : 0, topPad = showTags ? 16 : 4;
+    var nl = noteLayout(parseNotes(o, labels), n, function(i) {
+      return { c: px + slot * (i + 0.5), l: px + slot * i, r: px + slot * (i + 1) };
+    }, px, pw);
+    var negTag = showTags && sc.lo < 0 ? 14 : 0, topPad = (showTags ? 16 : 4) + (nl.rows ? nl.height + 4 : 0);
     var py = top0 + topPad, ph = h2 - (top0 - y0) - topPad - (labels.length ? 20 : 2) - negTag;
     var Y = function(x) {
       return py + ph - (x - sc.lo) / (sc.hi - sc.lo) * ph;
     };
+    if (nl.rows) s += noteMarks(th, nl, top0, py + ph);
     sc.ticks.forEach(function(t, i) {
       s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(Y(t)) + '" y2="' + r2(Y(t)) + '" stroke="' + th.grid + '"' + (t === 0 ? "" : ' stroke-dasharray="2 4"') + "/>" + text(px - 8, Y(t) + 3.5, tl[i], small(th, 10, 'text-anchor="end"'));
     });
@@ -2445,7 +2516,9 @@ function scatter(o, th) {
     return names[j] || "Group " + (j + 1);
   };
   var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang };
-  var notes = parseNotes(o, labels);
+  var notes = parseNotes(o, labels).filter(function(nt) {
+    return nt.j == null;
+  });
   var markOf = styleOf(o.markers, SHAPES, "circle"), bg = o.background || th.tile;
   var shapeOf = function(j) {
     var m2 = markOf ? markOf(j) : "circle";

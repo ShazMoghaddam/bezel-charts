@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import math
 
+from .._notes import note_layout, note_marks
 from .._tile import dims, tile
 from .._util import (
-    at, MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, fmtv, gap_note, goal_line, ok, real, goal_text, has, hit, jmax, jmin, legend, lst, new_id,
+    at, MONO, PATTERNS, SANS, N, R, anim, bool_, empty_state, fmt, fmtv, gap_note, goal_line, ok, real, goal_text, has, hit, jmax, jmin, legend, lst, new_id, parse_notes,
     num, palette, pattern, series, small, stat_of, style_of, text, to_number, to_string, trunc, truthy, tw,
 )
 
@@ -218,8 +219,13 @@ def bars(o, th) -> str:
         lab_drop = (
             math.ceil(math.sin(rad) * jmin(lab_max, tw("x" * ANGLE_MAX_CHARS, 10, True))) + 18 if angled else 20
         )
+        # Notes take a strip above the bars, one row per line of labels, so no label sits on a bar.
+        slot_w = w / n
+        nl = note_layout(
+            parse_notes(o, labels), n, lambda i: {"c": x0 + slot_w * (i + 0.5), "l": x0 + slot_w * i, "r": x0 + slot_w * (i + 1)}, x0, w
+        )
         bottom = (lab_drop if labels else 2) + neg_lab
-        top_pad = 16 if bool_(o.showValues) else 4
+        top_pad = (16 if bool_(o.showValues) else 4) + (nl["height"] + 4 if nl["rows"] else 0)
         ph = h - (top0 - y0) - bottom - top_pad
         py = top0 + top_pad
 
@@ -285,6 +291,8 @@ def bars(o, th) -> str:
             vw = tw(sv, size, True)
             boxes.append((cx - vw / 2, ty - 9, vw, 12))
 
+        if nl["rows"]:
+            s += note_marks(th, nl, top0, py + ph)
         s += (
             '<line x1="' + N(x0) + '" x2="' + N(x0 + w) + '" y1="' + R(Y0) + '" y2="' + R(Y0) + '" stroke="'
             + th["grid"] + '"/>'

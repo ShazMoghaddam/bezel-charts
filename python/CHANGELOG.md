@@ -3,6 +3,7 @@
 ## 1.12.0 (unreleased)
 
 - **Fan charts:** `bc.line(df, bands=[{"name": "Good", "low": "p10", "mid": "p50", "high": "p90"}])` adds shaded ranges with a dashed middle line, for forecast scenarios and percentile ranges. Each of `low`, `high` and `mid` is a column name or a list. Columns used by bands are left out of the default `y`, and a single line takes its column's name. Matches the web components byte for byte.
+- **Spans:** `notes={2020: "2020 shock", ("2022", "2023"): "Rate rises"}`, where a pair of keys shades the span between them. Notes and spans now work on bars, combo and waterfall charts too, and crowded labels move down a row instead of overlapping.
 - **Missing values:** `None`, `NaN`, `pd.NA` and anything that isn't a number used to be drawn as 0 with a warning. They're now gaps, exactly as in the web components: lines break, bars leave a marked empty slot, histograms, box plots and scatter plots leave them out, and so on for every chart. There's no warning any more, since nothing is changed behind your back. `chart.alt` says "No data" for each gap.
 - `fill=False` turns off the shading under a line chart's first line, and `fill="all"` shades every line (line, spark).
 - **Waterfall:** a blank (`NaN`) total row shows the running total, so there's no need for `.fillna(0)` on totals. A blank change draws a dashed "No data" step.
