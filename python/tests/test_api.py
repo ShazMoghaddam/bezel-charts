@@ -116,6 +116,47 @@ def test_fill_turns_the_line_shading_off_or_on_for_every_line():
     assert bc.line(df, fill=False).svg == bc.to_svg("line", values="1,3,2|2,2,4", series="a,b", fill="none")
 
 
+def _forecast():
+    return pd.DataFrame({
+        "year": [2022, 2023, 2024, 2025, 2026, 2027],
+        "revenue": [10.0, 12.0, 13.0, 15.0, np.nan, np.nan],
+        "bad_lo": [np.nan, np.nan, np.nan, 15, 13, 11], "bad": [np.nan, np.nan, np.nan, 15, 14, 13], "bad_hi": [np.nan, np.nan, np.nan, 15, 15.5, 16],
+        "good_lo": [np.nan, np.nan, np.nan, 15, 16, 17], "good": [np.nan, np.nan, np.nan, 15, 17, 19], "good_hi": [np.nan, np.nan, np.nan, 15, 18, 21],
+    })
+
+
+BANDS = [{"name": "Bad", "low": "bad_lo", "mid": "bad", "high": "bad_hi"}, {"name": "Good", "low": "good_lo", "mid": "good", "high": "good_hi"}]
+
+
+def test_bands_from_dataframe_columns():
+    chart = bc.line(_forecast(), x="year", bands=BANDS)
+    # Band columns aren't drawn as lines too, and the one line takes its column's name.
+    assert "1 series and 2 bands over 6 points" in chart.svg
+    assert "revenue" in texts(chart.svg) and "Bad" in texts(chart.svg) and "Good" in texts(chart.svg)
+    # The forecast years after the history ends aren't counted as missing.
+    assert "missing" not in chart.svg
+
+
+def test_bands_match_javascript():
+    js = bc.to_svg(
+        "line", values="10,12,13,15,null,null", series="revenue", labels="2022,2023,2024,2025,2026,2027",
+        band_low=",,,15,13,11|,,,15,16,17", band_mid=",,,15,14,13|,,,15,17,19", band_high=",,,15,15.5,16|,,,15,18,21",
+        band_series="Bad,Good",
+    )
+    assert bc.line(_forecast(), x="year", y="revenue", bands=BANDS).svg == js
+
+
+def test_bands_from_lists_and_bad_input():
+    chart = bc.line([1, 2, 3], bands={"low": [None, None, 3, 2], "high": [None, None, 3, 5], "name": "Range"})
+    assert "1 series and 1 band over 4 points" in chart.svg
+    with pytest.raises(TypeError, match="names a column"):
+        bc.line([1, 2, 3], bands=[{"low": "p10", "high": "p90"}])
+    with pytest.raises(KeyError, match="nope"):
+        bc.line(_forecast(), x="year", bands=[{"low": "nope", "high": "bad_hi"}])
+    with pytest.raises(TypeError, match="not \\['lo'\\]"):
+        bc.line([1, 2], bands=[{"lo": [1, 2]}])
+
+
 def test_blank_waterfall_total_shows_the_running_total():
     df = pd.DataFrame({"step": ["Start", "Sales", "Costs", "Profit"], "v": [120, 30, -12, np.nan]})
     chart = bc.waterfall(df, x="step", y="v", totals=["Start", "Profit"])

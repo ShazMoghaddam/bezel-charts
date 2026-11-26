@@ -172,6 +172,27 @@ One or more lines over time, with an axis, a legend and notes on key moments. Se
 
 **Dates.** With `dates`, a reading on 1 January, one on 2 January and one on 1 March sit where they fall, instead of evenly spaced. The axis picks its own step for the span and the width: hours (`14:00`), days or weeks (`5 Jan`), months (`Jan 2026`, then `Feb`, `Mar`), or years. Tooltips and the data table show the full date, and `labels`, if you give them, still name the points. Dates are read as written, with no time zone conversion.
 
+**Fan charts.** Bands add shaded ranges, each with an optional dashed middle line: forecast scenarios that carry on from a history line, or percentile ranges such as 10th to 90th. Give each band's low and high values, and its middle if it has one, with bands separated by `|`. A band is blank where it has no value, so history and forecast can share one set of labels. To join the forecast onto the history, start each band at the last actual value:
+
+```html
+<bezel-line heading="Revenue forecast" series="Actual" prefix="$"
+  labels="2021,2022,2023,2024,2025,2026,2027,2028"
+  values="37,34,41,47,52,null,null,null"
+  band-series="Bad,Middling,Good"
+  band-low="  ,,,,52,48,45,42 | ,,,,52,52,53,54 | ,,,,52,55,59,63"
+  band-mid="  ,,,,52,50,49,47 | ,,,,52,54,56,59 | ,,,,52,56,61,66"
+  band-high=" ,,,,52,52,52,53 | ,,,,52,56,60,64 | ,,,,52,58,64,70"></bezel-line>
+```
+
+| Attribute     | Values                                                         | Default |
+| ------------- | -------------------------------------------------------------- | ------- |
+| `band-low`, `band-high` | each band's range, bands separated by `\|`          |         |
+| `band-mid`    | each band's middle line, optional                              |         |
+| `band-series` | band names for the legend and tooltips                         | `Band 1` |
+| `band-color`  | one colour per band. Give nested percentile bands the same colour so they deepen towards the middle | the colours after the lines' |
+
+From JavaScript, set `chart.data = { bands: [{ name, low, high, mid, color }] }` instead. Each band is shaded with a faint edge, and middle lines take turns at dashed, dotted and dash-dot, so bands differ by more than colour. The soft fill under the first line is off when there are bands, unless you set `fill`. Tooltips give each band's range and middle, such as "Good: 54.6 to 57.9, mid 56.2", the data table gets low, middle and high columns, and the years a line stops for its forecast aren't counted as missing.
+
 **Log scale.** `log` suits values that grow fast, like users or prices over years: 100, 1,000, 10k and 100k sit evenly apart. Zero and negative values have no place on a log scale, so the line leaves a gap there, and the tooltip and data table still show them.
 
 ### `<bezel-area>`

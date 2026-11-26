@@ -155,18 +155,65 @@ def spark(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | Non
     return Chart("spark", _options(options, values[0], None, lbls))
 
 
-def line(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+def line(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, bands: Any = None, **options: Any) -> Chart:
     """A line chart with one or more series, a value axis and labels along the bottom.
 
     ``data`` can be a DataFrame (``x=`` for labels, ``y=`` for one column or a list of them; by default
     every numeric column), a Series, a dict of name to values, a list of lists, or a single list.
     When ``x=`` (or the index) holds real dates, points sit where they fall in time and the axis picks its own
     date steps. ``x_format`` (for example ``"%b %Y"``) still names the points in tooltips.
+
+    ``bands=`` adds shaded ranges with an optional middle line, for fan charts such as forecast scenarios. Give a
+    list of dicts with ``low``, ``high`` and optionally ``mid``, ``name`` and ``color``. Each of ``low``, ``high`` and
+    ``mid`` is a column name in ``data`` or a list of numbers, with ``None`` or ``NaN`` where the band has no value::
+
+        bc.line(df, x="year", y="revenue", bands=[
+            {"name": "Bad", "low": "bad_lo", "mid": "bad", "high": "bad_hi"},
+            {"name": "Good", "low": "good_lo", "mid": "good", "high": "good_hi"},
+        ])
+
+    Columns used by bands are left out of the default ``y``, so they aren't drawn as lines too.
     """
+    if bands is not None:
+        options = {**options, "bands": _bands(data, bands)}
     if data is None:
         return Chart("line", _options(options, None, None, None))
+    if bands is not None and y is None and _data._is_frame(data):
+        used = {v for b in bands if isinstance(b, Mapping) for k, v in b.items() if k in ("low", "high", "mid") and isinstance(v, str)}
+        y = [c for c in _data._numeric_columns(data, x) if c not in used]
     values, names, lbls = _data.prepare(data, x, y, x_format)
+    if bands is not None and not names and "series" not in options:
+        # With bands there's always a legend, so a single line takes its column's name rather than "Series 1".
+        one = y if isinstance(y, str) else y[0] if isinstance(y, list) and len(y) == 1 else getattr(data, "name", None)
+        names = [_data.label(one)] if one is not None and len(values) == 1 else None
     return Chart("line", _options(_dated(options, data, x, x_format, lbls), values, names, None if _undated(options, data, x, x_format) else lbls))
+
+
+def _bands(data, bands) -> list:
+    """Band dicts with their columns looked up in data and every value as a number, NaN where it's missing."""
+    if isinstance(bands, Mapping):
+        bands = [bands]
+    out = []
+    for b in bands:
+        if not isinstance(b, Mapping):
+            raise TypeError("bezel_charts: each band is a dict such as {'low': 'p10', 'high': 'p90', 'mid': 'p50', 'name': 'Middling'}.")
+        unknown = set(b) - {"low", "high", "mid", "name", "color"}
+        if unknown:
+            raise TypeError(f"bezel_charts: a band takes low, high, mid, name and color, not {sorted(unknown)}.")
+        band = {k: b[k] for k in ("name", "color") if b.get(k) is not None}
+        for k in ("low", "high", "mid"):
+            v = b.get(k)
+            if v is None:
+                continue
+            if isinstance(v, str):
+                if not _data._is_frame(data):
+                    raise TypeError(f"bezel_charts: band {k}={v!r} names a column, so pass a DataFrame as data.")
+                if v not in data.columns:
+                    raise KeyError(f"bezel_charts: column {v!r} not found. Columns: {list(data.columns)}")
+                v = data[v]
+            band[k] = _data.numbers(v, f"band {k}")
+        out.append(band)
+    return out
 
 
 def area(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:

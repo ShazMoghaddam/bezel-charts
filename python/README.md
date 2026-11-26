@@ -92,6 +92,26 @@ bc.line(df.set_index("date")["users"], log=True)     # a date index works too
 
 Tooltips show the full date. Pass `x_format` to name the points your way instead, and the axis keeps its date steps. Text that only looks like a date stays a label.
 
+### Fan charts
+
+Bands add shaded ranges with a dashed middle line, for forecast scenarios that carry on from a history line, or percentile ranges. Each band names its columns, or takes lists, with `NaN` where it has no value. Start each band at the last actual value to join it on:
+
+```python
+bc.line(df, x="year", y="revenue", prefix="$", bands=[
+    {"name": "Bad", "low": "bad_lo", "mid": "bad", "high": "bad_hi"},
+    {"name": "Middling", "low": "mid_lo", "mid": "mid", "high": "mid_hi"},
+    {"name": "Good", "low": "good_lo", "mid": "good", "high": "good_hi"},
+])
+
+# Nested percentile bands in one colour deepen towards the middle
+bc.line(history, bands=[
+    {"name": "10th to 90th", "low": p10, "high": p90, "color": "#6E70F0"},
+    {"name": "25th to 75th", "low": p25, "mid": p50, "high": p75, "color": "#6E70F0"},
+])
+```
+
+Columns used by bands are left out of the default `y`, so they aren't drawn as lines too, and a single line takes its column's name for the legend.
+
 ### Area
 
 ```python

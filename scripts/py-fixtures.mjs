@@ -362,6 +362,20 @@ CASES.line.push(
 );
 CASES.spark.push({ values: '3,5,4', fill: 'none' }, { values: '3,,5,4', fill: 'off', theme: 'light' });
 
+// Bands (1.12.0): fan charts, from attributes and from a bands array.
+const hist = '24,26,25,31,29,37,34,41,47,52', ahead = ',,,,,,,,,52';
+CASES.line.push(
+  { values: hist + ',null,null,null', labels: '2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026,2027,2028', series: 'Actual',
+    'band-low': ahead + ',49,46,44|' + ahead + ',53,54,55|' + ahead + ',55,58,61', 'band-high': ahead + ',52,52,53|' + ahead + ',56,59,62|' + ahead + ',58,64,70',
+    'band-mid': ahead + ',51,49,48|' + ahead + ',54,56,58|' + ahead + ',56,61,66', 'band-series': 'Bad,Middling,Good', prefix: '$', notes: '2020:2020 shock', height: 240 },
+  { values: [1, 2, 3, null, null], bands: [{ name: '10th to 90th', low: [null, null, 3, 2.5, 2], high: [null, null, 3, 4, 5], color: '#6E70F0' },
+    { name: '25th to 75th', low: [null, null, 3, 2.8, 2.6], high: [null, null, 3, 3.6, 4.2], mid: [null, null, 3, 3.2, 3.4], color: '#6E70F0' }], theme: 'light', animate: true },
+  { values: '5,6,7', 'band-low': '4,5,6', 'band-high': '6,7,8', straight: '', fill: 'first' },
+  { 'band-mid': '1,2,3', 'band-series': 'Only a middle line' },
+  { values: '1,10,100,1000', log: '', 'band-low': '0.5,5,,500', 'band-high': '2,20,,2000', markers: '', dash: '' },
+  { values: '3,4', 'band-low': '1,2,3,4,5', 'band-high': '5,6,7,8,9', 'band-color': '#ff6600', min: 2, max: 8, goal: 6 },
+);
+
 
 for (const [type, cases] of Object.entries(CASES)) {
   const rows = cases.map((options) => ({

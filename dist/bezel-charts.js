@@ -451,7 +451,12 @@ var ATTRIBUTES = [
   "zone-labels",
   "totals",
   "clickable",
-  "fill"
+  "fill",
+  "band-low",
+  "band-high",
+  "band-mid",
+  "band-series",
+  "band-color"
 ];
 var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}.c{outline:none}:host([clickable]) .bzc-hit{cursor:pointer}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}`;
 var STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
@@ -1057,33 +1062,139 @@ function loneDots(runs, c, all) {
   }).join("");
 }
 
+// src/core/bands.js
+var MID_DASHES = ["dashed", "dotted", "dashdot"];
+function bandsOf(o, pal, k) {
+  var B;
+  if (Array.isArray(o.bands)) {
+    B = o.bands.filter(function(b) {
+      return b && typeof b === "object";
+    }).map(function(b) {
+      return { low: nums(b.low), high: nums(b.high), mid: nums(b.mid), name: b.name, color: b.color };
+    });
+  } else {
+    var L = series(o.bandLow), H = series(o.bandHigh), M = series(o.bandMid), names = list(o.bandSeries), cols = list(o.bandColor);
+    B = [];
+    for (var j = 0; j < Math.max(L.length, H.length, M.length); j++) B.push({ low: L[j] || [], high: H[j] || [], mid: M[j] || [], name: names[j], color: cols[j] });
+  }
+  return B.map(function(b, j2) {
+    return {
+      low: b.low,
+      high: b.high,
+      mid: b.mid,
+      name: has(b.name) ? String(b.name) : "Band " + (j2 + 1),
+      color: has(b.color) ? String(b.color) : pal[(k + j2) % pal.length],
+      dash: MID_DASHES[j2 % MID_DASHES.length],
+      n: Math.max(b.low.length, b.high.length, b.mid.length)
+    };
+  });
+}
+function bandAt(B, i) {
+  return B.some(function(b) {
+    return ok(b.low[i]) || ok(b.high[i]) || ok(b.mid[i]);
+  });
+}
+function bandValues(B) {
+  return [].concat.apply([], B.map(function(b) {
+    return b.low.concat(b.high, b.mid);
+  }));
+}
+function bandKey(b, x, y) {
+  return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="18" height="10" rx="2" fill="' + b.color + '" fill-opacity=".28"/>' + (!b.mid.some(ok) ? "" : '<line x1="' + r2(x + 1) + '" x2="' + r2(x + 17) + '" y1="' + r2(y + 6) + '" y2="' + r2(y + 6) + '" stroke="' + b.color + '" stroke-width="2" stroke-dasharray="' + DASHES[b.dash] + '"/>');
+}
+function drawBands(o, B, X, Y, straight, bg, k0) {
+  var s = "";
+  B.forEach(function(b, j) {
+    var hi = [], lo = [];
+    for (var i = 0; i < b.n; i++) {
+      hi.push([X(i), Y(b.high[i])]);
+      lo.push([X(i), Y(b.low[i])]);
+    }
+    var runs = runsOf(hi.map(function(p, i2) {
+      return [i2, isFinite(p[1]) && isFinite(lo[i2][1]) ? 1 : NaN];
+    }));
+    var fill = "", edge = "";
+    runs.forEach(function(r) {
+      var a = r[0][0], z = r[r.length - 1][0] + 1, top = hi.slice(a, z), base = lo.slice(a, z);
+      fill += pathOf(top, straight) + pathOf(base.slice().reverse(), straight).replace(/^M/, "L") + "Z";
+      edge += pathOf(top, straight) + pathOf(base, straight);
+    });
+    if (fill) {
+      s += '<path d="' + fill + '" fill="' + b.color + '" fill-opacity=".2"' + anim(o, "bzc-a", j * 0.1) + '/><path d="' + edge + '" fill="none" stroke="' + b.color + '" stroke-opacity=".5" stroke-width="1"' + anim(o, "bzc-a", j * 0.1) + "/>";
+    }
+  });
+  B.forEach(function(b, j) {
+    var mid = runsOf(b.mid.map(function(v, i) {
+      return [X(i), Y(v)];
+    }));
+    if (!mid.length) return;
+    var e = mid[mid.length - 1], last = e[e.length - 1];
+    s += seriesLine(o, mid.map(function(r) {
+      return pathOf(r, straight);
+    }).join(""), b.color, k0 + j, DASHES[b.dash]) + '<circle cx="' + r2(last[0]) + '" cy="' + r2(last[1]) + '" r="3.5" fill="' + b.color + '" stroke="' + bg + '" stroke-width="2"/>';
+  });
+  return s;
+}
+function bandTip(b, i, o) {
+  var lo = b.low[i], hi = b.high[i], mid = b.mid[i], range = ok(lo) && ok(hi);
+  if (!range && !ok(mid)) return "";
+  if (range && lo === hi && (!ok(mid) || mid === lo)) return "\n" + b.name + ": " + fmt(lo, o);
+  return "\n" + b.name + ": " + (range ? fmt(lo, o) + " to " + fmt(hi, o) : "") + (ok(mid) ? (range ? ", mid " : "mid ") + fmt(mid, o) : "");
+}
+function bandTable(t, B, o, n) {
+  B.forEach(function(b) {
+    var mids = b.mid.some(ok);
+    t.head.push(b.name + " low");
+    if (mids) t.head.push(b.name + " mid");
+    t.head.push(b.name + " high");
+    for (var i = 0; i < n; i++) {
+      var cell = function(v) {
+        return i < v.length ? fmt(v[i], o) : "";
+      };
+      t.rows[i].push(cell(b.low));
+      if (mids) t.rows[i].push(cell(b.mid));
+      t.rows[i].push(cell(b.high));
+    }
+  });
+  return t;
+}
+
 // src/charts/line.js
 function line(o, th) {
-  var S = series(o.values), names = list(o.series), labels = list(o.labels), pal = palette(o, th);
+  var S = series(o.values), names = list(o.series), labels = list(o.labels), pal = palette(o, th), B = bandsOf(o, pal, S.length);
   var h = num(o.height, 170), n = Math.max.apply(null, [0].concat(S.map(function(s) {
     return s.length;
+  }), B.map(function(b) {
+    return b.n;
   })));
-  var notes = parseNotes(o, labels), multi = S.length > 1 || names.length > 0;
+  var notes = parseNotes(o, labels), multi = S.length > 1 || names.length > 0 || B.length > 0;
   var st = statOf(S[0] || [], o, "");
   var dashOf = styleOf(o.dash, Object.keys(DASHES), "solid"), markOf = styleOf(o.markers, SHAPES, "none");
   var bg = o.background || th.tile;
-  var key = (dashOf || markOf) && lineKey(pal, dashOf, markOf, bg);
+  var key = (dashOf || markOf || B.length) && lineKey(pal, dashOf, markOf, bg);
+  if (B.length) key = /* @__PURE__ */ function(lk) {
+    return function(k, x, y) {
+      return k < S.length ? lk(k, x, y) : bandKey(B[k - S.length], x, y);
+    };
+  }(key);
   var nameOf = function(k) {
     return names[k] || "Series " + (k + 1);
   };
   var T = parseDates(o, n), timed = T && hasTimes(T), lang = o.lang || "en-GB";
-  var flat = [].concat.apply([], S), all = real(flat), pos = all.filter(function(v) {
+  var flat = [].concat.apply([], S), all = real(flat.concat(bandValues(B))), pos = all.filter(function(v) {
     return v > 0;
   });
   if (has(o.goal) && +o.goal > 0) pos.push(+o.goal);
-  var log = bool(o.log) && pos.length > 0, fill = fillOf(o);
+  var log = bool(o.log) && pos.length > 0, fill = B.length && !has(o.fill) ? "none" : fillOf(o);
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!all.length) return emptyState(th, x0, y0, w, h2);
     var f = xyFrame(o, th, {
       n,
       names: multi ? S.map(function(_, k) {
         return nameOf(k);
-      }) : null,
+      }).concat(B.map(function(b) {
+        return b.name;
+      })) : null,
       pal,
       key,
       kw: key && 24,
@@ -1103,6 +1214,7 @@ function line(o, th) {
       posHi: log ? Math.max.apply(null, pos) : 0
     }, x0, y0, w, h2);
     var s = f.svg + (f.clip ? "<g" + f.clip + ">" : ""), X = f.X, Y = f.Y, px = f.px, pw = f.pw, top = f.top, ph = f.ph;
+    if (B.length) s += drawBands(o, B, X, Y, bool(o.straight), bg, S.length);
     S.forEach(function(v, k) {
       var c = pal[k % pal.length];
       var P = v.map(function(y, i) {
@@ -1134,16 +1246,33 @@ function line(o, th) {
     });
     return s + (f.clip ? "</g>" : "") + xyFinish(o, th, f, n, function(j) {
       var tip = pointName(labels, T, j, lang, timed);
+      var tips = B.map(function(b) {
+        return bandTip(b, j, o);
+      }).join("");
       S.forEach(function(v, k) {
-        if (j < v.length) tip += "\n" + (multi ? nameOf(k) + ": " : "") + fmtv(v[j], o);
+        if (j < v.length && !(tips && !isFinite(v[j]))) tip += "\n" + (multi ? nameOf(k) + ": " : "") + fmtv(v[j], o);
       });
-      return tip;
+      return tip + tips;
     }, S);
-  }, { stat: st, summary: S.length + " series over " + n + " points" + gapNote(flat) });
+  }, {
+    stat: st,
+    // A line that stops where the bands carry on, such as history before a forecast, isn't missing anything there.
+    summary: S.length + " series" + (B.length ? " and " + B.length + (B.length === 1 ? " band" : " bands") : "") + " over " + n + " points" + gapNote(B.length ? [].concat.apply([], S.map(function(v) {
+      return v.filter(function(_, i) {
+        return !bandAt(B, i);
+      });
+    })) : flat)
+  });
 }
 line.table = function(o) {
-  var t = seriesTable(o);
-  return datedTable(t, o, t.rows.length);
+  var t = seriesTable(o), S = series(o.values), B = bandsOf(o, [""], S.length), labels = list(o.labels);
+  var n = Math.max.apply(null, [t.rows.length].concat(B.map(function(b) {
+    return b.n;
+  })));
+  for (var i = t.rows.length; i < n; i++) t.rows.push([labels[i] || "#" + (i + 1)].concat(S.map(function() {
+    return "";
+  })));
+  return datedTable(B.length ? bandTable(t, B, o, n) : t, o, n);
 };
 
 // src/entries/line.js

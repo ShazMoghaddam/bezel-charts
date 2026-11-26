@@ -2,8 +2,9 @@
 
 ## 1.12.0 (unreleased)
 
-Missing values are gaps, never 0, and line shading you can turn off.
+Fan charts, missing values as gaps, and line shading you can turn off.
 
+- **Fan charts:** bands on line charts, each a shaded range between a low and a high series with an optional dashed middle line. Made for forecast scenarios (bad, middling, good) that carry on from a history line, and percentile ranges such as 10th to 90th. Set them with `band-low`, `band-high`, `band-mid`, `band-series` and `band-color`, bands separated by `|`, or from JavaScript as `bands: [{ name, low, high, mid, color }]`. Bands sit under the lines with a faint edge, middle lines take turns at dashed, dotted and dash-dot so they differ by more than colour, and the legend, tooltips ("Good: 54.6 to 57.9, mid 56.2"), summary and data table all include them. The years a line stops for its forecast aren't counted as missing. See [Fan charts](README.md#bezel-line).
 - **Missing values:** every chart used to draw a missing value as 0, which made a gap in the data look like a real drop. Now a blank slot (`4,,6`), `null`, `NaN`, `-` or anything else that isn't a number is a gap, as are `null`, `undefined` and `NaN` in arrays. Each chart shows it in its own way: lines and areas break, bars leave a dashed slot on the zero line, a waterfall draws a dashed "No data" step and its later totals say what they leave out, histograms, box plots and scatter plots leave it out and say how many, rings, progress bars and bullet rows say "No data", donuts drop the slice, and the heatmap draws an empty outline. Tooltips say "No data", summaries count the gaps and `bezel-click` gives `null`. See [Missing values](README.md#missing-values).
 - `fill` on line charts: the soft shading always sat under the first line and couldn't be turned off. `fill="none"` (or `false`) turns it off, `fill="all"` shades every line, more lightly so they stay readable together, and `fill="first"` is the default, so existing charts don't change. Sparklines take `fill="none"` too. The Studio has a setting for it.
 - **Changed:** `4,,6` used to be read as `4,6`, which quietly moved every later value onto the wrong label. The blank is now a gap. A trailing comma is still ignored.
@@ -11,7 +12,7 @@ Missing values are gaps, never 0, and line shading you can turn off.
 - A stacked total with a missing part is unknown rather than a smaller number, and a stacked area breaks at that column.
 - A blank waterfall total shows the running total, since a total needs no value of its own.
 - The Studio keeps blank cells from a file as gaps, keeps `4,,6` typed into a field, and no longer warns that a gap is drawn as 0.
-- Size: gap handling adds about 1.4 kB to the full bundle (28.9 kB), spread across every chart. The full, line, waterfall, bullet and histogram budgets go up by 1 kB.
+- Size: gap handling adds about 1.4 kB to the full bundle, spread across every chart, and bands add about 1.2 kB, which only line charts load. The full bundle is 30.1 kB. Budgets: full 31 kB, line 15 kB, and waterfall, bullet and histogram 1 kB more each.
 
 ## 1.11.0 (2026-11-16)
 
