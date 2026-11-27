@@ -131,9 +131,10 @@ function lin(x) { return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055
  */
 function labelIn(name, value, share, x, y, w, h, ink) {
   if (w < 36 || h < 20) return '';
+  // Names are semi-bold, about a tenth wider than the plain text tw() measures, so they're measured at 13.2px.
   var room = w - 12, nm = String(name);
-  while (nm.length > 1 && tw(nm, 12) > room) nm = nm.slice(0, -2) + '…';
-  if (tw(nm, 12) > room) return '';
+  while (nm.length > 1 && tw(nm, 13.2) > room) nm = nm.slice(0, -2) + '…';
+  if (tw(nm, 13.2) > room) return '';
   var s = text(x + 6, y + 15, nm, 'fill="' + ink + '" font-family="' + SANS + '" font-size="12" font-weight="600"');
   if (h >= 36) {
     var both = value + ' · ' + share + '%', one = share + '%';

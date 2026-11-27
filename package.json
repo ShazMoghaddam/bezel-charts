@@ -1,6 +1,6 @@
 {
   "name": "bezel-charts",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "Small, polished charts as zero-dependency web components. Sparklines, lines, areas, bars, bar and line combos, waterfalls, histograms, box plots, rings, donuts, gauges, progress bars, bullet charts, heatmaps and treemaps, with fan charts, shaded spans and one-click static SVG export for READMEs.",
   "type": "module",
   "main": "dist/bezel-charts.js",

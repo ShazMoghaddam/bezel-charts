@@ -116,11 +116,12 @@ def _label_in(name, value, share, x, y, w, h, ink) -> str:
     """A tile's name and its value and share, top left, when they fit."""
     if w < 36 or h < 20:
         return ""
+    # Names are semi-bold, about a tenth wider than the plain text tw() measures, so they're measured at 13.2px.
     room = w - 12
     nm = to_string(name)
-    while len(nm) > 1 and tw(nm, 12) > room:
+    while len(nm) > 1 and tw(nm, 13.2) > room:
         nm = nm[:-2] + "…"
-    if tw(nm, 12) > room:
+    if tw(nm, 13.2) > room:
         return ""
     s = text(x + 6, y + 15, nm, 'fill="' + ink + '" font-family="' + SANS + '" font-size="12" font-weight="600"')
     if h >= 36:

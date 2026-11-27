@@ -102,6 +102,8 @@ bc.treemap(spend.groupby("category")["amount"].sum(), prefix="£")         # a S
 
 `by=` is a column name or a list with one group per item. Without it, each tile has its own colour. Zero, negative and missing values are left out and counted in the summary.
 
+![A treemap of a portfolio's holdings in coloured blocks by sector: Tech, Finance, Health and Consumer, with each tile's name, weight and share](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/treemap.svg)
+
 ### Fan charts
 
 Bands add shaded ranges with a dashed middle line, for forecast scenarios that carry on from a history line, or percentile ranges. Each band names its columns, or takes lists, with `NaN` where it has no value. Start each band at the last actual value to join it on:
@@ -121,6 +123,8 @@ bc.line(history, bands=[
 ```
 
 Columns used by bands are left out of the default `y`, so they aren't drawn as lines too, and a single line takes its column's name for the legend.
+
+![A fan chart of revenue from 2016 to 2025, then bad, middling and good forecast bands to 2030, each a shaded range with a dashed middle line, with a 2020 shock marker and a shaded span for rate rises](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/fan.svg)
 
 ### Area
 

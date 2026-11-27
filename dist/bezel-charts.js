@@ -1,4 +1,4 @@
-/*! Bezel Charts v1.11.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.12.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/util.js
 var SANS = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -3257,8 +3257,8 @@ function lin(x) {
 function labelIn(name, value, share, x, y, w, h, ink) {
   if (w < 36 || h < 20) return "";
   var room = w - 12, nm = String(name);
-  while (nm.length > 1 && tw(nm, 12) > room) nm = nm.slice(0, -2) + "\u2026";
-  if (tw(nm, 12) > room) return "";
+  while (nm.length > 1 && tw(nm, 13.2) > room) nm = nm.slice(0, -2) + "\u2026";
+  if (tw(nm, 13.2) > room) return "";
   var s = text(x + 6, y + 15, nm, 'fill="' + ink + '" font-family="' + SANS + '" font-size="12" font-weight="600"');
   if (h >= 36) {
     var both = value + " \xB7 " + share + "%", one = share + "%";
@@ -3288,7 +3288,7 @@ register("treemap", treemap);
 define("treemap");
 
 // src/index.js
-var version = "1.11.0";
+var version = "1.12.0";
 var types = NAMES.slice();
 export {
   BezelChart,

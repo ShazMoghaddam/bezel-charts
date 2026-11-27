@@ -1,24 +1,48 @@
 # Changelog
 
-## 1.12.0 (unreleased)
+## 1.12.0 (2026-11-27)
 
-A treemap, fan charts, shaded spans, missing values as gaps, and line shading you can turn off.
+Fan charts, a treemap, shaded spans, and missing values shown as gaps instead of 0.
 
-- **Treemap:** a new chart, `<bezel-treemap>`, for parts of a whole with too many parts for a donut, such as holdings by sector. `groups` puts each group in a block of its own colour with its items inside, and a legend. Tiles are squarified so they stay easy to compare, smaller tiles in a group step down a little in strength, and each tile shows its name, value and share when they fit, in white or near-black, whichever stands out more. Zero, negative and missing values are left out and counted. Tooltips, the data table, the summary and the arrow keys (biggest to smallest) all work as on the other charts. In the Studio too, with a sample portfolio and file import that groups by a text column. Import it on its own as `bezel-charts/treemap`. That makes seventeen charts.
-- **Fan charts:** bands on line charts, each a shaded range between a low and a high series with an optional dashed middle line. Made for forecast scenarios (bad, middling, good) that carry on from a history line, and percentile ranges such as 10th to 90th. Set them with `band-low`, `band-high`, `band-mid`, `band-series` and `band-color`, bands separated by `|`, or from JavaScript as `bands: [{ name, low, high, mid, color }]`. Bands sit under the lines with a faint edge, middle lines take turns at dashed, dotted and dash-dot so they differ by more than colour, and the legend, tooltips ("Good: 54.6 to 57.9, mid 56.2"), summary and data table all include them. The years a line stops for its forecast aren't counted as missing. See [Fan charts](README.md#bezel-line).
-- **Spans:** `notes` can shade a stretch as well as mark a point: `notes="2020:2020 shock;2022..2023:Rate rises"`. Spans have a faint edge so they show in greyscale, and sit behind the data.
-- **Notes on more charts:** bars (upright), combo and waterfall charts now take `notes` and spans. A span covers whole columns, and labels get their own strip above the bars. The combo chart used to ignore `notes`, and bars ignored them too.
-- **Labels that don't overlap:** notes that would sit on each other move down a row, up to three, and a long label stays inside the chart instead of running off the edge. Notes that never overlapped are drawn exactly as before.
-- **Changed:** the bullet chart's legend, tooltips and data table call the bar "Value" by default instead of "Actual", which read oddly for scores, forecasts and budgets. Name both with `series="This quarter,Plan"`, now documented properly.
-- **Docs:** the heatmap is now described as what it is, a calendar heatmap with one square per day, with how its shading works, its `color` option, and a note that it isn't a grid of rows by columns. A grid heatmap is planned as its own chart for 1.13.0. The Studio and gallery call it "Calendar heatmap"; the tag stays `<bezel-heatmap>`.
-- **Missing values:** every chart used to draw a missing value as 0, which made a gap in the data look like a real drop. Now a blank slot (`4,,6`), `null`, `NaN`, `-` or anything else that isn't a number is a gap, as are `null`, `undefined` and `NaN` in arrays. Each chart shows it in its own way: lines and areas break, bars leave a dashed slot on the zero line, a waterfall draws a dashed "No data" step and its later totals say what they leave out, histograms, box plots and scatter plots leave it out and say how many, rings, progress bars and bullet rows say "No data", donuts drop the slice, and the heatmap draws an empty outline. Tooltips say "No data", summaries count the gaps and `bezel-click` gives `null`. See [Missing values](README.md#missing-values).
-- `fill` on line charts: the soft shading always sat under the first line and couldn't be turned off. `fill="none"` (or `false`) turns it off, `fill="all"` shades every line, more lightly so they stay readable together, and `fill="first"` is the default, so existing charts don't change. Sparklines take `fill="none"` too. The Studio has a setting for it.
-- **Changed:** `4,,6` used to be read as `4,6`, which quietly moved every later value onto the wrong label. The blank is now a gap. A trailing comma is still ignored.
-- **Changed:** a word in a number list (such as `targets="7,nope"`) used to count as 0. It's now a gap, so that bullet row has no target.
-- A stacked total with a missing part is unknown rather than a smaller number, and a stacked area breaks at that column.
-- A blank waterfall total shows the running total, since a total needs no value of its own.
-- The Studio keeps blank cells from a file as gaps, keeps `4,,6` typed into a field, and no longer warns that a gap is drawn as 0.
-- Size: gap handling adds about 1.4 kB to the full bundle, spread across every chart; bands about 1.2 kB, which only line charts load; and notes and spans about 0.7 kB, shared by the six charts that use them. The full bundle is 30.8 kB.
+### New
+
+- **Fan charts:** bands on line charts, each a shaded range between a low and a high series with an optional dashed middle line. Made for forecast scenarios (bad, middling, good) that carry on from a history line, and percentile ranges such as 10th to 90th. Set them with `band-low`, `band-high`, `band-mid`, `band-series` and `band-color`, bands separated by `|`, or from JavaScript as `bands: [{ name, low, high, mid, color }]`. Bands sit under the lines with a faint edge, and middle lines take turns at dashed, dotted and dash-dot, so bands differ by more than colour. The legend, tooltips ("Good: 54.6 to 57.9, mid 56.2"), summary and data table all include them, and the years a line stops for its forecast aren't counted as missing. In the Studio too. See [Fan charts](README.md#bezel-line).
+- **Treemap:** a new chart, `<bezel-treemap>`, for parts of a whole with too many parts for a donut, such as holdings by sector. `groups` puts each group in a block of its own colour with its items inside, with a legend. Tiles are squarified so they stay easy to compare, smaller tiles in a group step down a little in strength, and each tile shows its name, value and share when they fit, in white or near-black, whichever stands out more. Zero, negative and missing values are left out and counted. Tooltips, the data table, the summary and the arrow keys (biggest to smallest) work as on the other charts. In the Studio, with a sample portfolio and file import that groups by a text column, and on its own as `bezel-charts/treemap`. That makes seventeen charts.
+- **Shaded spans:** `notes` can shade a stretch as well as mark a point: `notes="2020:2020 shock;2022..2023:Rate rises"`. Spans sit behind the data, with a faint edge so they show in greyscale and print.
+- **Notes on more charts:** upright bars, combo charts and waterfalls now take `notes` and spans. A span covers whole columns, and labels get their own strip above the bars so none sits on a bar.
+- **`fill` on line charts:** `fill="none"` (or `false`) turns off the soft shading under the first line, `fill="all"` shades every line, more lightly so they stay readable together, and `fill="first"` is the default. Sparklines take `fill="none"` too. In the Studio as "Shading under the line".
+
+### Missing values are gaps, never 0
+
+Every chart used to draw a missing value as 0, which made a gap in the data look like a real drop. Now a blank slot (`4,,6`), `null`, `NaN`, `-` or anything else that isn't a number is a gap, as are `null`, `undefined` and `NaN` in arrays. Each chart shows it in its own way:
+
+- lines and areas break, with a dot on a value alone between gaps; a stacked area breaks the whole column, since its total isn't known
+- bars leave a dashed slot on the zero line, and a stacked total with a missing part is unknown rather than smaller
+- a waterfall draws a dashed "No data" step that keeps the level, and later totals say how many steps they leave out; a blank total just shows the running total
+- histograms, box plots and scatter plots leave gaps out and say how many
+- rings, progress bars and bullet rows say "No data", donuts drop the slice, and the heatmap draws an empty dashed outline
+
+Tooltips say "No data", summaries count the gaps, the data table shows "–" and `bezel-click` gives `null`. The Studio keeps blank cells from a file as gaps and keeps `4,,6` typed into a field. See [Missing values](README.md#missing-values).
+
+### Changed
+
+These change how some existing charts look. None changes the API.
+
+- `4,,6` used to be read as `4,6`, which quietly moved every later value onto the wrong label. The blank is now a gap. A trailing comma is still ignored.
+- A word in a number list (such as `targets="7,nope"`) used to count as 0. It's now a gap, so that bullet row has no target.
+- Bullet charts call the bar "Value" by default instead of "Actual", which read oddly for scores, forecasts and budgets. `series="This quarter,Plan"` names both, now documented properly.
+- Bars used to ignore `notes`, and so did the combo chart. They now draw them.
+- Notes that would overlap move down a row, up to three, and a long label stays inside the chart. Notes that never overlapped are drawn exactly as before.
+
+### Docs
+
+- The heatmap is described as what it is: a calendar heatmap, one square per day, with how its shading works, its `color` option, and a note that it isn't a grid of rows by columns. A grid heatmap is planned as its own chart for 1.13.0. The Studio and gallery call it "Calendar heatmap"; the tag stays `<bezel-heatmap>`.
+- New README image (`docs/bezel-charts-17.png`) and social preview, with the fan chart and treemap. The old `bezel-charts-16.png` stays, as the READMEs of published versions point at it.
+- The gallery said "Fourteen" chart types; it now says seventeen.
+
+### Size
+
+The full bundle is 32.4 kB gzipped, up from 27.3 kB: about 1.4 kB for gap handling across every chart, 1.5 kB for the treemap, 1.2 kB for bands, which only line charts load, and 0.7 kB for notes and spans, shared by the six charts that use them. A page that loads one chart takes 8.5 to 15.3 kB. Every budget is now the next whole kB with at least 0.3 kB of room.
 
 ## 1.11.0 (2026-11-16)
 

@@ -1,17 +1,19 @@
 # Changelog (Python package)
 
-## 1.12.0 (unreleased)
+## 1.12.0 (2026-11-27)
 
-- **Treemap:** `bc.treemap(df, x="holding", y="weight", by="sector")`, the seventeenth chart. `by=` is a column name or a list; without it, each tile has its own colour. Matches the web components byte for byte.
-- **Fan charts:** `bc.line(df, bands=[{"name": "Good", "low": "p10", "mid": "p50", "high": "p90"}])` adds shaded ranges with a dashed middle line, for forecast scenarios and percentile ranges. Each of `low`, `high` and `mid` is a column name or a list. Columns used by bands are left out of the default `y`, and a single line takes its column's name. Matches the web components byte for byte.
+Fan charts, a treemap, shaded spans, and missing values shown as gaps instead of 0. Everything matches the web components byte for byte.
+
+- **Fan charts:** `bc.line(df, x="year", y="revenue", bands=[{"name": "Good", "low": "p10", "mid": "p50", "high": "p90"}])` adds shaded ranges with a dashed middle line, for forecast scenarios and percentile ranges. Each of `low`, `high` and `mid` is a column name or a list. Columns used by bands are left out of the default `y`, and a single line takes its column's name.
+- **Treemap:** `bc.treemap(df, x="holding", y="weight", by="sector")`, the seventeenth chart. `by=` is a column name or a list; without it, each tile has its own colour.
 - **Spans:** `notes={2020: "2020 shock", ("2022", "2023"): "Rate rises"}`, where a pair of keys shades the span between them. Notes and spans now work on bars, combo and waterfall charts too, and crowded labels move down a row instead of overlapping.
-- **Changed:** bullet charts call the bar "Value" by default instead of "Actual". `series=["This quarter", "Plan"]` names the bar and the target line, now in the docstring and README.
-- **Docs:** `bc.heatmap()` is described as a calendar heatmap (days, not a grid of rows by columns), and its docstring now says how missing days and missing values are shown.
+- **`fill`:** `fill=False` turns off the shading under a line chart's first line, and `fill="all"` shades every line (line, spark).
 - **Missing values:** `None`, `NaN`, `pd.NA` and anything that isn't a number used to be drawn as 0 with a warning. They're now gaps, exactly as in the web components: lines break, bars leave a marked empty slot, histograms, box plots and scatter plots leave them out, and so on for every chart. There's no warning any more, since nothing is changed behind your back. `chart.alt` says "No data" for each gap.
-- `fill=False` turns off the shading under a line chart's first line, and `fill="all"` shades every line (line, spark).
 - **Waterfall:** a blank (`NaN`) total row shows the running total, so there's no need for `.fillna(0)` on totals. A blank change draws a dashed "No data" step.
 - **Heatmap from dates:** a day whose rows are all missing is a gap; days with no rows are still 0, as nothing happened.
-- All of it matches the web components byte for byte, with 43 new parity cases.
+- **Changed:** bullet charts call the bar "Value" by default instead of "Actual". `series=["This quarter", "Plan"]` names the bar and the target line.
+- **Docs:** `bc.heatmap()` is described as a calendar heatmap (days, not a grid of rows by columns). New README examples for the fan chart and the treemap.
+- Tests: 79 new parity cases against the JavaScript, and new API tests for bands, spans, treemaps and missing values.
 
 ## 1.11.0 (2026-11-16)
 

@@ -58,7 +58,7 @@ const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
 const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'groups', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
-  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'fill', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'dash', 'markers', 'patterns', 'zones', 'zone-labels', 'targets', 'totals',
+  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'fill', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'band-low', 'band-high', 'band-mid', 'band-series', 'dash', 'markers', 'patterns', 'zones', 'zone-labels', 'targets', 'totals',
   'center-label', 'theme', 'frame', 'corners', 'height', 'color', 'background', 'no-tooltips', 'static'];
 
 const all = CHARTS.map((c) => c.id);
@@ -138,11 +138,18 @@ const FIELDS = [
   { tab: 'extras', key: 'angle-labels', kind: 'toggle', label: 'Slant labels so every one fits', only: only('bars', 'grouped'), when: (a) => !('horizontal' in a) },
   { tab: 'extras', key: 'highlight', kind: 'toggle', invert: 'none', label: 'Highlight the highest bar', only: only('bars') },
   { tab: 'extras', key: 'straight', kind: 'toggle', label: 'Straight lines instead of curves', only: only('spark', 'line', 'area') },
-  { tab: 'extras', key: 'fill', kind: 'seg', label: 'Shading under the line', options: [['', 'First line'], ['all', 'Every line'], ['none', 'None']], only: only('line') },
+  { tab: 'extras', key: 'fill', kind: 'seg', label: 'Shading under the line', options: [['', 'Auto'], ['first', 'First line'], ['all', 'Every line'], ['none', 'None']], only: only('line'),
+    hint: 'Auto shades under the first line, or nothing when there are bands.' },
   { tab: 'extras', key: 'fill', kind: 'toggle', invert: 'none', label: 'Shading under the line', only: only('spark') },
   { tab: 'extras', key: 'zero', kind: 'toggle', label: 'Start the axis at zero', only: only('line', 'scatter') },
   { tab: 'extras', kind: 'pair', only: only('line', 'area'), fields: [{ key: 'min', kind: 'number', label: 'Axis from', placeholder: 'Auto' }, { key: 'max', kind: 'number', label: 'Axis to', placeholder: 'Auto' }] },
   { tab: 'extras', key: 'log', kind: 'toggle', label: 'Log scale, for values that grow fast', only: only('line') },
+  // Fan charts: shaded bands with a middle line, such as forecast scenarios carrying on from the line.
+  { tab: 'extras', key: 'band-low', kind: 'text', label: 'Band lows', placeholder: 'e.g. , , , 52, 48, 45', only: only('line'),
+    hint: 'Shade a range, such as a forecast. One per point, blank where the band has no value; separate bands with |.' },
+  { tab: 'extras', key: 'band-high', kind: 'text', label: 'Band highs', placeholder: 'e.g. , , , 52, 56, 60', only: only('line') },
+  { tab: 'extras', key: 'band-mid', kind: 'text', label: 'Band middle lines', placeholder: 'e.g. , , , 52, 52, 53', only: only('line'), hint: 'Optional, drawn dashed.' },
+  { tab: 'extras', key: 'band-series', kind: 'list', label: 'Band names', placeholder: 'e.g. Bad, Middling, Good', only: only('line') },
   { tab: 'extras', key: 'trend', kind: 'toggle', label: 'Trend line with its r value', only: only('scatter') },
   { tab: 'extras', kind: 'pair', only: only('histogram'), fields: [{ key: 'bins', kind: 'number', label: 'About how many ranges', placeholder: 'Auto' }, { key: 'bin-width', kind: 'number', label: 'Or each range’s width', placeholder: 'Auto' }] },
   { tab: 'extras', key: 'mark', kind: 'select', label: 'Lines for', only: only('histogram'),

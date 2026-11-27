@@ -31,7 +31,7 @@ from ._util import fmtv as _fmtv
 from .charts import TYPES
 from .charts.waterfall import walk as _walk
 
-__version__ = "1.11.0"
+__version__ = "1.12.0"
 __all__ = [
     "Chart", "area", "bars", "boxplot", "bullet", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes", "treemap",
     "to_svg", "types", "waterfall", "__version__",

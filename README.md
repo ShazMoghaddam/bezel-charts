@@ -11,7 +11,7 @@
 
 Bezel Charts is a set of free, open-source web components: seventeen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
-![All sixteen Bezel Charts in light and dark tiles: a sparkline, a progress bar, rings, a gauge and a donut; a line chart with a launch day note and a bars-and-line chart on two axes; a waterfall from revenue to profit, a bullet scorecard and bars with a target; stacked areas and a histogram with its median; a scatter plot with a trend line, box plots and grouped bars; and an activity heatmap](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/docs/bezel-charts-16.png)
+![All seventeen Bezel Charts in light and dark tiles: a sparkline, a progress bar, rings, a gauge and a donut; a line chart with a launch day note and a bars-and-line chart on two axes; a fan chart forecasting revenue under bad, middling and good scenarios with a shaded span for rate rises, and a treemap of a portfolio grouped by sector; a waterfall from revenue to profit, a bullet scorecard and bars with a target; stacked areas and a histogram with its median; a scatter plot with a trend line, box plots and grouped bars; and an activity heatmap](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/docs/bezel-charts-17.png)
 
 **[Open the Studio](https://shazmoghaddam.github.io/bezel-charts/site/#studio)** to build a chart and copy its code.
 
@@ -50,7 +50,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.11.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.12.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -84,11 +84,12 @@ import { toSVG } from 'bezel-charts/line'; // render and toSVG work for every ch
 
 | Page | Gzipped |
 | --- | --- |
-| One sparkline, ring, donut, gauge, progress bar or heatmap | 7.7 to 8.0 kB |
-| One waterfall, bullet, histogram, box plot, scatter, bar or bars-and-line chart | 9.5 to 11.0 kB |
-| One line or area chart | 12.5 to 12.9 kB |
-| A line and a bar chart | 15.3 kB |
-| Every chart: the full bundle | 26.4 kB |
+| One sparkline, ring, donut, gauge, progress bar or heatmap | 8.5 to 9.4 kB |
+| One bullet, box plot, treemap, scatter, histogram or waterfall | 10.3 to 11.3 kB |
+| One bar or bars-and-line chart | 12.7 kB |
+| One line or area chart | 14.6 to 15.3 kB |
+| A line and a bar chart | 18.7 kB |
+| Every chart: the full bundle | 32.4 kB |
 
 Once a page needs four or five different charts, load the full bundle instead. `<bezel-chart type="…">` works with whichever charts are loaded, and tells you which file to add if its type isn't one of them. The classic `iife.js` script always has every chart, because a classic script can't load the shared file.
 
