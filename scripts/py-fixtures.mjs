@@ -386,6 +386,24 @@ CASES.scatter.push({ x: '1,2,3', y: '1,2,3', notes: '1:Middle;0..2:Not on a scat
 // Bullet names (1.12.0): "Value" by default, or the two names from series.
 CASES.bullet.push({ values: '182,64', targets: '200,60', labels: 'Revenue,Margin', series: 'This quarter,Plan', zones: '150,180|40,55' });
 
+// Treemap (1.12.0): parts of a whole, with and without groups.
+const holdings = {
+  values: '7.1,6.4,5.9,3.8,2.2,1.9,4.1,3.2,2.6,1.4,3.3,2.8,1.7,2.9,2.1,1.2,2.4,1.6,1.1,0.9',
+  labels: 'Apple,Microsoft,Nvidia,Alphabet,Broadcom,Oracle,JPMorgan,Visa,Mastercard,Goldman Sachs,UnitedHealth,Eli Lilly,Pfizer,Amazon,Tesla,Nike,Exxon,Chevron,NextEra,Duke',
+  groups: 'Tech,Tech,Tech,Tech,Tech,Tech,Finance,Finance,Finance,Finance,Health,Health,Health,Consumer,Consumer,Consumer,Energy,Energy,Utilities,Utilities',
+};
+CASES.treemap = [
+  { heading: 'Portfolio', suffix: '%', decimals: 1, height: 300, ...holdings },
+  { ...holdings, theme: 'light', width: 560, animate: true },
+  { values: '420,310,260,150,90,45', labels: 'North America,Europe,Asia Pacific,Latin America,Middle East,Africa', prefix: '$', suffix: 'm' },
+  { values: '5,3,0,-2,,1', labels: 'a,b,zero,negative,missing,f', groups: 'X,Y,X,Y,X' },
+  { values: '1', labels: 'Only one', groups: 'Solo', stat: 'total' },
+  { values: '10,10,10,10', color: '#ff6600,teal,#00f,rgb(1,2,3)', width: 200, height: 120 },
+  { values: '3,2,1', labels: 'A very long name that will not fit,Short,Mid', groups: 'G1,G2,G1', width: 240, compact: '' },
+  { values: '' },
+];
+CASES.treemap.push({ values: '5,,3', labels: 'a,b,c' }, { values: 'null,null' });
+
 // Bands (1.12.0): fan charts, from attributes and from a bands array.
 const hist = '24,26,25,31,29,37,34,41,47,52', ahead = ',,,,,,,,,52';
 CASES.line.push(

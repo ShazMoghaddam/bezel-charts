@@ -170,6 +170,32 @@ def test_bullet_names_default_to_value_and_target():
     assert "This quarter" in texts(svg) and "Plan" in texts(svg) and "Value" not in texts(svg)
 
 
+def test_treemap_groups_from_a_column():
+    df = pd.DataFrame({
+        "holding": ["Apple", "Microsoft", "Nvidia", "JPMorgan", "Visa"],
+        "weight": [31, 22, 18, 9, 7],
+        "sector": ["Tech", "Tech", "Tech", "Finance", "Finance"],
+    })
+    chart = bc.treemap(df, x="holding", y="weight", by="sector", suffix="%")
+    assert chart.svg == bc.to_svg(
+        "treemap", values="31,22,18,9,7", labels="Apple,Microsoft,Nvidia,JPMorgan,Visa", groups="Tech,Tech,Tech,Finance,Finance", suffix="%"
+    )
+    assert "Tech" in texts(chart.svg) and "Finance" in texts(chart.svg)
+    assert "in 2 groups" in chart.svg
+    # by= also takes a list, and without it each item has its own colour.
+    assert "in 2 groups" in bc.treemap({"a": 3, "b": 1}, by=["X", "Y"]).svg
+    assert "groups" not in bc.treemap({"a": 3, "b": 1}).svg
+    with pytest.raises(KeyError, match="nope"):
+        bc.treemap(df, x="holding", y="weight", by="nope")
+    with pytest.raises(TypeError, match="names a column"):
+        bc.treemap([1, 2], by="sector")
+
+
+def test_treemap_leaves_out_what_it_cant_draw():
+    svg = bc.treemap(pd.Series([5.0, 0.0, -2.0, np.nan, 3.0], index=list("abcde"))).svg
+    assert "total 8 across 2 items, largest a (63%), 3 not shown" in svg
+
+
 def test_alt_text_says_no_data():
     assert bc.bars([4, None, 6], labels=["a", "b", "c"]).alt.endswith("a 4, b No data, c 6")
     assert "b no data" in bc.waterfall([4, None, 6], labels=["a", "b", "c"]).alt

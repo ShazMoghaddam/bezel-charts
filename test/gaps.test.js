@@ -43,6 +43,7 @@ const GAPS = {
   progress: [{ values: '30,,20' }, { values: 'null' }, { values: '30,null', max: 100, goal: 40 }],
   bullet: [{ values: '182,,7.4', targets: '200,60,', zones: '150,180|40,,55|6,7' }, { values: 'null', targets: '5' }],
   heatmap: [{ values: '1,,3,0', start: '2026-01-01' }, { values: 'null,null', start: '2026-01-01' }],
+  treemap: [{ values: '5,,3', labels: 'a,b,c', groups: 'X,Y,X' }, { values: 'null,null' }],
 };
 
 test('every chart type has gap cases', () => {

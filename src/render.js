@@ -2,7 +2,7 @@
 import { THEMES } from './core/themes.js';
 import { bool, resetIds, stableIds } from './core/util.js';
 /** Every chart type, in the order the full bundle loads them. */
-export const NAMES = ['spark', 'line', 'area', 'bars', 'combo', 'waterfall', 'histogram', 'boxplot', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'bullet', 'heatmap'];
+export const NAMES = ['spark', 'line', 'area', 'bars', 'combo', 'waterfall', 'histogram', 'boxplot', 'scatter', 'ring', 'donut', 'gauge', 'progress', 'bullet', 'heatmap', 'treemap'];
 
 /** The renderers loaded so far. Each chart's entry file adds its own, so a page only loads the charts it uses. */
 export const TYPES = {};

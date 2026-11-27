@@ -44,6 +44,8 @@ const CASES = {
     { values: Array.from({ length: 40 }, (_, i) => (i % 3 ? 1200 : -800)).join(','), totals: '39', compact: '' }],
   heatmap: [{}, { values: year, start: '2025-10-27', suffix: ' commits' }, { values: '1,2,3', start: '2026-03-01' },
     { values: '0,1,2,3,4', start: '2026-07-01', lang: 'fr-FR' }],
+  treemap: [{}, { values: '31,22,18,9,7', labels: 'Apple,Microsoft,Nvidia,JPMorgan,Visa', groups: 'Tech,Tech,Tech,Finance,Finance' },
+    { values: '5,3,1' }, { values: '4,0,-1', theme: 'light', animate: true }],
 };
 
 // A light structural check: every opened tag is closed in order.

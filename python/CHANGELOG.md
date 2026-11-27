@@ -2,6 +2,7 @@
 
 ## 1.12.0 (unreleased)
 
+- **Treemap:** `bc.treemap(df, x="holding", y="weight", by="sector")`, the seventeenth chart. `by=` is a column name or a list; without it, each tile has its own colour. Matches the web components byte for byte.
 - **Fan charts:** `bc.line(df, bands=[{"name": "Good", "low": "p10", "mid": "p50", "high": "p90"}])` adds shaded ranges with a dashed middle line, for forecast scenarios and percentile ranges. Each of `low`, `high` and `mid` is a column name or a list. Columns used by bands are left out of the default `y`, and a single line takes its column's name. Matches the web components byte for byte.
 - **Spans:** `notes={2020: "2020 shock", ("2022", "2023"): "Rate rises"}`, where a pair of keys shades the span between them. Notes and spans now work on bars, combo and waterfall charts too, and crowded labels move down a row instead of overlapping.
 - **Changed:** bullet charts call the bar "Value" by default instead of "Actual". `series=["This quarter", "Plan"]` names the bar and the target line, now in the docstring and README.

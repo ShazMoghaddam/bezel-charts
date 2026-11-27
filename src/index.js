@@ -19,6 +19,7 @@ import './entries/gauge.js';
 import './entries/progress.js';
 import './entries/bullet.js';
 import './entries/heatmap.js';
+import './entries/treemap.js';
 import { NAMES, render, toSVG } from './render.js';
 import { THEMES } from './core/themes.js';
 import { BezelChart } from './element.js';

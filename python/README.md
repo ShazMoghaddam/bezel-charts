@@ -59,7 +59,7 @@ Then in your README, with `chart.alt` as the alt text:
 ![Monthly revenue: latest £79k. £42k, £48k, £45k, £53k, £61k, £58k, £66k, £72k, £79k](docs/revenue.svg)
 ```
 
-## The sixteen charts
+## The seventeen charts
 
 | Function | What it draws |
 | --- | --- |
@@ -75,11 +75,12 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
 | `bc.ring(data)` | Progress rings, one per value, out of 100 unless you set `max`. |
 | `bc.donut(data)` | Parts of a whole, with the total in the middle and percentages alongside. |
+| `bc.treemap(data, by=)` | Parts of a whole as tiles sized by value, grouped into coloured blocks, for when there are too many parts for a donut. |
 | `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
 | `bc.progress(data)` | A progress bar, single or stacked with a legend. |
 | `bc.bullet(data, target=)` | Bullet charts: each measure's value against its target, with bands for poor, fair and good. |
 
-Grouped bars are `bc.bars()` with several series, which makes sixteen. They are the same sixteen as the web components, and `bc.types` lists them.
+Grouped bars are `bc.bars()` with several series, which makes seventeen. They are the same seventeen as the web components, and `bc.types` lists them.
 
 ### Dates
 
@@ -91,6 +92,15 @@ bc.line(df.set_index("date")["users"], log=True)     # a date index works too
 ```
 
 Tooltips show the full date. Pass `x_format` to name the points your way instead, and the axis keeps its date steps. Text that only looks like a date stays a label.
+
+### Treemaps
+
+```python
+bc.treemap(holdings, x="holding", y="weight", by="sector", suffix="%")  # a block per sector, its holdings inside
+bc.treemap(spend.groupby("category")["amount"].sum(), prefix="£")         # a Series: one tile per category
+```
+
+`by=` is a column name or a list with one group per item. Without it, each tile has its own colour. Zero, negative and missing values are left out and counted in the summary.
 
 ### Fan charts
 

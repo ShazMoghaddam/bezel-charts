@@ -14,12 +14,13 @@ from .progress import progress
 from .ring import ring
 from .scatter import scatter
 from .spark import spark
+from .treemap import treemap
 from .waterfall import waterfall
 
 # Same order as NAMES in src/render.js.
 TYPES = {
     "spark": spark, "line": line, "area": area, "bars": bars, "combo": combo, "waterfall": waterfall, "histogram": histogram, "boxplot": boxplot, "scatter": scatter, "ring": ring, "donut": donut,
-    "gauge": gauge, "progress": progress, "bullet": bullet, "heatmap": heatmap,
+    "gauge": gauge, "progress": progress, "bullet": bullet, "heatmap": heatmap, "treemap": treemap,
 }
 
 __all__ = ["TYPES"]

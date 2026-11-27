@@ -9,7 +9,7 @@
 [![Python](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-D99A0E)](LICENSE)
 
-Bezel Charts is a set of free, open-source web components: sixteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
+Bezel Charts is a set of free, open-source web components: seventeen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
 ![All sixteen Bezel Charts in light and dark tiles: a sparkline, a progress bar, rings, a gauge and a donut; a line chart with a launch day note and a bars-and-line chart on two axes; a waterfall from revenue to profit, a bullet scorecard and bars with a target; stacked areas and a histogram with its median; a scatter plot with a trend line, box plots and grouped bars; and an activity heatmap](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/docs/bezel-charts-16.png)
 
@@ -18,9 +18,9 @@ Bezel Charts is a set of free, open-source web components: sixteen chart tiles d
 - **One tag per chart.** `<bezel-bars values="4,9,6">` is a finished, labelled, animated chart.
 - **Yours to style.** Any colour, light and dark themes that follow the viewer's setting, rounder or squarer corners, with or without the bezel frame.
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
-- **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, histograms, box plots, waterfalls, bullet charts, grouped series, goal lines and notes on key points.
+- **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, fan charts for forecasts and percentile ranges, histograms, box plots, waterfalls, treemaps, bullet charts, grouped series, goal lines, notes and shaded spans, and missing values shown as gaps, never as 0.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 26 kB gzipped for all sixteen charts, or 8 to 13 kB for a page that loads just one. No dependencies and no build step.
+- **Light.** About 32 kB gzipped for all seventeen charts, or 9 to 15 kB for a page that loads just one. No dependencies and no build step.
 - **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
@@ -393,6 +393,27 @@ How a total splits into parts. More than six slices are grouped into "Other".
 | `center-label` | the words under the total. Long ones shrink, wrap onto two lines, then shorten to fit the hole | `Total` |
 | `height`       | chart height in px           | `150`    |
 
+### `<bezel-treemap>`
+
+Parts of a whole as tiles sized by value, for when there are too many parts for a donut: holdings by sector, spending by category, traffic by page. Each group is a block in its own colour with its items inside, so a sector's holdings stay together.
+
+```html
+<bezel-treemap heading="Portfolio by holding" suffix="%" decimals="1"
+  values="7.1,6.4,5.9,3.8,4.1,3.2,2.6,3.3,2.8,2.9,2.1"
+  labels="Apple,Microsoft,Nvidia,Alphabet,JPMorgan,Visa,Mastercard,UnitedHealth,Eli Lilly,Amazon,Tesla"
+  groups="Tech,Tech,Tech,Tech,Finance,Finance,Finance,Health,Health,Consumer,Consumer"></bezel-treemap>
+```
+
+| Attribute | Values                                                        | Default |
+| --------- | ------------------------------------------------------------- | ------- |
+| `values`  | one number per tile                                           |         |
+| `labels`  | one per tile, written on the tile when it fits                |         |
+| `groups`  | one per tile. Each group is a block in its own colour, in the order they first appear, with a legend | a colour per tile |
+| `color`   | one colour per group, or per tile without groups              | theme   |
+| `height`  | chart height in px                                            | `260`   |
+
+Tiles are laid out squarified, so they stay close to square and easy to compare, biggest first. Within a group, smaller tiles step down a little in strength, so neighbours stay easy to tell apart. Each tile shows its name and its value and share when they fit, shortened if needed, in white or near-black, whichever stands out more against that tile. Zero, negative and missing values can't be drawn as an area, so they're left out, and the summary and data table say so. The arrow keys move from the biggest tile to the smallest.
+
 ### `<bezel-gauge>`
 
 A reading on a scale, optionally coloured by zone.
@@ -654,7 +675,7 @@ bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
 bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
 ```
 
-All sixteen charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
+All seventeen charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
 
 ## Frameworks
 

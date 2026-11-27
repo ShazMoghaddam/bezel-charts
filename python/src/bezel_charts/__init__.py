@@ -33,7 +33,7 @@ from .charts.waterfall import walk as _walk
 
 __version__ = "1.11.0"
 __all__ = [
-    "Chart", "area", "bars", "boxplot", "bullet", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
+    "Chart", "area", "bars", "boxplot", "bullet", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes", "treemap",
     "to_svg", "types", "waterfall", "__version__",
 ]
 
@@ -382,6 +382,28 @@ def donut(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | Non
     DataFrame with ``y=`` for the values and ``x=`` for the names.
     """
     return _parts_chart("donut", data, x, y, x_format, options)
+
+
+def treemap(data: Any = None, *, x: Any = None, y: Any = None, by: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+    """A treemap: parts of a whole as tiles sized by value, for when there are too many parts for a donut.
+
+    Pass a list, a dict of name to value, a Series, or a DataFrame with ``y=`` for the values and ``x=`` for the
+    names. ``by=`` groups the items, as a column name or a list with one group per item: each group is a block in
+    its own colour, with its items inside. Without it, each item has its own colour::
+
+        bc.treemap(df, x="holding", y="weight", by="sector", suffix="%")
+
+    Zero, negative and missing values can't be drawn as an area, so they're left out and counted in the summary.
+    """
+    if by is not None:
+        if isinstance(by, str):
+            if not _data._is_frame(data):
+                raise TypeError(f"bezel_charts: by={by!r} names a column, so pass a DataFrame as data.")
+            if by not in data.columns:
+                raise KeyError(f"bezel_charts: column {by!r} not found. Columns: {list(data.columns)}")
+            by = data[by]
+        options = {**options, "groups": [_data.label(g) for g in _data._to_list(by)]}
+    return _parts_chart("treemap", data, x, y, x_format, options)
 
 
 def gauge(value: Any = None, *, label: Any = None, **options: Any) -> Chart:
