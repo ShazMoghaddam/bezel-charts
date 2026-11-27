@@ -2960,7 +2960,7 @@ function bullet(o, th) {
   var nameOf = function(i) {
     return labels[i] || "Measure " + (i + 1);
   };
-  var keyNames = [names[0] || "Actual", names[1] || "Target"];
+  var keyNames = [names[0] || "Value", names[1] || "Target"];
   var key = function(j, x, y) {
     return j ? '<line x1="' + r2(x + 5) + '" x2="' + r2(x + 5) + '" y1="' + r2(y) + '" y2="' + r2(y + 12) + '" stroke="' + th.fg + '" stroke-width="2.5"/>' : '<rect x="' + r2(x) + '" y="' + r2(y + 3) + '" width="10" height="6" rx="1.5" fill="' + pal[0] + '"/>';
   };
@@ -3028,7 +3028,7 @@ bullet.table = function(o) {
   var v = nums(o.values), labels = list(o.labels), T = nums(o.targets), Z = series(o.zones), zoneNames = list(o.zoneLabels), names = list(o.series);
   var anyT = T.length > 0, anyZ = Z.length > 0;
   return {
-    head: ["Measure", names[0] || "Actual"].concat(anyT ? [names[1] || "Target", "Difference"] : [], anyZ ? ["Band"] : []),
+    head: ["Measure", names[0] || "Value"].concat(anyT ? [names[1] || "Target", "Difference"] : [], anyZ ? ["Band"] : []),
     rows: v.map(function(val, i) {
       var zs = real(Z.length > 1 ? Z[i] || [] : Z[0] || []).sort(function(a, b) {
         return a - b;

@@ -77,7 +77,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.donut(data)` | Parts of a whole, with the total in the middle and percentages alongside. |
 | `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
 | `bc.progress(data)` | A progress bar, single or stacked with a legend. |
-| `bc.bullet(data, target=)` | Bullet charts: actual against target for each measure, with bands for poor, fair and good. |
+| `bc.bullet(data, target=)` | Bullet charts: each measure's value against its target, with bands for poor, fair and good. |
 
 Grouped bars are `bc.bars()` with several series, which makes sixteen. They are the same sixteen as the web components, and `bc.types` lists them.
 
@@ -239,6 +239,7 @@ bc.progress({"Done": 46, "In review": 18, "Blocked": 6}, max=100, goal=75, headi
 ```python
 bc.bullet(df, x="kpi", y="actual", target="plan", zones=[[150, 180], [40, 55]], zone_labels=["Poor", "Fair", "Good"])
 bc.bullet({"North": 72, "South": 95}, target=80, zones=[50, 75], suffix="%")  # one target and one set of bands for every row
+bc.bullet(df, x="kpi", y="actual", target="plan", series=["This quarter", "Plan"])  # names for the bar and the target line ("Value" and "Target" if not set)
 ```
 
 `target=` takes a column name, a list with one per row, or one number. `zones=` is one list for every row or one list per row.

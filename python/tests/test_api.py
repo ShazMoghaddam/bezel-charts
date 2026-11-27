@@ -164,6 +164,12 @@ def test_blank_waterfall_total_shows_the_running_total():
     assert "missing" not in chart.svg
 
 
+def test_bullet_names_default_to_value_and_target():
+    assert "Value" in texts(bc.bullet([182], target=200).svg)
+    svg = bc.bullet({"Revenue": 182}, target=200, series=["This quarter", "Plan"]).svg
+    assert "This quarter" in texts(svg) and "Plan" in texts(svg) and "Value" not in texts(svg)
+
+
 def test_alt_text_says_no_data():
     assert bc.bars([4, None, 6], labels=["a", "b", "c"]).alt.endswith("a 4, b No data, c 6")
     assert "b no data" in bc.waterfall([4, None, 6], labels=["a", "b", "c"]).alt

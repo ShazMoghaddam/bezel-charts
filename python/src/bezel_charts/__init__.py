@@ -438,6 +438,8 @@ def bullet(
     and ``x=`` for the names. ``target=`` is a column name, a list (one per row) or one number for every row.
     ``zones=`` sets the band edges, the same as the gauge's: ``zones=[150, 180]`` for every row, or one list per
     row such as ``zones=[[150, 180], [40, 55]]``. ``zone_labels=["Poor", "Fair", "Good"]`` names the bands.
+    ``series=["Sales", "Plan"]`` names the bar and the target line in the legend and tooltips; without it they're
+    "Value" and "Target".
     """
     out = dict(options)
     if target is not None:

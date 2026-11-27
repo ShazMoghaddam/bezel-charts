@@ -82,7 +82,7 @@ const FIELDS = [
   { tab: 'data', key: 'values', kind: 'number', label: 'Reading', only: only('gauge') },
   { tab: 'data', key: 'values', kind: 'numbers', label: 'Changes, in order', only: only('waterfall'),
     hint: 'Rises are positive and falls negative. For a total bar, put the opening amount for a start or 0 for a subtotal.' },
-  { tab: 'data', key: 'values', kind: 'numbers', label: 'Actual values, one row each', only: only('bullet') },
+  { tab: 'data', key: 'values', kind: 'numbers', label: 'Values, one row each', only: only('bullet') },
   { tab: 'data', key: 'targets', kind: 'numbers', label: 'Targets', only: only('bullet'), hint: 'One per row, or one number for every row. Drawn as an upright line.' },
   { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'area', 'bars', 'grouped', 'combo', 'waterfall', 'ring', 'donut', 'progress', 'bullet'),
     hint: { waterfall: 'One per step, along the bottom.', bullet: 'One per row, on the left.', spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', area: 'One per point, along the bottom.', combo: 'One per column, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
@@ -121,6 +121,7 @@ const FIELDS = [
   { tab: 'extras', key: 'zones', kind: 'text', label: 'Band edges', placeholder: 'e.g. 150, 180', only: only('bullet'),
     hint: 'Two numbers make three bands, darkest at the low end. Give each row its own with | between them.' },
   { tab: 'extras', key: 'zone-labels', kind: 'list', label: 'Band names', placeholder: 'e.g. Poor, Fair, Good', only: only('bullet'), hint: 'Shown in tooltips and the data table.' },
+  { tab: 'extras', key: 'series', kind: 'list', label: 'Names for the bar and the target', placeholder: 'e.g. This quarter, Plan', only: only('bullet'), hint: 'Value and Target if left empty.' },
   { tab: 'extras', key: 'max', kind: 'number', label: 'Scale up to', placeholder: 'Automatic', only: only('bullet'), hint: 'The same end for every row. Leave empty and each row fits its own numbers.' },
   { tab: 'extras', key: 'center-label', kind: 'text', label: 'Centre wording', placeholder: 'Total', only: only('donut') },
   { tab: 'extras', key: 'show-values', kind: 'toggle', label: 'Show values on the chart', only: only('spark', 'line', 'area', 'bars', 'grouped') },
@@ -630,7 +631,7 @@ export function createStudio(root) {
       case 'waterfall':
         return ['Rise', 'Fall', 'Total'];
       case 'bullet':
-        return ['Actual'];
+        return ['Value'];
       case 'gauge': {
         const z = tokens(attrs.zones).length;
         return z ? ['Low', 'Middle', 'High', 'Very high', 'Top'].slice(0, Math.min(5, z + 1)) : ['Reading'];

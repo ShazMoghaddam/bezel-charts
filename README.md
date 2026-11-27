@@ -429,25 +429,25 @@ A progress bar, or stacked parts against a target.
 
 ### `<bezel-bullet>`
 
-Bullet charts: one row per measure, comparing the actual value with its target against bands for poor, fair and good. A compact choice for a KPI scorecard.
+Bullet charts: one row per measure, comparing each value with its target against bands for poor, fair and good. A compact choice for a KPI scorecard.
 
 ```html
 <bezel-bullet heading="Q3 scorecard" values="182,64,7.4" targets="200,60,8" labels="Revenue £k,Margin %,NPS"
-  zones="150,180|40,55|6,7" zone-labels="Poor,Fair,Good"></bezel-bullet>
+  zones="150,180|40,55|6,7" zone-labels="Poor,Fair,Good" series="This quarter,Plan"></bezel-bullet>
 ```
 
 | Attribute     | Values                                                          | Default |
 | ------------- | --------------------------------------------------------------- | ------- |
-| `values`      | the actual values, one per row                                  |         |
+| `values`      | the values, one per row, drawn as bars                          |         |
 | `targets`     | one per row, or one number for every row, drawn as an upright line |      |
 | `labels`      | one per row, on the left                                        |         |
 | `zones`       | band edges, the same as the gauge: `150,180` makes three bands. Give each row its own with `\|` |  |
 | `zone-labels` | names for the bands, shown in tooltips and the data table       | `2 of 3` |
 | `max`         | the same end for every row                                      | each row fits its own numbers |
-| `series`      | names for the legend: actual and target                         | `Actual,Target` |
+| `series`      | two names: the bar, then the target line. Used in the legend, tooltips and data table | `Value,Target` |
 | `color`       | one colour, or one per row                                      | theme   |
 
-Each row has its own scale from zero, so measures in different units sit together. The bands use one grey, darkest at the low end, so they read in greyscale and in print. The summary counts how many measures meet their target, and the tooltip and data table give the actual, target, difference and band.
+Each row has its own scale from zero, so measures in different units sit together. The bands use one grey, darkest at the low end, so they read in greyscale and in print. The summary counts how many measures meet their target, and the tooltip and data table give the value, target, difference and band, under the names from `series`.
 
 ### `<bezel-heatmap>`
 

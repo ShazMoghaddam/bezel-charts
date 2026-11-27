@@ -139,7 +139,7 @@ test('parts charts show "No data" for the missing one', () => {
   assert.doesNotMatch(d, />B<\/text>/);
   assert.match(d, /across 2 parts, 1 missing/);
   assert.deepEqual(table('donut', { values: '3,,2', labels: 'A,B,C' }).rows[1], ['B', '–', '–']);
-  assert.match(render('bullet', { values: '1,,3', targets: '2,2,2', labels: 'A,B,C' }), /B(&#10;|\n)Actual: no data/);
+  assert.match(render('bullet', { values: '1,,3', targets: '2,2,2', labels: 'A,B,C' }), /B(&#10;|\n)Value: no data/);
   assert.match(render('gauge', { values: 'null' }), /No data yet/);
 });
 

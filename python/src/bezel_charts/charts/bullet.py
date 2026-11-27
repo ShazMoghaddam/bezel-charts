@@ -49,7 +49,8 @@ def bullet(o, th) -> str:
     def name_of(i):
         return labels[i] if i < len(labels) and labels[i] else "Measure " + str(i + 1)
 
-    key_names = [names[0] if len(names) > 0 and names[0] else "Actual", names[1] if len(names) > 1 and names[1] else "Target"]
+    # "Value" suits any measure, where "Actual" read oddly for scores, forecasts or budgets.
+    key_names = [names[0] if len(names) > 0 and names[0] else "Value", names[1] if len(names) > 1 and names[1] else "Target"]
 
     def key(j, x, y):
         if j:

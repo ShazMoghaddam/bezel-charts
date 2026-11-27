@@ -383,6 +383,9 @@ CASES.combo.push(
 CASES.waterfall.push({ values: '120,30,-12,-25,0', labels: 'Start,Sales,Costs,Tax,Profit', totals: 'Start,Profit', notes: 'Costs..Tax:Outgoings;Sales:Best month' });
 CASES.scatter.push({ x: '1,2,3', y: '1,2,3', notes: '1:Middle;0..2:Not on a scatter' });
 
+// Bullet names (1.12.0): "Value" by default, or the two names from series.
+CASES.bullet.push({ values: '182,64', targets: '200,60', labels: 'Revenue,Margin', series: 'This quarter,Plan', zones: '150,180|40,55' });
+
 // Bands (1.12.0): fan charts, from attributes and from a bands array.
 const hist = '24,26,25,31,29,37,34,41,47,52', ahead = ',,,,,,,,,52';
 CASES.line.push(

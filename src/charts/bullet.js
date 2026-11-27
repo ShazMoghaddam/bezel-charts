@@ -8,6 +8,7 @@ import { tile, dims } from '../core/tile.js';
  * zones are the band edges, the same as the gauge's: zones="150,180" makes three bands. Separate rows with "|" when
  * each measure has its own, and name the bands with zone-labels="Poor,Fair,Good".
  * Each row has its own scale from zero, so measures in different units sit together.
+ * series="Sales,Plan" names the bar and the target line in the legend, tooltips and data table ("Value,Target" if not).
  */
 export default function bullet(o, th) {
   var v = nums(o.values), n = v.length, labels = list(o.labels), names = list(o.series), pal = palette(o, th);
@@ -17,7 +18,8 @@ export default function bullet(o, th) {
   var hasT = function (i) { return isFinite(targetOf(i)); };
   var anyT = v.some(function (_, i) { return hasT(i); });
   var nameOf = function (i) { return labels[i] || 'Measure ' + (i + 1); };
-  var keyNames = [names[0] || 'Actual', names[1] || 'Target'];
+  // "Value" suits any measure, where "Actual" read oddly for scores, forecasts or budgets.
+  var keyNames = [names[0] || 'Value', names[1] || 'Target'];
   var key = function (j, x, y) {
     return j ? '<line x1="' + r2(x + 5) + '" x2="' + r2(x + 5) + '" y1="' + r2(y) + '" y2="' + r2(y + 12) + '" stroke="' + th.fg + '" stroke-width="2.5"/>'
       : '<rect x="' + r2(x) + '" y="' + r2(y + 3) + '" width="10" height="6" rx="1.5" fill="' + pal[0] + '"/>';
@@ -83,7 +85,7 @@ bullet.table = function (o) {
   var v = nums(o.values), labels = list(o.labels), T = nums(o.targets), Z = series(o.zones), zoneNames = list(o.zoneLabels), names = list(o.series);
   var anyT = T.length > 0, anyZ = Z.length > 0;
   return {
-    head: ['Measure', names[0] || 'Actual'].concat(anyT ? [names[1] || 'Target', 'Difference'] : [], anyZ ? ['Band'] : []),
+    head: ['Measure', names[0] || 'Value'].concat(anyT ? [names[1] || 'Target', 'Difference'] : [], anyZ ? ['Band'] : []),
     rows: v.map(function (val, i) {
       var zs = real(Z.length > 1 ? Z[i] || [] : Z[0] || []).sort(function (a, b) { return a - b; });
       var row = rowOf(o, i, val, T.length === 1 ? T[0] : T[i], zs, zoneNames);
