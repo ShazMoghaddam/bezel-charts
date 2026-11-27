@@ -472,7 +472,7 @@ Each row has its own scale from zero, so measures in different units sit togethe
 
 ### `<bezel-heatmap>`
 
-Activity by day, GitHub style, with Monday at the top.
+A calendar heatmap: one square per day, in weeks running left to right with Monday at the top, like a GitHub contributions chart. Use it for anything counted per day, such as commits, runs, sales or sign-ups.
 
 ```html
 <bezel-heatmap heading="Contributions" start="2026-01-01" values="0,3,5,1,0,2,8,4" suffix=" commits"></bezel-heatmap>
@@ -480,10 +480,13 @@ Activity by day, GitHub style, with Monday at the top.
 
 | Attribute     | Values                                      | Default |
 | ------------- | ------------------------------------------- | ------- |
-| `values`      | one number per day                          |         |
+| `values`      | one number per day, in date order           |         |
 | `start`       | the first day, `YYYY-MM-DD`                 | so the last value is today |
+| `color`       | the colour the squares deepen towards       | theme   |
 
-On narrow screens the heatmap shows the most recent weeks that fit rather than shrinking the squares.
+Squares deepen in four steps up to the largest value. A day of 0 is a plain grey square, and a missing day is an empty dashed outline, so the two can't be confused. Month names run along the top, and the total and the Less to More key along the bottom. On narrow screens the heatmap shows the most recent weeks that fit rather than shrinking the squares.
+
+**Days, not grids.** Every value is one day in a calendar, so this isn't a heatmap of rows by columns, such as a correlation matrix or sales by region and month. A grid heatmap is planned as its own chart for 1.13.0.
 
 ### `<bezel-chart>`
 

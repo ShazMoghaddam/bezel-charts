@@ -337,7 +337,10 @@ def heatmap(data: Any = None, *, x: Any = None, y: Any = None, start: Any = None
     Pass daily numbers with ``start=`` (a date or "YYYY-MM-DD"; by default the last value is today),
     a Series with a date index, a DataFrame with ``x=`` naming the date column and ``y=`` the values,
     or just a list or column of dates, where each day counts how many times it appears.
-    Missing days are filled with 0. On narrow tiles the most recent weeks are kept.
+    Days with no rows count as 0; a day whose values are all missing shows as an empty outline.
+    On narrow tiles the most recent weeks are kept.
+
+    Every value is a day, so this isn't a heatmap of rows by columns, such as a correlation matrix.
     """
     if data is None:
         out = _options(options, None, None, None)

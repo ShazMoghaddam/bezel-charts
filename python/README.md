@@ -72,7 +72,7 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.histogram(data)` | How raw values spread out: counts per range, with round edges, mean and median lines and shares. |
 | `bc.boxplot(data)` | Box plots comparing spreads, with quartiles matching pandas, outliers and an optional mean. |
 | `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
-| `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
+| `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. Days only, not a grid of rows by columns. |
 | `bc.ring(data)` | Progress rings, one per value, out of 100 unless you set `max`. |
 | `bc.donut(data)` | Parts of a whole, with the total in the middle and percentages alongside. |
 | `bc.treemap(data, by=)` | Parts of a whole as tiles sized by value, grouped into coloured blocks, for when there are too many parts for a donut. |

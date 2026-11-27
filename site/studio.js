@@ -30,7 +30,7 @@ const CHARTS = [
   { id: 'gauge', tag: 'gauge', name: 'Gauge', icon: 'M4 17a8 8 0 0 1 16 0M12 17l4-5' },
   { id: 'progress', tag: 'progress', name: 'Progress', icon: 'M4 10h16v4H4zM4 10h9v4H4z' },
   { id: 'bullet', tag: 'bullet', name: 'Bullet', icon: 'M3 7h18v4H3zM3 8.5h11v1H3zM16 6v6M3 15h18v4H3zM3 16.5h8v1H3zM13 14v6' },
-  { id: 'heatmap', tag: 'heatmap', name: 'Heatmap', icon: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4zM4 16h4v4H4z' },
+  { id: 'heatmap', tag: 'heatmap', name: 'Calendar heatmap', icon: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4zM4 16h4v4H4z' },
 ];
 const byId = Object.fromEntries(CHARTS.map((c) => [c.id, c]));
 const WIDE = new Set(['line', 'area', 'combo', 'waterfall', 'grouped', 'histogram', 'boxplot', 'scatter', 'heatmap', 'treemap']);

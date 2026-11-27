@@ -1,6 +1,10 @@
 import { esc, r2, has, nums, sum, fmt, fmtv, ok, real, text, small, palette, emptyState, statOf, ref } from '../core/util.js';
 import { tile, dims } from '../core/tile.js';
 
+/**
+ * Calendar heatmap: one square per day, in weeks left to right with Monday at the top, like a GitHub contributions
+ * chart. Every value is a day, so it isn't a grid of rows by columns; a grid heatmap is planned as its own chart.
+ */
 var FULL = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
 
 /** The first day shown: the start option, or far enough back that the last value is today. */

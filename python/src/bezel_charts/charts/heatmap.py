@@ -1,4 +1,5 @@
-"""Calendar heatmap, one square per day. Ported from src/charts/heatmap.js."""
+"""Calendar heatmap, one square per day, like a GitHub contributions chart. Days only, not a grid of rows by
+columns. Ported from src/charts/heatmap.js."""
 
 from __future__ import annotations
 
