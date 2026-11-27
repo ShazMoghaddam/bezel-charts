@@ -11,7 +11,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "Shaz Moghaddam" }]
-keywords = ["charts", "svg", "sparkline", "pandas", "jupyter", "data-visualization", "readme", "scatter", "heatmap", "gauge"]
+keywords = ["charts", "svg", "sparkline", "pandas", "jupyter", "data-visualization", "readme", "scatter", "heatmap", "gauge", "treemap", "fan-chart", "forecast"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Framework :: Jupyter",

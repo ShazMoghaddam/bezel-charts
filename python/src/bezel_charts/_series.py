@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 
+from ._notes import note_layout, note_marks
 from ._time import date_ticks
 from ._util import (
     at, DASHES, N, R, anim, clamp, goal_line, has, hit, jmax, jmin, legend, marker, new_id, nice_scale, small, text,
@@ -132,15 +133,7 @@ def xy_frame(o, th, c, x0, y0, w, h) -> Frame:
                 continue
             anchor = "start" if n > 1 and i == 0 else "end" if n > 1 and i == n - 1 else "middle"
             s += text(X(i), top + ph + 15, labels[i], small(th, 10, 'text-anchor="' + anchor + '"'))
-    for nt in c["notes"]:
-        if nt["i"] >= n:
-            continue
-        x = X(nt["i"])
-        s += (
-            '<line x1="' + R(x) + '" x2="' + R(x) + '" y1="' + R(top + 12) + '" y2="' + R(top + ph) + '" stroke="'
-            + th["fg"] + '" stroke-opacity=".4" stroke-dasharray="3 3"/>'
-            + text(clamp(x, px + 30, px + pw - 30), top + 8, nt["text"], small(th, 10, 'text-anchor="middle"', th["fg"]))
-        )
+    s += note_marks(th, note_layout(c["notes"], n, lambda i: {"c": X(i), "l": X(i), "r": X(i)}, px, pw), top, top + ph)
     return Frame(s, X, Y, px, pw, top, ph, clip, bool(T))
 
 

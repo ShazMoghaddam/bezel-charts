@@ -6,9 +6,10 @@ import math
 
 from .._js import pow10, to_fixed_number
 from .._series import point_marks, series_line
+from .._notes import note_layout, note_marks
 from .._tile import tile
 from .._util import (
-    at, DASHES, PATTERNS, SHAPES, Opts, R, anim, bool_, empty_state, fmt, has, hit, jmax, jmin, legend, lst, marker,
+    at, DASHES, PATTERNS, SHAPES, Opts, R, anim, bool_, empty_state, fmt, fmtv, gap_note, has, ok, real, runs_of, hit, jmax, jmin, legend, lst, marker, parse_notes,
     new_id, nice_scale, num, palette, path_of, pattern, series, small, style_of, text, to_string, truthy, tw,
 )
 
@@ -74,6 +75,8 @@ def combo(o, th) -> str:
         up = down = 0
         for s in B:
             v = val(s, i)
+            if not ok(v):
+                continue
             if stacked:
                 if v >= 0:
                     up += v
@@ -86,7 +89,7 @@ def combo(o, th) -> str:
         bottoms.append(down)
 
     def draw(x0, y0, w, h):
-        if not n or not k:
+        if not n or not k or not real([x for s2 in B + L for x in s2]):
             return empty_state(th, x0, y0, w, h)
         s = "<defs>" + defs + "</defs>" if defs else ""
         top = y0
@@ -98,9 +101,9 @@ def combo(o, th) -> str:
         # Left axis: bars, always including zero. Right axis: lines, with the same number of steps.
         sc = nice_scale(jmin(*bottoms), jmax(*tops), 4)
         steps = len(sc.ticks) - 1
-        flat = [x for s2 in L for x in s2]
+        flat = real([x for s2 in L for x in s2])
         sc2 = None
-        if m:
+        if m and flat:
             lmin, lmax = jmin(*flat), jmax(*flat)
             if bool_(o.lineZero):
                 lmin, lmax = jmin(0, lmin), jmax(0, lmax)
@@ -113,6 +116,14 @@ def combo(o, th) -> str:
         pw = w - lw - rw
         ph = h - (top - y0) - (20 if labels else 4)
         band = pw / n
+        # Notes take a strip under the legend, above the axis titles, so no label sits on a bar.
+        nl = note_layout(
+            parse_notes(o, labels), n, lambda i: {"c": px + band * (i + 0.5), "l": px + band * i, "r": px + band * (i + 1)}, px, pw
+        )
+        note_top = top - (16 if has(o.yLabel) or has(o.lineLabel) else 0)
+        if nl["rows"]:
+            top += nl["height"] + 4
+            ph -= nl["height"] + 4
 
         def X(i):
             return px + band * (i + 0.5)
@@ -123,6 +134,8 @@ def combo(o, th) -> str:
         def Y2(v):
             return top + ph - (v - sc2["lo"]) / (sc2["hi"] - sc2["lo"]) * ph
 
+        if nl["rows"]:
+            s += note_marks(th, nl, note_top, top + ph)
         for i, t in enumerate(sc.ticks):
             y = Y(t)
             s += (
@@ -156,6 +169,14 @@ def combo(o, th) -> str:
                     continue
                 v = ser[i]
                 x = X(i) - gw / 2 if stacked else X(i) - gw / 2 + j * bw
+                # A missing bar gets a short dash on the zero line, so its empty slot doesn't read as 0.
+                if not ok(v):
+                    if not stacked:
+                        s += (
+                            '<line x1="' + R(x + bw * 0.3) + '" x2="' + R(x + bw * 0.7) + '" y1="' + R(Y(0) - 3) + '" y2="'
+                            + R(Y(0) - 3) + '" stroke="' + th["muted"] + '" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>'
+                        )
+                    continue
                 if stacked:
                     if v >= 0:
                         a = up
@@ -175,32 +196,41 @@ def combo(o, th) -> str:
                 )
         # Lines over the bars, on the right axis.
         for j, ser in enumerate(L):
+            if not sc2:
+                continue
             c = line_col(j)
-            P = [[X(i), Y2(v)] for i, v in enumerate(ser)]
+            runs = runs_of([[X(i), Y2(v)] for i, v in enumerate(ser)])
             mk = mark_of(j) if mark_of else "none"
-            s += series_line(o, path_of(P, bool_(o.straight)), c, j, DASHES[dash_of(j)] if dash_of else "")
+            if not runs:
+                continue
+            P = [p for r in runs for p in r]
+            s += series_line(o, "".join(path_of(r, bool_(o.straight)) for r in runs), c, j, DASHES[dash_of(j)] if dash_of else "")
             if mk != "none":
                 s += point_marks(o, mk, ser, X, Y2, c, bg, j)
             else:
+                # A value on its own between gaps has no line to sit on, so it gets a dot.
+                for q, r in enumerate(runs):
+                    if len(r) == 1 and q < len(runs) - 1:
+                        s += '<circle cx="' + R(r[0][0]) + '" cy="' + R(r[0][1]) + '" r="2.5" fill="' + c + '"/>'
                 s += '<circle cx="' + R(P[-1][0]) + '" cy="' + R(P[-1][1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>'
         for i in range(n):
             tip = labels[i] if i < len(labels) and labels[i] else "#" + str(i + 1)
             t = 0
             for j, ser in enumerate(B):
                 if i < len(ser):
-                    tip += "\n" + bar_name(j) + ": " + fmt(ser[i], o)
+                    tip += "\n" + bar_name(j) + ": " + fmtv(ser[i], o)
                     t += ser[i]
             if stacked:
-                tip += "\nTotal: " + fmt(t, o)
+                tip += "\nTotal: " + fmtv(t, o)
             for j, ser in enumerate(L):
                 if i < len(ser):
-                    tip += "\n" + line_name(j) + ": " + fmt(ser[i], lo)
+                    tip += "\n" + line_name(j) + ": " + fmtv(ser[i], lo)
             s += hit(X(i) - band / 2, top, band, ph, tip, i, at(B + L, i))
         return s
 
     summary = (
         str(k) + " bar series" + (" stacked" if stacked else "") + " and " + str(m) + (" line" if m == 1 else " lines")
-        + " over " + str(n) + " points"
+        + " over " + str(n) + " points" + gap_note([x for s2 in B + L for x in s2])
     )
     return tile(o, th, h, draw, {"summary": summary})
 

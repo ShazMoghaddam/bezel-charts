@@ -6,7 +6,7 @@ import math
 
 from .._tile import tile
 from .._util import (
-    R, anim, bool_, empty_state, fmt, goal_line, has, hit, jmax, jmin, lst, marker, nice_scale, num, palette, series,
+    R, anim, bool_, empty_state, fmt, goal_line, has, real, hit, jmax, jmin, lst, marker, nice_scale, num, palette, series,
     small, text, to_number, to_string, trunc, truthy, tw,
 )
 
@@ -28,19 +28,23 @@ def boxplot(o, th) -> str:
     def f(v):
         return fmt(v, o)
 
-    if k == 1:
-        about = "median " + f(stats[0]["median"]) + ", middle half " + f(stats[0]["q1"]) + " to " + f(stats[0]["q3"])
-    elif k:
-        meds = [st["median"] for st in stats]
-        about = str(k) + " groups, medians from " + f(jmin(*meds)) + " to " + f(jmax(*meds))
-    else:
+    live = [st for st in stats if st["n"]]
+    missing = sum(st["missing"] for st in stats)
+    if not live:
         about = "no data"
+    elif k == 1:
+        about = "median " + f(stats[0]["median"]) + ", middle half " + f(stats[0]["q1"]) + " to " + f(stats[0]["q3"])
+    else:
+        meds = [st["median"] for st in live]
+        about = str(k) + " groups, medians from " + f(jmin(*meds)) + " to " + f(jmax(*meds))
+    if missing and live:
+        about += ", " + str(missing) + " missing left out"
 
     def draw(x0, y0, w, h):
-        if not k:
+        if not live:
             return empty_state(th, x0, y0, w, h)
-        lo = jmin(*[st["min"] for st in stats])
-        hi = jmax(*[st["max"] for st in stats])
+        lo = jmin(*[st["min"] for st in live])
+        hi = jmax(*[st["max"] for st in live])
         if has(o.goal):
             lo = jmin(lo, to_number(o.goal))
             hi = jmax(hi, to_number(o.goal))
@@ -117,6 +121,7 @@ def boxplot(o, th) -> str:
                 + "\n" + ("Range without outliers " if n_out else "Range ") + f(st["low"]) + " to " + f(st["high"])
                 + ("\n" + str(n_out) + (" outlier" if n_out == 1 else " outliers") if n_out else "")
                 + ("\nMean " + f(st["mean"]) if show_mean else "") + "\nn = " + str(st["n"])
+                + (", " + str(st["missing"]) + " missing left out" if st["missing"] else "")
             )
             s += hit(px, C(i) - band / 2, pw, band, tip, i, st["median"], i) if horiz else hit(C(i) - band / 2, y0, band, ph, tip, i, st["median"], i)
         return s
@@ -140,11 +145,13 @@ def quantile(s, p):
 
 
 def summary(v, full_range):
-    """The five numbers, the mean and the outliers for one group. full_range makes the whiskers reach the extremes."""
-    s = sorted(v)
+    """The five numbers, the mean and the outliers for one group, with missing values left out and counted.
+    full_range makes the whiskers reach the extremes."""
+    s = sorted(real(v))
     n = len(s)
+    missing = len(v) - n
     if not n:
-        return {"n": 0, "outliers": []}
+        return {"n": 0, "outliers": [], "missing": missing}
     q1, q3 = quantile(s, 0.25), quantile(s, 0.75)
     iqr = q3 - q1
     low_fence = -math.inf if full_range else q1 - 1.5 * iqr
@@ -154,6 +161,6 @@ def summary(v, full_range):
     for x in s:
         t += x
     return {
-        "n": n, "min": s[0], "max": s[-1], "q1": q1, "median": quantile(s, 0.5), "q3": q3, "mean": t / n,
+        "n": n, "missing": missing, "min": s[0], "max": s[-1], "q1": q1, "median": quantile(s, 0.5), "q3": q3, "mean": t / n,
         "low": inside[0], "high": inside[-1], "outliers": [x for x in s if x < low_fence or x > high_fence],
     }

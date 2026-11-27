@@ -1,7 +1,8 @@
-import { newId, r2, num, has, list, series, bool, fmt, tw, text, small, hit, anim, palette, emptyState, pathOf, at } from '../core/util.js';
+import { newId, r2, num, has, list, series, bool, fmt, fmtv, ok, real, runsOf, gapNote, gapMark, tw, text, small, hit, anim, palette, emptyState, pathOf, at, parseNotes } from '../core/util.js';
 import { niceScale, legend, styleOf, pattern, marker, DASHES, SHAPES, PATTERNS } from '../core/series.js';
-import { seriesLine, pointMarks } from '../core/lines.js';
+import { seriesLine, pointMarks, runsPath, loneDots } from '../core/lines.js';
 import { tile } from '../core/tile.js';
+import { noteLayout, noteMarks } from '../core/notes.js';
 
 /**
  * Bars and lines with different units on one chart: bars read against the left axis, lines against the right.
@@ -40,6 +41,7 @@ export default function combo(o, th) {
     var up = 0, down = 0;
     B.forEach(function (s) {
       var v = val(s, i);
+      if (!ok(v)) return;
       if (stacked) { if (v >= 0) up += v; else down += v; }
       else { up = Math.max(up, v); down = Math.min(down, v); }
     });
@@ -47,7 +49,7 @@ export default function combo(o, th) {
   }
 
   return tile(o, th, h, function (x0, y0, w, h) {
-    if (!n || !k) return emptyState(th, x0, y0, w, h);
+    if (!n || !k || !real([].concat.apply([], B.concat(L))).length) return emptyState(th, x0, y0, w, h);
     var s = defs ? '<defs>' + defs + '</defs>' : '', top = y0;
     var lg = legend(B.map(function (_, j) { return barName(j); }).concat(L.map(function (_, j) { return lineName(j); })), pal, th, x0, top, w, key, 24);
     s += lg.svg;
@@ -56,17 +58,22 @@ export default function combo(o, th) {
     if (titled) top += 16;
     // Left axis: bars, always including zero. Right axis: lines, with the same number of steps.
     var sc = niceScale(Math.min.apply(null, bottoms), Math.max.apply(null, tops), 4), steps = sc.ticks.length - 1;
-    var all = [].concat.apply([], L);
+    var all = real([].concat.apply([], L));
     var lmin = Math.min.apply(null, all), lmax = Math.max.apply(null, all);
     if (bool(o.lineZero)) { lmin = Math.min(0, lmin); lmax = Math.max(0, lmax); }
-    var sc2 = m ? matched(lmin, lmax, steps) : null;
+    var sc2 = m && all.length ? matched(lmin, lmax, steps) : null;
     var tl = sc.ticks.map(function (t) { return fmt(t, o, true); }), tr = sc2 ? sc2.ticks.map(function (t) { return fmt(t, lo, true); }) : [];
     var lw = Math.max.apply(null, tl.map(function (t) { return tw(t, 10, true); })) + 10;
     var rw = sc2 ? Math.max.apply(null, tr.map(function (t) { return tw(t, 10, true); })) + 10 : 0;
     var px = x0 + lw, pw = w - lw - rw, ph = h - (top - y0) - (labels.length ? 20 : 4), band = pw / n;
+    // Notes take a strip under the legend, above the axis titles, so no label sits on a bar.
+    var nl = noteLayout(parseNotes(o, labels), n, function (i) { return { c: px + band * (i + 0.5), l: px + band * i, r: px + band * (i + 1) }; }, px, pw);
+    var noteTop = top - (titled ? 16 : 0);
+    if (nl.rows) { top += nl.height + 4; ph -= nl.height + 4; }
     var X = function (i) { return px + band * (i + 0.5); };
     var Y = function (v) { return top + ph - (v - sc.lo) / (sc.hi - sc.lo) * ph; };
     var Y2 = function (v) { return top + ph - (v - sc2.lo) / (sc2.hi - sc2.lo) * ph; };
+    if (nl.rows) s += noteMarks(th, nl, noteTop, top + ph);
     sc.ticks.forEach(function (t, i) {
       var y = Y(t);
       s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '"' + (t === 0 ? '' : ' stroke-dasharray="2 4"') + '/>' +
@@ -90,6 +97,11 @@ export default function combo(o, th) {
       B.forEach(function (ser, j) {
         if (i >= ser.length) return;
         var v = ser[i], a, b, x = stacked ? X(i) - gw / 2 : X(i) - gw / 2 + j * bw;
+        // A missing bar gets a short dash on the zero line, so its empty slot doesn't read as 0.
+        if (!ok(v)) {
+          if (!stacked) s += gapMark(x, bw, Y(0), th);
+          return;
+        }
         if (stacked) { if (v >= 0) { a = up; up += v; b = up; } else { a = down; down += v; b = down; } }
         else { a = 0; b = v; }
         var ya = Y(a), yb = Y(b);
@@ -99,20 +111,26 @@ export default function combo(o, th) {
     }
     // Lines over the bars, on the right axis.
     L.forEach(function (ser, j) {
-      var c = lineCol(j), P = ser.map(function (v, i) { return [X(i), Y2(v)]; }), mk = markOf ? markOf(j) : 'none';
-      s += seriesLine(o, pathOf(P, bool(o.straight)), c, j, dashOf ? DASHES[dashOf(j)] : '');
+      if (!sc2) return;
+      var c = lineCol(j), runs = runsOf(ser.map(function (v, i) { return [X(i), Y2(v)]; })), mk = markOf ? markOf(j) : 'none';
+      if (!runs.length) return;
+      var P = [].concat.apply([], runs);
+      s += seriesLine(o, runsPath(runs, bool(o.straight)), c, j, dashOf ? DASHES[dashOf(j)] : '');
       if (mk !== 'none') s += pointMarks(o, mk, ser, X, Y2, c, bg, j);
-      else s += '<circle cx="' + r2(P[P.length - 1][0]) + '" cy="' + r2(P[P.length - 1][1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      else {
+        s += loneDots(runs, c);
+        s += '<circle cx="' + r2(P[P.length - 1][0]) + '" cy="' + r2(P[P.length - 1][1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      }
     });
     for (i = 0; i < n; i++) {
       var tip = labels[i] || '#' + (i + 1), t = 0;
-      B.forEach(function (ser, j) { if (i < ser.length) { tip += '\n' + barName(j) + ': ' + fmt(ser[i], o); t += ser[i]; } });
-      if (stacked) tip += '\nTotal: ' + fmt(t, o);
-      L.forEach(function (ser, j) { if (i < ser.length) tip += '\n' + lineName(j) + ': ' + fmt(ser[i], lo); });
+      B.forEach(function (ser, j) { if (i < ser.length) { tip += '\n' + barName(j) + ': ' + fmtv(ser[i], o); t += ser[i]; } });
+      if (stacked) tip += '\nTotal: ' + fmtv(t, o);
+      L.forEach(function (ser, j) { if (i < ser.length) tip += '\n' + lineName(j) + ': ' + fmtv(ser[i], lo); });
       s += hit(X(i) - band / 2, top, band, ph, tip, i, at(B.concat(L), i));
     }
     return s;
-  }, { summary: k + ' bar series' + (stacked ? ' stacked' : '') + ' and ' + m + (m === 1 ? ' line' : ' lines') + ' over ' + n + ' points' });
+  }, { summary: k + ' bar series' + (stacked ? ' stacked' : '') + ' and ' + m + (m === 1 ? ' line' : ' lines') + ' over ' + n + ' points' + gapNote([].concat.apply([], B.concat(L))) });
 }
 
 combo.table = function (o) {

@@ -44,6 +44,8 @@ const CASES = {
     { values: Array.from({ length: 40 }, (_, i) => (i % 3 ? 1200 : -800)).join(','), totals: '39', compact: '' }],
   heatmap: [{}, { values: year, start: '2025-10-27', suffix: ' commits' }, { values: '1,2,3', start: '2026-03-01' },
     { values: '0,1,2,3,4', start: '2026-07-01', lang: 'fr-FR' }],
+  treemap: [{}, { values: '31,22,18,9,7', labels: 'Apple,Microsoft,Nvidia,JPMorgan,Visa', groups: 'Tech,Tech,Tech,Finance,Finance' },
+    { values: '5,3,1' }, { values: '4,0,-1', theme: 'light', animate: true }],
 };
 
 // A light structural check: every opened tag is closed in order.
@@ -545,11 +547,11 @@ test('waterfall labels hide together when any would overlap its neighbour', () =
 test('bullet rows compare the actual with the target and name the band it falls in', () => {
   const o = { values: '182,64', targets: '200,60', labels: 'Revenue,Margin', zones: '150,180|40,55', zoneLabels: 'Poor,Fair,Good' };
   const t = table('bullet', o);
-  assert.deepEqual(t.head, ['Measure', 'Actual', 'Target', 'Difference', 'Band']);
+  assert.deepEqual(t.head, ['Measure', 'Value', 'Target', 'Difference', 'Band']);
   assert.deepEqual(t.rows, [['Revenue', '182', '200', '−18', 'Good'], ['Margin', '64', '60', '+4', 'Good']]);
   const svg = render('bullet', o);
   assert.match(svg, /1 of 2 measures at or above target/);
-  assert.equal(tips(svg)[0], 'Revenue|Actual 182|Target 200|Difference −18|Band Good');
+  assert.equal(tips(svg)[0], 'Revenue|Value 182|Target 200|Difference −18|Band Good');
 });
 
 test('bullet with one target for every row, unnamed bands, and no targets at all', () => {
@@ -557,7 +559,7 @@ test('bullet with one target for every row, unnamed bands, and no targets at all
   const plain = render('bullet', { values: '3,4' });
   assert.match(plain, /2 measures</);
   assert.doesNotMatch(plain, /Target/);
-  assert.deepEqual(table('bullet', { values: '3,4' }).head, ['Measure', 'Actual']);
+  assert.deepEqual(table('bullet', { values: '3,4' }).head, ['Measure', 'Value']);
 });
 
 // 1.11.0: stable ids, goal labels, compact letters and the donut centre.
@@ -679,4 +681,15 @@ test('the donut centre label fits the hole: smaller, then two lines, then shorte
   const oneWord = toSVG('donut', { ...v, 'center-label': 'Antidisestablishmentarianism' });
   assert.ok(labelsOf(oneWord)[0].t.endsWith('…'));
   inside(oneWord);
+});
+
+test('bullet: series names the bar and the target line everywhere (1.12.0)', () => {
+  const o = { values: '182,64', targets: '200,60', labels: 'Revenue,Margin', series: 'This quarter,Plan' };
+  const svg = render('bullet', o);
+  assert.match(svg, />This quarter<\/text>/);
+  assert.match(svg, />Plan<\/text>/);
+  assert.match(svg, /Revenue(&#10;|\n)This quarter 182(&#10;|\n)Plan 200/);
+  assert.deepEqual(table('bullet', o).head, ['Measure', 'This quarter', 'Plan', 'Difference']);
+  // The defaults.
+  assert.match(render('bullet', { values: '1', targets: '2' }), />Value<\/text>[\s\S]*>Target<\/text>/);
 });

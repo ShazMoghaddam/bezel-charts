@@ -28,7 +28,7 @@ with sync_playwright() as p:
     code = lambda: pg.locator('#code').inner_text()
     svg_ok = lambda: pg.evaluate("(() => { const el = document.querySelector('#frame').firstElementChild; const s = el && el.shadowRoot && el.shadowRoot.querySelector('svg'); return !!s && !/NaN|undefined/.test(el.shadowRoot.innerHTML) })()")
 
-    ids = ['spark','line','bars','grouped','waterfall','scatter','ring','donut','gauge','progress','bullet','heatmap']
+    ids = ['spark','line','bars','grouped','waterfall','scatter','ring','donut','treemap','gauge','progress','bullet','heatmap']
     for cid in ids:
         pg.click(f'[data-ui="{cid}"]'); pg.wait_for_timeout(250)
         check(svg_ok(), f'{cid}: preview renders')

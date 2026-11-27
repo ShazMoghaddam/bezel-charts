@@ -5,31 +5,44 @@ from __future__ import annotations
 import math
 
 from .._js import js_str, parse_int, to_number
+from .._notes import note_layout, note_marks
 from .._tile import dims, tile
-from .._util import R, anim, empty_state, fmt, goal_line, has, hit, jmax, jmin, legend, lst, nice_scale, num, nums, small, text, tw
+from .._util import R, parse_notes, anim, empty_state, fmt, goal_line, ok, has, hit, jmax, jmin, legend, lst, nice_scale, num, nums, small, text, tw
 
-_KINDS = ["up", "down", "total"]
-_NAMES = {"up": "Rise", "down": "Fall", "total": "Total"}
+_KINDS = ["up", "down", "total", "gap"]
+_NAMES = {"up": "Rise", "down": "Fall", "total": "Total", "gap": "No data"}
 
 
 def walk(v, labels, totals):
-    """Each bar's name, kind, change and the levels it runs between."""
+    """Each bar's name, kind, change and the levels it runs between. A missing change is a "gap" that keeps the level;
+    a missing total just shows the running total."""
     # A label wins, so a total on "2026" finds the year. Otherwise a whole number is a position, counting from 0.
     at = []
     for m in lst(totals):
         i = labels.index(m) if m in labels else -1
         p = parse_int(m)
         at.append(int(p) if i < 0 and js_str(p) == m else i)
-    run, out = 0, []
+    run, out, gaps = 0, [], 0
     for i, x in enumerate(v):
         name = labels[i] if i < len(labels) and labels[i] else "Step " + str(i + 1)
         frm = run
-        run += x
+        # A total needs no value of its own, so a blank one just shows the running total.
+        if not ok(x) and i not in at:
+            gaps += 1
+            out.append({"name": name, "kind": "gap", "change": x, "from": run, "to": run, "gaps": gaps})
+            continue
+        run += x if ok(x) else 0
         if i in at:
-            out.append({"name": name, "kind": "total", "change": x, "from": 0, "to": run})
+            out.append({"name": name, "kind": "total", "change": x, "from": 0, "to": run, "gaps": gaps})
         else:
             out.append({"name": name, "kind": "down" if x < 0 else "up", "change": x, "from": frm, "to": run})
     return out
+
+
+def excludes(st):
+    """On a total after a missing step: how many steps it leaves out."""
+    g = st.get("gaps", 0)
+    return "\nExcludes " + str(g) + " missing " + ("step" if g == 1 else "steps") if g else ""
 
 
 def _signed(x, o, short=False):
@@ -53,18 +66,26 @@ def waterfall(o, th) -> str:
     for k in kinds:
         j = _KINDS.index(k)
         key_names.append(names[j] if j < len(names) and names[j] else _NAMES[k])
-    key_pal = [cols[k] for k in kinds]
+    key_pal = [cols.get(k, th["muted"]) for k in kinds]
 
     def key(j, x, y):
+        if kinds[j] == "gap":
+            return (
+                '<rect x="' + R(x + 0.75) + '" y="' + R(y + 1.75) + '" width="8.5" height="8.5" rx="2" fill="none" stroke="'
+                + th["muted"] + '" stroke-width="1.5" stroke-dasharray="2 2"/>'
+            )
         return '<rect x="' + R(x) + '" y="' + R(y + 1) + '" width="10" height="10" rx="2" fill="' + key_pal[j] + '"/>'
 
     legend_h = legend(key_names, key_pal, th, 0, 0, dims(o)["w"], key, 15)["height"] if n else 0
     h = num(o.height, 200) + legend_h
     end = steps[n - 1]["to"] if n else 0
+    missing = len([st for st in steps if st["kind"] == "gap"])
 
     def tip_of(st):
+        if st["kind"] == "gap":
+            return st["name"] + "\nNo data\nRunning total " + fmt(st["to"], o) + ", unchanged"
         if st["kind"] == "total":
-            return st["name"] + "\nTotal " + fmt(st["to"], o)
+            return st["name"] + "\nTotal " + fmt(st["to"], o) + excludes(st)
         return st["name"] + "\nChange " + _signed(st["change"], o) + "\nRunning total " + fmt(st["to"], o)
 
     def draw(x0, y0, w, h):
@@ -87,18 +108,24 @@ def waterfall(o, th) -> str:
         slot = pw / n
         bwid = jmin(slot * 0.62, 56)
         # Signed labels on every bar, so rises and falls read without colour. They only show when they all fit.
-        tags = [fmt(st["to"], o, True) if st["kind"] == "total" else _signed(st["change"], o, True) for st in steps]
+        tags = ["–" if st["kind"] == "gap" else fmt(st["to"], o, True) if st["kind"] == "total" else _signed(st["change"], o, True) for st in steps]
         show_tags = jmax(*[tw(t, 10, True) for t in tags]) <= slot - 2
         lab_max = jmax(*[tw(l, 10, True) for l in labels]) if labels else 0
         every = jmax(1, math.ceil(n * (lab_max + 8) / pw)) if labels else 1
+        # Notes take a strip above the bars, one row per line of labels, so no label sits on a bar.
+        nl = note_layout(
+            parse_notes(o, labels), n, lambda i: {"c": px + slot * (i + 0.5), "l": px + slot * i, "r": px + slot * (i + 1)}, px, pw
+        )
         neg_tag = 14 if show_tags and sc.lo < 0 else 0
-        top_pad = 16 if show_tags else 4
+        top_pad = (16 if show_tags else 4) + (nl["height"] + 4 if nl["rows"] else 0)
         py = top0 + top_pad
         ph = h - (top0 - y0) - top_pad - (20 if labels else 2) - neg_tag
 
         def Y(x):
             return py + ph - (x - sc.lo) / (sc.hi - sc.lo) * ph
 
+        if nl["rows"]:
+            s += note_marks(th, nl, top0, py + ph)
         for i, t in enumerate(sc.ticks):
             s += (
                 '<line x1="' + R(px) + '" x2="' + R(px + pw) + '" y1="' + R(Y(t)) + '" y2="' + R(Y(t)) + '" stroke="' + th["grid"] + '"'
@@ -110,10 +137,19 @@ def waterfall(o, th) -> str:
             yA = Y(jmax(st["from"], st["to"]))
             yB = Y(jmin(st["from"], st["to"]))
             bh = jmax(1, yB - yA)
-            s += (
-                '<rect x="' + R(x) + '" y="' + R(yA) + '" width="' + R(bwid) + '" height="' + R(bh) + '" rx="' + R(jmin(3, bwid / 2, bh / 2))
-                + '" fill="' + cols[st["kind"]] + '"' + anim(o, "bzc-a", jmin(0.6, i * 0.05)) + "/>"
-            )
+            # A missing step: a dashed outline across its level, which the next bar carries on from.
+            if st["kind"] == "gap":
+                yA = Y(st["to"]) - 7
+                yB = yA + 14
+                s += (
+                    '<rect x="' + R(x + 0.75) + '" y="' + R(yA) + '" width="' + R(bwid - 1.5) + '" height="14" rx="3" fill="none" stroke="'
+                    + th["muted"] + '" stroke-width="1.5" stroke-dasharray="3 3"' + anim(o, "bzc-a", jmin(0.6, i * 0.05)) + "/>"
+                )
+            else:
+                s += (
+                    '<rect x="' + R(x) + '" y="' + R(yA) + '" width="' + R(bwid) + '" height="' + R(bh) + '" rx="' + R(jmin(3, bwid / 2, bh / 2))
+                    + '" fill="' + cols[st["kind"]] + '"' + anim(o, "bzc-a", jmin(0.6, i * 0.05)) + "/>"
+                )
             # A thin step from this bar's level across to the next bar.
             if i < n - 1:
                 s += '<line x1="' + R(x + bwid) + '" x2="' + R(x + slot) + '" y1="' + R(Y(st["to"])) + '" y2="' + R(Y(st["to"])) + '" stroke="' + th["muted"] + '" stroke-dasharray="2 2"/>'
@@ -128,5 +164,8 @@ def waterfall(o, th) -> str:
             s += hit(px + i * slot, top0, slot, h - (top0 - y0), tip_of(st), i, st["change"])
         return s
 
-    summary = "ends at " + fmt(end, o) + " after " + str(n) + (" step" if n == 1 else " steps") if n else "no data"
+    summary = (
+        "ends at " + fmt(end, o) + " after " + str(n) + (" step" if n == 1 else " steps") + (", " + str(missing) + " missing" if missing else "")
+        if n else "no data"
+    )
     return tile(o, th, h, draw, {"summary": summary})

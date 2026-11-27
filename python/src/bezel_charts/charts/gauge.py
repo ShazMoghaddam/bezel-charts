@@ -7,7 +7,7 @@ import math
 from .._js import NAN, finite
 from .._tile import tile
 from .._util import (
-    SANS, R, anim, clamp, empty_state, fmt, has, hit, jmin, lst, num, nums, palette, small, text, to_number,
+    SANS, R, anim, clamp, empty_state, fmt, has, real, hit, jmin, lst, num, nums, palette, small, text, to_number,
     to_string, truthy,
 )
 
@@ -19,7 +19,7 @@ def gauge(o, th) -> str:
     mn, mx, h = num(o.min, 0), num(o.max, 100), num(o.height, 130)
     if mx == mn:
         mx = mn + 1
-    zones = nums(o.zones)
+    zones = real(nums(o.zones))
     pal = palette(o, th)
     zc = pal if len([c for c in lst(o.color) if c]) > 1 else [th["up"], th["palette"][3], th["down"]]
     colour = pal[0]

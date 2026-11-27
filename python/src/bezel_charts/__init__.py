@@ -27,12 +27,13 @@ from ._render import render as _render
 from ._render import to_svg as _to_svg
 from ._tile import THEMES as themes
 from ._util import Opts, fmt, lst, series
+from ._util import fmtv as _fmtv
 from .charts import TYPES
 from .charts.waterfall import walk as _walk
 
-__version__ = "1.11.0"
+__version__ = "1.12.0"
 __all__ = [
-    "Chart", "area", "bars", "boxplot", "bullet", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes",
+    "Chart", "area", "bars", "boxplot", "bullet", "combo", "histogram", "donut", "gauge", "heatmap", "line", "progress", "render", "ring", "scatter", "spark", "themes", "treemap",
     "to_svg", "types", "waterfall", "__version__",
 ]
 
@@ -88,14 +89,18 @@ class Chart:
         S = series(o.values) if self.type in ("spark", "line", "area", "bars", "donut", "progress", "bullet") else []
         if len(S) == 1:
             labels = lst(o.labels)
-            parts = [(labels[i] + " " if i < len(labels) and labels[i] else "") + fmt(v, o) for i, v in enumerate(S[0])]
+            parts = [(labels[i] + " " if i < len(labels) and labels[i] else "") + _fmtv(v, o) for i, v in enumerate(S[0])]
             more = len(parts) - 12
             out += ". " + ", ".join(parts[:12]) + (f" and {more} more" if more > 0 else "")
         elif self.type == "waterfall":
             # Totals read as the running total they show, changes as signed steps.
             steps = _walk((series(o.values) or [[]])[0], lst(o.labels), o.totals)
             parts = [
-                st["name"] + (" total " + fmt(st["to"], o) if st["kind"] == "total" else " " + ("+" if st["change"] > 0 else "") + fmt(st["change"], o))
+                st["name"] + (
+                    " no data" if st["kind"] == "gap"
+                    else " total " + fmt(st["to"], o) if st["kind"] == "total"
+                    else " " + ("+" if st["change"] > 0 else "") + fmt(st["change"], o)
+                )
                 for st in steps
             ]
             more = len(parts) - 12
@@ -150,18 +155,65 @@ def spark(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | Non
     return Chart("spark", _options(options, values[0], None, lbls))
 
 
-def line(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+def line(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, bands: Any = None, **options: Any) -> Chart:
     """A line chart with one or more series, a value axis and labels along the bottom.
 
     ``data`` can be a DataFrame (``x=`` for labels, ``y=`` for one column or a list of them; by default
     every numeric column), a Series, a dict of name to values, a list of lists, or a single list.
     When ``x=`` (or the index) holds real dates, points sit where they fall in time and the axis picks its own
     date steps. ``x_format`` (for example ``"%b %Y"``) still names the points in tooltips.
+
+    ``bands=`` adds shaded ranges with an optional middle line, for fan charts such as forecast scenarios. Give a
+    list of dicts with ``low``, ``high`` and optionally ``mid``, ``name`` and ``color``. Each of ``low``, ``high`` and
+    ``mid`` is a column name in ``data`` or a list of numbers, with ``None`` or ``NaN`` where the band has no value::
+
+        bc.line(df, x="year", y="revenue", bands=[
+            {"name": "Bad", "low": "bad_lo", "mid": "bad", "high": "bad_hi"},
+            {"name": "Good", "low": "good_lo", "mid": "good", "high": "good_hi"},
+        ])
+
+    Columns used by bands are left out of the default ``y``, so they aren't drawn as lines too.
     """
+    if bands is not None:
+        options = {**options, "bands": _bands(data, bands)}
     if data is None:
         return Chart("line", _options(options, None, None, None))
+    if bands is not None and y is None and _data._is_frame(data):
+        used = {v for b in bands if isinstance(b, Mapping) for k, v in b.items() if k in ("low", "high", "mid") and isinstance(v, str)}
+        y = [c for c in _data._numeric_columns(data, x) if c not in used]
     values, names, lbls = _data.prepare(data, x, y, x_format)
+    if bands is not None and not names and "series" not in options:
+        # With bands there's always a legend, so a single line takes its column's name rather than "Series 1".
+        one = y if isinstance(y, str) else y[0] if isinstance(y, list) and len(y) == 1 else getattr(data, "name", None)
+        names = [_data.label(one)] if one is not None and len(values) == 1 else None
     return Chart("line", _options(_dated(options, data, x, x_format, lbls), values, names, None if _undated(options, data, x, x_format) else lbls))
+
+
+def _bands(data, bands) -> list:
+    """Band dicts with their columns looked up in data and every value as a number, NaN where it's missing."""
+    if isinstance(bands, Mapping):
+        bands = [bands]
+    out = []
+    for b in bands:
+        if not isinstance(b, Mapping):
+            raise TypeError("bezel_charts: each band is a dict such as {'low': 'p10', 'high': 'p90', 'mid': 'p50', 'name': 'Middling'}.")
+        unknown = set(b) - {"low", "high", "mid", "name", "color"}
+        if unknown:
+            raise TypeError(f"bezel_charts: a band takes low, high, mid, name and color, not {sorted(unknown)}.")
+        band = {k: b[k] for k in ("name", "color") if b.get(k) is not None}
+        for k in ("low", "high", "mid"):
+            v = b.get(k)
+            if v is None:
+                continue
+            if isinstance(v, str):
+                if not _data._is_frame(data):
+                    raise TypeError(f"bezel_charts: band {k}={v!r} names a column, so pass a DataFrame as data.")
+                if v not in data.columns:
+                    raise KeyError(f"bezel_charts: column {v!r} not found. Columns: {list(data.columns)}")
+                v = data[v]
+            band[k] = _data.numbers(v, f"band {k}")
+        out.append(band)
+    return out
 
 
 def area(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | None = None, **options: Any) -> Chart:
@@ -285,7 +337,10 @@ def heatmap(data: Any = None, *, x: Any = None, y: Any = None, start: Any = None
     Pass daily numbers with ``start=`` (a date or "YYYY-MM-DD"; by default the last value is today),
     a Series with a date index, a DataFrame with ``x=`` naming the date column and ``y=`` the values,
     or just a list or column of dates, where each day counts how many times it appears.
-    Missing days are filled with 0. On narrow tiles the most recent weeks are kept.
+    Days with no rows count as 0; a day whose values are all missing shows as an empty outline.
+    On narrow tiles the most recent weeks are kept.
+
+    Every value is a day, so this isn't a heatmap of rows by columns, such as a correlation matrix.
     """
     if data is None:
         out = _options(options, None, None, None)
@@ -330,6 +385,28 @@ def donut(data: Any = None, *, x: Any = None, y: Any = None, x_format: str | Non
     DataFrame with ``y=`` for the values and ``x=`` for the names.
     """
     return _parts_chart("donut", data, x, y, x_format, options)
+
+
+def treemap(data: Any = None, *, x: Any = None, y: Any = None, by: Any = None, x_format: str | None = None, **options: Any) -> Chart:
+    """A treemap: parts of a whole as tiles sized by value, for when there are too many parts for a donut.
+
+    Pass a list, a dict of name to value, a Series, or a DataFrame with ``y=`` for the values and ``x=`` for the
+    names. ``by=`` groups the items, as a column name or a list with one group per item: each group is a block in
+    its own colour, with its items inside. Without it, each item has its own colour::
+
+        bc.treemap(df, x="holding", y="weight", by="sector", suffix="%")
+
+    Zero, negative and missing values can't be drawn as an area, so they're left out and counted in the summary.
+    """
+    if by is not None:
+        if isinstance(by, str):
+            if not _data._is_frame(data):
+                raise TypeError(f"bezel_charts: by={by!r} names a column, so pass a DataFrame as data.")
+            if by not in data.columns:
+                raise KeyError(f"bezel_charts: column {by!r} not found. Columns: {list(data.columns)}")
+            by = data[by]
+        options = {**options, "groups": [_data.label(g) for g in _data._to_list(by)]}
+    return _parts_chart("treemap", data, x, y, x_format, options)
 
 
 def gauge(value: Any = None, *, label: Any = None, **options: Any) -> Chart:
@@ -386,6 +463,8 @@ def bullet(
     and ``x=`` for the names. ``target=`` is a column name, a list (one per row) or one number for every row.
     ``zones=`` sets the band edges, the same as the gauge's: ``zones=[150, 180]`` for every row, or one list per
     row such as ``zones=[[150, 180], [40, 55]]``. ``zone_labels=["Poor", "Fair", "Good"]`` names the bands.
+    ``series=["Sales", "Plan"]`` names the bar and the target line in the legend and tooltips; without it they're
+    "Value" and "Target".
     """
     out = dict(options)
     if target is not None:

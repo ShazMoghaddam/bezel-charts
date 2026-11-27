@@ -1,4 +1,4 @@
-/*! Bezel Charts v1.11.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
+/*! Bezel Charts v1.12.0 | MIT | github.com/ShazMoghaddam/bezel-charts */
 
 // src/core/util.js
 var SANS = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
@@ -51,14 +51,43 @@ function has(v) {
   return v != null && v !== "";
 }
 function nums(v) {
-  if (Array.isArray(v)) return v.map(function(x) {
-    var n = +x;
-    return isFinite(n) ? n : 0;
-  });
+  if (Array.isArray(v)) return v.map(numOf);
   if (!has(v)) return [];
-  return String(v).split(/[\s,;]+/).filter(Boolean).map(function(x) {
-    var n = +x;
-    return isFinite(n) ? n : 0;
+  var t = String(v).trim().split(/\s*[,;]\s*|\s+/);
+  while (t.length && t[t.length - 1] === "") t.pop();
+  return t.map(numOf);
+}
+function numOf(x) {
+  return x == null || x === "" ? NaN : +x;
+}
+function ok(v) {
+  return typeof v === "number" && isFinite(v);
+}
+function real(v) {
+  return v.filter(ok);
+}
+function fmtv(n, o) {
+  return ok(n) ? fmt(n, o) : "No data";
+}
+function fillOf(o) {
+  var f = o.fill;
+  if (f === false || f === "false" || f === "none" || f === "off") return "none";
+  return f === "all" ? "all" : "first";
+}
+function gapMark(x, w, y, th) {
+  return '<line x1="' + r2(x + w * 0.3) + '" x2="' + r2(x + w * 0.7) + '" y1="' + r2(y - 3) + '" y2="' + r2(y - 3) + '" stroke="' + th.muted + '" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="2 3"/>';
+}
+function gapNote(v) {
+  var m = v.length - real(v).length;
+  return m ? ", " + m + " missing" : "";
+}
+function runsOf(P) {
+  return P.reduce(function(r, p) {
+    if (isFinite(p[1])) r[r.length - 1].push(p);
+    else if (r[r.length - 1].length) r.push([]);
+    return r;
+  }, [[]]).filter(function(r) {
+    return r.length;
   });
 }
 function list(v) {
@@ -133,7 +162,9 @@ function small(th, size, extra, fill) {
   return 'fill="' + (fill || th.muted) + '" font-family="' + MONO + '" font-size="' + (size || 10) + '"' + (extra ? " " + extra : "");
 }
 function ref(i, v, s) {
-  return ' data-i="' + i + '"' + (s == null ? "" : ' data-s="' + s + '"') + ' data-v="' + [].concat(v).join(",") + '"';
+  return ' data-i="' + i + '"' + (s == null ? "" : ' data-s="' + s + '"') + ' data-v="' + [].concat(v).map(function(x) {
+    return typeof x === "number" && !isFinite(x) ? "" : x;
+  }).join(",") + '"';
 }
 function at(S, i) {
   return S.map(function(s) {
@@ -156,12 +187,21 @@ function emptyState(th, x, y, w, h) {
 }
 function parseNotes(o, labels) {
   if (!has(o.notes)) return [];
+  var names = labels.map(String);
+  var find = function(key) {
+    var i = names.indexOf(key);
+    return i < 0 && String(parseInt(key, 10)) === key ? parseInt(key, 10) : i;
+  };
   return String(o.notes).split(";").map(function(part) {
     var k = part.indexOf(":");
     if (k < 0) return null;
-    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = labels.map(String).indexOf(key);
-    if (i < 0 && String(parseInt(key, 10)) === key) i = parseInt(key, 10);
-    return i >= 0 && t ? { i, text: t } : null;
+    var key = part.slice(0, k).trim(), t = part.slice(k + 1).trim(), i = find(key), dots = key.indexOf("..");
+    if (!t) return null;
+    if (i < 0 && dots > 0) {
+      var a = find(key.slice(0, dots).trim()), b = find(key.slice(dots + 2).trim());
+      return a >= 0 && b >= 0 ? { i: Math.min(a, b), j: Math.max(a, b), text: t } : null;
+    }
+    return i >= 0 ? { i, text: t } : null;
   }).filter(Boolean);
 }
 function goalLine(o, th, x1, x2, y, at2) {
@@ -173,6 +213,7 @@ function goalText(o) {
 }
 function statOf(v, o, fallback) {
   var k = String(has(o.stat) ? o.stat : fallback || "").toLowerCase();
+  v = real(v);
   if (!k || k === "none" || !v.length) return null;
   var s = sum(v);
   var map = { last: v[v.length - 1], total: s, sum: s, average: s / v.length, avg: s / v.length, max: Math.max.apply(null, v), min: Math.min.apply(null, v) };
@@ -227,15 +268,56 @@ function tile(o, th, h, draw, meta) {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + W + " " + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="' + esc(label) + '"><title>' + esc(label) + "</title>" + (o.animate ? "<style>" + CSS + "</style>" : "") + bg + head + body + "</svg>";
 }
 
+// src/core/notes.js
+var ROW = 12;
+var ROWS = 3;
+function noteLayout(notes, n, at2, px, pw) {
+  var items = [], rows = 0;
+  notes.forEach(function(nt) {
+    if (nt.i >= n) return;
+    var a = at2(nt.i), span = nt.j != null && nt.j !== nt.i, l = a.l, r = a.r;
+    if (span) {
+      var b = at2(Math.min(nt.j, n - 1));
+      l = Math.min(a.l, b.l);
+      r = Math.max(a.r, b.r);
+    }
+    var half = tw(nt.text, 10, true) / 2, room = Math.max(30, half);
+    var x = clamp(span ? (l + r) / 2 : a.c, px + room, px + pw - room), row = 0;
+    var clash = function(p) {
+      return p.row === row && x - half < p.x + p.half + 6 && p.x - p.half < x + half + 6;
+    };
+    while (row < ROWS - 1 && items.some(clash)) row++;
+    rows = Math.max(rows, row + 1);
+    items.push({ x, half, row, text: nt.text, span, c: a.c, l, r });
+  });
+  return { items, rows, height: rows ? rows * ROW : 0 };
+}
+function noteMarks(th, lay, top, bottom) {
+  var s = "";
+  lay.items.forEach(function(p) {
+    if (p.span) {
+      s += '<rect x="' + r2(p.l) + '" y="' + r2(top) + '" width="' + r2(Math.max(1, p.r - p.l)) + '" height="' + r2(bottom - top) + '" fill="' + th.fg + '" fill-opacity=".07"/><path d="M' + r2(p.l) + "," + r2(top + 12 + p.row * ROW) + "V" + r2(bottom) + "M" + r2(p.r) + "," + r2(top + 12 + p.row * ROW) + "V" + r2(bottom) + '" stroke="' + th.fg + '" stroke-opacity=".18"/>';
+    }
+  });
+  lay.items.forEach(function(p) {
+    var y = top + 8 + p.row * ROW;
+    if (!p.span) s += '<line x1="' + r2(p.c) + '" x2="' + r2(p.c) + '" y1="' + r2(y + 4) + '" y2="' + r2(bottom) + '" stroke="' + th.fg + '" stroke-opacity=".4" stroke-dasharray="3 3"/>';
+    s += text(p.x, y, p.text, small(th, 10, 'text-anchor="middle"', th.fg));
+  });
+  return s;
+}
+
 // src/charts/spark.js
 function spark(o, th) {
   var v = nums(o.values), c = palette(o, th)[0], h = num(o.height, 64);
   var labels = list(o.labels), notes = parseNotes(o, labels);
   var st = statOf(v, o, "last");
+  var vals = real(v), lastOk = v.length - 1;
+  while (lastOk >= 0 && !ok(v[lastOk])) lastOk--;
   return tile(o, th, h, function(x0, y0, w, h2) {
-    if (!v.length) return emptyState(th, x0, y0, w, h2);
+    if (!vals.length) return emptyState(th, x0, y0, w, h2);
     var pts = v.length === 1 ? [v[0], v[0]] : v;
-    var mn = Math.min.apply(null, pts), mx = Math.max.apply(null, pts);
+    var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
     if (has(o.goal)) {
       mn = Math.min(mn, +o.goal);
       mx = Math.max(mx, +o.goal);
@@ -252,31 +334,47 @@ function spark(o, th) {
     var P = pts.map(function(n, i) {
       return [X(i), Y(n)];
     });
-    var d = pathOf(P, bool(o.straight)), g = newId("g"), last = P[P.length - 1];
-    var s = '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".32"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>';
+    var runs = runsOf(P), straight = bool(o.straight), g = newId("g"), last = P[v.length === 1 ? 1 : lastOk];
+    var d = runs.map(function(r) {
+      return pathOf(r, straight);
+    }).join("");
+    var filled = fillOf(o) !== "none";
+    var s = !filled ? "" : '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".32"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>';
     [1 / 3, 2 / 3].forEach(function(f) {
       s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(y0 + h2 * f) + '" y2="' + r2(y0 + h2 * f) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>';
     });
-    s += '<path d="' + d + "L" + r2(last[0]) + "," + (y0 + h2) + "L" + x0 + "," + (y0 + h2) + 'Z" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
+    var spans = notes.filter(function(n) {
+      return n.j != null;
+    });
+    if (spans.length) s += noteMarks(th, noteLayout(spans, v.length, function(i) {
+      var x = X(i);
+      return { c: x, l: x, r: x };
+    }, x0, w), y0, y0 + h2);
+    if (filled) s += '<path d="' + runs.map(function(r) {
+      return pathOf(r, straight) + "L" + r2(r[r.length - 1][0]) + "," + (y0 + h2) + "L" + (r[0] === P[0] ? x0 : r2(r[0][0])) + "," + (y0 + h2) + "Z";
+    }).join("") + '" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
     s += '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1"' + anim(o, "bzc-d") + "/>";
+    runs.forEach(function(r) {
+      if (r.length === 1 && r[0] !== last) s += '<circle cx="' + r2(r[0][0]) + '" cy="' + r2(r[0][1]) + '" r="2.5" fill="' + c + '"/>';
+    });
     if (has(o.goal)) s += goalLine(o, th, x0, x0 + w, Y(+o.goal));
     notes.forEach(function(n) {
-      if (n.i >= v.length) return;
+      if (n.j != null || n.i >= v.length || !ok(v[n.i])) return;
       var p = P[n.i];
       s += '<circle cx="' + r2(p[0]) + '" cy="' + r2(p[1]) + '" r="3.5" fill="' + th.fg + '"/>' + text(clamp(p[0], x0 + 30, x0 + w - 30), p[1] - 9, n.text, small(th, 10, 'text-anchor="middle"', th.fg));
     });
     s += '<circle cx="' + r2(last[0]) + '" cy="' + r2(last[1]) + '" r="9" fill="' + c + '" fill-opacity=".25"/><circle cx="' + r2(last[0]) + '" cy="' + r2(last[1]) + '" r="4.5" fill="' + c + '"/>';
     if (bool(o.showValues)) {
       P.forEach(function(p, i) {
-        if (i < v.length) s += text(p[0], p[1] - 8, fmt(v[i], o, true), small(th, 9, 'text-anchor="middle"'));
+        if (i < v.length && ok(v[i])) s += text(p[0], p[1] - 8, fmt(v[i], o, true), small(th, 9, 'text-anchor="middle"'));
       });
     }
     var step = v.length > 1 ? w / (v.length - 1) : w;
     v.forEach(function(n, i) {
-      s += hit(X(i) - step / 2, y0 - 6, step, h2 + 12, (labels[i] || "#" + (i + 1)) + ": " + fmt(n, o), i, n);
+      s += hit(X(i) - step / 2, y0 - 6, step, h2 + 12, (labels[i] || "#" + (i + 1)) + ": " + fmtv(n, o), i, n);
     });
     return s;
-  }, { stat: st, summary: v.length ? "latest " + fmt(v[v.length - 1], o) : "no data" });
+  }, { stat: st, summary: vals.length ? "latest " + fmt(v[lastOk], o) + gapNote(v) : "no data" });
 }
 spark.table = function(o) {
   var labels = list(o.labels);
@@ -310,7 +408,7 @@ var THEMES = {
 };
 
 // src/render.js
-var NAMES = ["spark", "line", "area", "bars", "combo", "waterfall", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "bullet", "heatmap"];
+var NAMES = ["spark", "line", "area", "bars", "combo", "waterfall", "histogram", "boxplot", "scatter", "ring", "donut", "gauge", "progress", "bullet", "heatmap", "treemap"];
 var TYPES = {};
 function register(type, fn) {
   TYPES[type] = fn;
@@ -407,7 +505,14 @@ var ATTRIBUTES = [
   "targets",
   "zone-labels",
   "totals",
-  "clickable"
+  "clickable",
+  "fill",
+  "groups",
+  "band-low",
+  "band-high",
+  "band-mid",
+  "band-series",
+  "band-color"
 ];
 var HOST_CSS = `:host{display:block;position:relative;max-width:100%}:host([hidden]){display:none}svg{display:block;max-width:100%;height:auto;overflow:visible}.tip{position:absolute;left:0;top:0;pointer-events:none;background:#0b0b10;color:#f2f1f7;font:600 12px/1.5 ${MONO};padding:7px 10px;border-radius:10px;white-space:pre;opacity:0;transform:translate(-50%,calc(-100% - 12px));transition:opacity .12s;z-index:3;border:1px solid #2a2935;box-shadow:0 8px 24px rgba(0,0,0,.35)}.tip.on{opacity:1}.c{outline:none}:host([clickable]) .bzc-hit{cursor:pointer}.c:focus-visible{outline:2px solid #fff;outline-offset:3px;box-shadow:0 0 0 7px #000}.k{stroke:currentColor;stroke-width:2;stroke-opacity:1}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}@media (forced-colors:active){.c:focus-visible{outline-color:Highlight}}`;
 var STEPS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
@@ -942,11 +1047,10 @@ function xyFrame(o, th, c, x0, y0, w, h) {
       s += text(X(i), top + ph + 15, labels[i], small(th, 10, 'text-anchor="' + anchor + '"'));
     }
   }
-  c.notes.forEach(function(nt) {
-    if (nt.i >= n) return;
-    var x = X(nt.i);
-    s += '<line x1="' + r2(x) + '" x2="' + r2(x) + '" y1="' + r2(top + 12) + '" y2="' + r2(top + ph) + '" stroke="' + th.fg + '" stroke-opacity=".4" stroke-dasharray="3 3"/>' + text(clamp(x, px + 30, px + pw - 30), top + 8, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
-  });
+  s += noteMarks(th, noteLayout(c.notes, n, function(i2) {
+    var x = X(i2);
+    return { c: x, l: x, r: x };
+  }, px, pw), top, top + ph);
   return { svg: s, X, Y, px, pw, top, ph, clip, uneven: !!T };
 }
 function fixedScale(lo, hi, hasMin, hasMax) {
@@ -1002,34 +1106,150 @@ function pointMarks(o, mk, ys, X, Y, c, bg, k) {
   });
   return s;
 }
+function runsPath(runs, straight) {
+  return runs.map(function(r) {
+    return pathOf(r, straight);
+  }).join("");
+}
+function loneDots(runs, c, all) {
+  return runs.map(function(r, q) {
+    return r.length === 1 && (all || q < runs.length - 1) ? '<circle cx="' + r2(r[0][0]) + '" cy="' + r2(r[0][1]) + '" r="2.5" fill="' + c + '"/>' : "";
+  }).join("");
+}
+
+// src/core/bands.js
+var MID_DASHES = ["dashed", "dotted", "dashdot"];
+function bandsOf(o, pal, k) {
+  var B;
+  if (Array.isArray(o.bands)) {
+    B = o.bands.filter(function(b) {
+      return b && typeof b === "object";
+    }).map(function(b) {
+      return { low: nums(b.low), high: nums(b.high), mid: nums(b.mid), name: b.name, color: b.color };
+    });
+  } else {
+    var L = series(o.bandLow), H = series(o.bandHigh), M = series(o.bandMid), names = list(o.bandSeries), cols = list(o.bandColor);
+    B = [];
+    for (var j = 0; j < Math.max(L.length, H.length, M.length); j++) B.push({ low: L[j] || [], high: H[j] || [], mid: M[j] || [], name: names[j], color: cols[j] });
+  }
+  return B.map(function(b, j2) {
+    return {
+      low: b.low,
+      high: b.high,
+      mid: b.mid,
+      name: has(b.name) ? String(b.name) : "Band " + (j2 + 1),
+      color: has(b.color) ? String(b.color) : pal[(k + j2) % pal.length],
+      dash: MID_DASHES[j2 % MID_DASHES.length],
+      n: Math.max(b.low.length, b.high.length, b.mid.length)
+    };
+  });
+}
+function bandAt(B, i) {
+  return B.some(function(b) {
+    return ok(b.low[i]) || ok(b.high[i]) || ok(b.mid[i]);
+  });
+}
+function bandValues(B) {
+  return [].concat.apply([], B.map(function(b) {
+    return b.low.concat(b.high, b.mid);
+  }));
+}
+function bandKey(b, x, y) {
+  return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="18" height="10" rx="2" fill="' + b.color + '" fill-opacity=".28"/>' + (!b.mid.some(ok) ? "" : '<line x1="' + r2(x + 1) + '" x2="' + r2(x + 17) + '" y1="' + r2(y + 6) + '" y2="' + r2(y + 6) + '" stroke="' + b.color + '" stroke-width="2" stroke-dasharray="' + DASHES[b.dash] + '"/>');
+}
+function drawBands(o, B, X, Y, straight, bg, k0) {
+  var s = "";
+  B.forEach(function(b, j) {
+    var hi = [], lo = [];
+    for (var i = 0; i < b.n; i++) {
+      hi.push([X(i), Y(b.high[i])]);
+      lo.push([X(i), Y(b.low[i])]);
+    }
+    var runs = runsOf(hi.map(function(p, i2) {
+      return [i2, isFinite(p[1]) && isFinite(lo[i2][1]) ? 1 : NaN];
+    }));
+    var fill = "", edge = "";
+    runs.forEach(function(r) {
+      var a = r[0][0], z = r[r.length - 1][0] + 1, top = hi.slice(a, z), base = lo.slice(a, z);
+      fill += pathOf(top, straight) + pathOf(base.slice().reverse(), straight).replace(/^M/, "L") + "Z";
+      edge += pathOf(top, straight) + pathOf(base, straight);
+    });
+    if (fill) {
+      s += '<path d="' + fill + '" fill="' + b.color + '" fill-opacity=".2"' + anim(o, "bzc-a", j * 0.1) + '/><path d="' + edge + '" fill="none" stroke="' + b.color + '" stroke-opacity=".5" stroke-width="1"' + anim(o, "bzc-a", j * 0.1) + "/>";
+    }
+  });
+  B.forEach(function(b, j) {
+    var mid = runsOf(b.mid.map(function(v, i) {
+      return [X(i), Y(v)];
+    }));
+    if (!mid.length) return;
+    var e = mid[mid.length - 1], last = e[e.length - 1];
+    s += seriesLine(o, mid.map(function(r) {
+      return pathOf(r, straight);
+    }).join(""), b.color, k0 + j, DASHES[b.dash]) + '<circle cx="' + r2(last[0]) + '" cy="' + r2(last[1]) + '" r="3.5" fill="' + b.color + '" stroke="' + bg + '" stroke-width="2"/>';
+  });
+  return s;
+}
+function bandTip(b, i, o) {
+  var lo = b.low[i], hi = b.high[i], mid = b.mid[i], range = ok(lo) && ok(hi);
+  if (!range && !ok(mid)) return "";
+  if (range && lo === hi && (!ok(mid) || mid === lo)) return "\n" + b.name + ": " + fmt(lo, o);
+  return "\n" + b.name + ": " + (range ? fmt(lo, o) + " to " + fmt(hi, o) : "") + (ok(mid) ? (range ? ", mid " : "mid ") + fmt(mid, o) : "");
+}
+function bandTable(t, B, o, n) {
+  B.forEach(function(b) {
+    var mids = b.mid.some(ok);
+    t.head.push(b.name + " low");
+    if (mids) t.head.push(b.name + " mid");
+    t.head.push(b.name + " high");
+    for (var i = 0; i < n; i++) {
+      var cell = function(v) {
+        return i < v.length ? fmt(v[i], o) : "";
+      };
+      t.rows[i].push(cell(b.low));
+      if (mids) t.rows[i].push(cell(b.mid));
+      t.rows[i].push(cell(b.high));
+    }
+  });
+  return t;
+}
 
 // src/charts/line.js
 function line(o, th) {
-  var S = series(o.values), names = list(o.series), labels = list(o.labels), pal = palette(o, th);
+  var S = series(o.values), names = list(o.series), labels = list(o.labels), pal = palette(o, th), B = bandsOf(o, pal, S.length);
   var h = num(o.height, 170), n = Math.max.apply(null, [0].concat(S.map(function(s) {
     return s.length;
+  }), B.map(function(b) {
+    return b.n;
   })));
-  var notes = parseNotes(o, labels), multi = S.length > 1 || names.length > 0;
+  var notes = parseNotes(o, labels), multi = S.length > 1 || names.length > 0 || B.length > 0;
   var st = statOf(S[0] || [], o, "");
   var dashOf = styleOf(o.dash, Object.keys(DASHES), "solid"), markOf = styleOf(o.markers, SHAPES, "none");
   var bg = o.background || th.tile;
-  var key = (dashOf || markOf) && lineKey(pal, dashOf, markOf, bg);
+  var key = (dashOf || markOf || B.length) && lineKey(pal, dashOf, markOf, bg);
+  if (B.length) key = /* @__PURE__ */ function(lk) {
+    return function(k, x, y) {
+      return k < S.length ? lk(k, x, y) : bandKey(B[k - S.length], x, y);
+    };
+  }(key);
   var nameOf = function(k) {
     return names[k] || "Series " + (k + 1);
   };
   var T = parseDates(o, n), timed = T && hasTimes(T), lang = o.lang || "en-GB";
-  var all = [].concat.apply([], S), pos = all.filter(function(v) {
+  var flat = [].concat.apply([], S), all = real(flat.concat(bandValues(B))), pos = all.filter(function(v) {
     return v > 0;
   });
   if (has(o.goal) && +o.goal > 0) pos.push(+o.goal);
-  var log = bool(o.log) && pos.length > 0;
+  var log = bool(o.log) && pos.length > 0, fill = B.length && !has(o.fill) ? "none" : fillOf(o);
   return tile(o, th, h, function(x0, y0, w, h2) {
-    if (!n) return emptyState(th, x0, y0, w, h2);
+    if (!all.length) return emptyState(th, x0, y0, w, h2);
     var f = xyFrame(o, th, {
       n,
       names: multi ? S.map(function(_, k) {
         return nameOf(k);
-      }) : null,
+      }).concat(B.map(function(b) {
+        return b.name;
+      })) : null,
       pal,
       key,
       kw: key && 24,
@@ -1049,33 +1269,29 @@ function line(o, th) {
       posHi: log ? Math.max.apply(null, pos) : 0
     }, x0, y0, w, h2);
     var s = f.svg + (f.clip ? "<g" + f.clip + ">" : ""), X = f.X, Y = f.Y, px = f.px, pw = f.pw, top = f.top, ph = f.ph;
+    if (B.length) s += drawBands(o, B, X, Y, bool(o.straight), bg, S.length);
     S.forEach(function(v, k) {
       var c = pal[k % pal.length];
       var P = v.map(function(y, i) {
         return [X(i), Y(y)];
       });
       if (P.length === 1) P = [[px, P[0][1]], [px + pw, P[0][1]]];
-      var runs = log ? P.reduce(function(r, p) {
-        if (isFinite(p[1])) r[r.length - 1].push(p);
-        else if (r[r.length - 1].length) r.push([]);
-        return r;
-      }, [[]]).filter(function(r) {
-        return r.length;
-      }) : [P];
+      var runs = runsOf(P);
       if (!runs.length) return;
-      var d = runs.map(function(r) {
-        return pathOf(r, bool(o.straight));
-      }).join("");
+      var d = runsPath(runs, bool(o.straight));
       P = [].concat.apply([], runs);
-      if (k === 0 && !log) {
-        var g = newId("g"), last = P[P.length - 1];
-        s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity=".26"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs><path d="' + d + "L" + r2(last[0]) + "," + r2(top + ph) + "L" + r2(P[0][0]) + "," + r2(top + ph) + 'Z" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
+      if ((fill === "all" || fill === "first" && k === 0) && !log) {
+        var g = newId("g");
+        s += '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c + '" stop-opacity="' + (fill === "all" && S.length > 1 ? ".16" : ".26") + '"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs><path d="' + runs.map(function(r) {
+          return pathOf(r, bool(o.straight)) + "L" + r2(r[r.length - 1][0]) + "," + r2(top + ph) + "L" + r2(r[0][0]) + "," + r2(top + ph) + "Z";
+        }).join("") + '" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>";
       }
       var mk = markOf ? markOf(k) : "none";
       s += seriesLine(o, d, c, k, dashOf ? DASHES[dashOf(k)] : "");
       if (mk !== "none") {
         s += pointMarks(o, mk, v, X, Y, c, bg, k);
       } else {
+        s += loneDots(runs, c);
         var e = P[P.length - 1];
         s += '<circle cx="' + r2(e[0]) + '" cy="' + r2(e[1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
       }
@@ -1085,16 +1301,33 @@ function line(o, th) {
     });
     return s + (f.clip ? "</g>" : "") + xyFinish(o, th, f, n, function(j) {
       var tip = pointName(labels, T, j, lang, timed);
+      var tips = B.map(function(b) {
+        return bandTip(b, j, o);
+      }).join("");
       S.forEach(function(v, k) {
-        if (j < v.length) tip += "\n" + (multi ? nameOf(k) + ": " : "") + fmt(v[j], o);
+        if (j < v.length && !(tips && !isFinite(v[j]))) tip += "\n" + (multi ? nameOf(k) + ": " : "") + fmtv(v[j], o);
       });
-      return tip;
+      return tip + tips;
     }, S);
-  }, { stat: st, summary: S.length + " series over " + n + " points" });
+  }, {
+    stat: st,
+    // A line that stops where the bands carry on, such as history before a forecast, isn't missing anything there.
+    summary: S.length + " series" + (B.length ? " and " + B.length + (B.length === 1 ? " band" : " bands") : "") + " over " + n + " points" + gapNote(B.length ? [].concat.apply([], S.map(function(v) {
+      return v.filter(function(_, i) {
+        return !bandAt(B, i);
+      });
+    })) : flat)
+  });
 }
 line.table = function(o) {
-  var t = seriesTable(o);
-  return datedTable(t, o, t.rows.length);
+  var t = seriesTable(o), S = series(o.values), B = bandsOf(o, [""], S.length), labels = list(o.labels);
+  var n = Math.max.apply(null, [t.rows.length].concat(B.map(function(b) {
+    return b.n;
+  })));
+  for (var i = t.rows.length; i < n; i++) t.rows.push([labels[i] || "#" + (i + 1)].concat(S.map(function() {
+    return "";
+  })));
+  return datedTable(B.length ? bandTable(t, B, o, n) : t, o, n);
 };
 
 // src/entries/line.js
@@ -1130,8 +1363,11 @@ function area(o, th) {
     pos.push(p);
     for (j = 0; j < k; j++) {
       var v = mode === "percent" ? p ? Math.max(0, val(j, i)) / p * 100 : 0 : val(j, i);
-      if (!mode) {
-        lows[j].push(0);
+      if (mode && !ok(t)) {
+        lows[j].push(NaN);
+        highs[j].push(NaN);
+      } else if (!mode) {
+        lows[j].push(ok(v) ? 0 : NaN);
         highs[j].push(v);
       } else if (v >= 0) {
         lows[j].push(up);
@@ -1144,7 +1380,7 @@ function area(o, th) {
       }
     }
   }
-  var edges = [].concat.apply([], lows.concat(highs));
+  var edges = real([].concat.apply([], lows.concat(highs))), flat = [].concat.apply([], S);
   var dashOf = styleOf(o.dash, Object.keys(DASHES), "solid"), markOf = styleOf(o.markers, SHAPES, "none");
   var patOf = k > 1 ? styleOf(o.patterns, PATTERNS, "solid") : null, bg = o.background || th.tile, defs = "", fills = [];
   for (var q = 0; patOf && q < k; q++) {
@@ -1161,7 +1397,7 @@ function area(o, th) {
     return pos[i2] ? Math.round(Math.max(0, val(j2, i2)) / pos[i2] * 100) : 0;
   };
   return tile(o, th, h, function(x0, y0, w, h2) {
-    if (!n) return emptyState(th, x0, y0, w, h2);
+    if (!edges.length) return emptyState(th, x0, y0, w, h2);
     var f = xyFrame(o, th, {
       n,
       names: multi ? S.map(function(_, j2) {
@@ -1197,22 +1433,34 @@ function area(o, th) {
       return mode ? highs[j2] : S[j2];
     };
     S.forEach(function(_, j2) {
-      var top = pts(shown(j2)), base = pts(mode ? lows[j2] : shown(j2).map(function() {
-        return 0;
-      })).reverse();
-      s += '<path d="' + pathOf(top, straight) + pathOf(base, straight).replace(/^M/, "L") + 'Z" fill="' + (fills[j2] || pal[j2 % pal.length]) + '" fill-opacity="' + alpha + '"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(j2 * 0.1) + 's"' : "") + "/>";
+      var top = pts(shown(j2)), base = pts(mode ? lows[j2] : shown(j2).map(function(y) {
+        return ok(y) ? 0 : NaN;
+      }));
+      var d = runsOf(top.map(function(q2, i2) {
+        return [i2, isFinite(q2[1]) && isFinite(base[i2][1]) ? 1 : NaN];
+      })).map(function(r) {
+        var a = r[0][0], b = r[r.length - 1][0] + 1;
+        return pathOf(top.slice(a, b), straight) + pathOf(base.slice(a, b).reverse(), straight).replace(/^M/, "L") + "Z";
+      }).join("");
+      if (d) s += '<path d="' + d + '" fill="' + (fills[j2] || pal[j2 % pal.length]) + '" fill-opacity="' + alpha + '"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(j2 * 0.1) + 's"' : "") + "/>";
     });
     S.forEach(function(_, j2) {
-      var c = pal[j2 % pal.length], ys = shown(j2), P = pts(ys), mk = markOf ? markOf(j2) : "none";
-      s += seriesLine(o, pathOf(P, straight), c, j2, dashOf ? DASHES[dashOf(j2)] : "");
+      var c = pal[j2 % pal.length], ys = shown(j2), runs = runsOf(pts(ys)), mk = markOf ? markOf(j2) : "none";
+      if (!runs.length) return;
+      var P = [].concat.apply([], runs);
+      s += seriesLine(o, runsPath(runs, straight), c, j2, dashOf ? DASHES[dashOf(j2)] : "");
       if (mk !== "none") s += pointMarks(o, mk, ys, X, Y, c, bg, j2);
-      else if (!mode) s += '<circle cx="' + r2(P[P.length - 1][0]) + '" cy="' + r2(P[P.length - 1][1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      else {
+        s += loneDots(runs, c, mode);
+        if (!mode) s += '<circle cx="' + r2(P[P.length - 1][0]) + '" cy="' + r2(P[P.length - 1][1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      }
       if (bool(o.showValues) && !mode) ys.forEach(function(y, i2) {
-        s += text(X(i2), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"'));
+        if (ok(y)) s += text(X(i2), Y(y) - 8, fmt(y, o, true), small(th, 9, 'text-anchor="middle"'));
       });
     });
     if (bool(o.showValues) && mode === "stack") {
       totals.forEach(function(t2, i2) {
+        if (!ok(t2)) return;
         var top = Math.max.apply(null, highs.map(function(hs) {
           return hs[i2];
         }).concat([0]));
@@ -1222,13 +1470,13 @@ function area(o, th) {
     return s + (f.clip ? "</g>" : "") + xyFinish(o, th, f, n, function(i2) {
       var tip = pointName(labels, T, i2, lang, timed);
       S.forEach(function(ser, j2) {
-        if (i2 < ser.length) tip += "\n" + (multi ? nameOf(j2) + ": " : "") + fmt(ser[i2], o) + (mode === "percent" ? " (" + share(j2, i2) + "%)" : "");
+        if (i2 < ser.length) tip += "\n" + (multi ? nameOf(j2) + ": " : "") + fmtv(ser[i2], o) + (mode === "percent" && ok(ser[i2]) ? " (" + share(j2, i2) + "%)" : "");
       });
-      return tip + (mode ? "\nTotal: " + fmt(totals[i2], o) : "");
+      return tip + (mode ? "\nTotal: " + fmtv(totals[i2], o) : "");
     }, S);
   }, {
     stat: statOf(mode ? totals : S[0] || [], o, ""),
-    summary: k + " series " + (mode === "percent" ? "as shares of each total" : mode ? "stacked" : "filled") + " over " + n + " points"
+    summary: k + " series " + (mode === "percent" ? "as shares of each total" : mode ? "stacked" : "filled") + " over " + n + " points" + gapNote(flat)
   });
 }
 area.table = function(o) {
@@ -1250,17 +1498,22 @@ function bars(o, th) {
   })));
   var grouped = k > 1, horiz = bool(o.horizontal), stacked = grouped && bool(o.stacked);
   var many = !grouped && list(o.color).filter(Boolean).length > 1;
-  var v0 = S[0] || [], all = [].concat.apply([], S);
+  var v0 = S[0] || [], flat = [].concat.apply([], S), all = real(flat);
   var sumOf = function(i, sign) {
     return S.reduce(function(t2, s) {
       return i < s.length && s[i] * sign > 0 ? t2 + s[i] : t2;
     }, 0);
   };
   var totals = [], ups = [], downs = [];
+  var whole = function(i) {
+    return S.every(function(s) {
+      return i >= s.length || ok(s[i]);
+    });
+  };
   for (var t = 0; stacked && t < n; t++) {
     ups.push(sumOf(t, 1));
     downs.push(sumOf(t, -1));
-    totals.push(ups[t] + downs[t]);
+    totals.push(whole(t) ? ups[t] + downs[t] : NaN);
   }
   var scale = stacked ? ups.concat(downs) : all;
   var top = scale.length ? Math.max.apply(null, scale) : 0;
@@ -1287,10 +1540,10 @@ function bars(o, th) {
     return labels[i] || "#" + (i + 1);
   };
   var tipOf = function(i) {
-    if (!grouped) return labelOf(i) + ": " + fmt(v0[i], o);
+    if (!grouped) return labelOf(i) + ": " + fmtv(v0[i], o);
     return labelOf(i) + S.map(function(s, j) {
-      return i < s.length ? "\n" + nameOf(j) + ": " + fmt(s[i], o) : "";
-    }).join("") + (stacked ? "\nTotal: " + fmt(totals[i], o) : "");
+      return i < s.length ? "\n" + nameOf(j) + ": " + fmtv(s[i], o) : "";
+    }).join("") + (stacked ? "\nTotal: " + fmtv(totals[i], o) : "");
   };
   var d0 = dims(o);
   var legendH = grouped || names.length ? legend(S.map(function(_, j) {
@@ -1301,9 +1554,9 @@ function bars(o, th) {
   var rowH = horiz ? rows * subH + (rows - 1) * subGap + (thin ? 14 : 16) : 0;
   var goalH = horiz && n && has(o.goal) && +o.goal > 0 ? 16 : 0;
   var h = horiz ? legendH + goalH + Math.max(1, n) * rowH - 6 : num(o.height, 140) + legendH;
-  var best = v0.indexOf(Math.max.apply(null, v0.length ? v0 : [0]));
+  var best = v0.indexOf(Math.max.apply(null, real(v0).length ? real(v0) : [0]));
   return tile(o, th, h, function(x0, y0, w, h2) {
-    if (!n) return emptyState(th, x0, y0, w, h2);
+    if (!all.length) return emptyState(th, x0, y0, w, h2);
     var s = defs ? "<defs>" + defs + "</defs>" : "", top0 = y0;
     if (legendH) {
       s += legend(S.map(function(_, j) {
@@ -1365,7 +1618,7 @@ function bars(o, th) {
       var at2 = 0;
       S.forEach(function(ser, j) {
         var val = i2 < ser.length ? ser[i2] : 0, len = Math.max(0, val) / span2 * bw2;
-        if (len <= 0) return;
+        if (!(len > 0)) return;
         var gapL = at2 > 0 ? 1.5 : 0;
         out += '<rect x="' + r2(bx2 + at2 + gapL) + '" y="' + r2(by) + '" width="' + r2(Math.max(2, len - gapL)) + '" height="' + subH + '" rx="' + r2(Math.min(3, len / 2)) + '" fill="' + colourOf(j, i2) + '"' + anim(o, "bzc-gx", i2 * 0.06 + j * 0.03) + "/>";
         at2 += len;
@@ -1392,7 +1645,10 @@ function bars(o, th) {
     }
     var negLab = bool(o.showValues) && lo < 0 ? 14 : 0;
     var labDrop = angled ? Math.ceil(Math.sin(rad) * Math.min(labMax, tw("x".repeat(ANGLE_MAX_CHARS), 10, true))) + 18 : 20;
-    var bottom = (labels.length ? labDrop : 2) + negLab, topPad = bool(o.showValues) ? 16 : 4;
+    var slotW = w / n, nl = noteLayout(parseNotes(o, labels), n, function(i2) {
+      return { c: x0 + slotW * (i2 + 0.5), l: x0 + slotW * i2, r: x0 + slotW * (i2 + 1) };
+    }, x0, w);
+    var bottom = (labels.length ? labDrop : 2) + negLab, topPad = (bool(o.showValues) ? 16 : 4) + (nl.rows ? nl.height + 4 : 0);
     var ph = h2 - (top0 - y0) - bottom - topPad, py = top0 + topPad;
     var Y = function(x) {
       return py + ph - (x - lo) / (hi - lo) * ph;
@@ -1405,6 +1661,7 @@ function bars(o, th) {
       var vw = tw(str, size, true);
       boxes.push([cx - vw / 2, ty - 9, vw, 12]);
     };
+    if (nl.rows) s += noteMarks(th, nl, top0, py + ph);
     s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(Y0) + '" y2="' + r2(Y0) + '" stroke="' + th.grid + '"/>';
     for (var c = 0; c < n; c++) {
       var gx0 = x0 + c * slot + (slot - groupW) / 2;
@@ -1414,6 +1671,10 @@ function bars(o, th) {
         S.forEach(function(ser, j) {
           if (c >= ser.length) return;
           var val = ser[c], x = gx0 + j * (bwid + gap), y = Math.min(Y(val), Y0), bh = Math.abs(Y(val) - Y0);
+          if (!ok(val)) {
+            s += gapMark(x, bwid, Y0, th);
+            return;
+          }
           if (bh > 0.5) {
             s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(6, bwid / 2, bh / 2)) + '" fill="' + colourOf(j, c) + '" fill-opacity="' + opac(val) + '"' + anim(o, val < 0 ? "bzc-gn" : "bzc-g", c * 0.05 + j * 0.03) + "/>";
             boxes.push([x, y, bwid, bh]);
@@ -1457,7 +1718,7 @@ function bars(o, th) {
         }
       });
       if (bool(o.showValues)) {
-        var tot = totals[c2], ty = tot < 0 ? Y(downs[c2]) + 12 : Y(ups[c2]) - 5, ts = fmt(tot, o, true);
+        var tot = totals[c2], ty = tot < 0 ? Y(downs[c2]) + 12 : Y(ups[c2]) - 5, ts = ok(tot) ? fmt(tot, o, true) : "\u2013";
         out += text(
           x + bwid / 2,
           ty,
@@ -1470,7 +1731,7 @@ function bars(o, th) {
     }
   }, {
     stat: statOf(v0, o, ""),
-    summary: !n ? "no data" : stacked ? k + " series stacked across " + n + " groups" : grouped ? k + " series across " + n + " groups" : "highest " + (labels[best] || "") + " " + fmt(v0[best], o)
+    summary: !n ? "no data" : stacked ? k + " series stacked across " + n + " groups" : grouped ? k + " series across " + n + " groups" : "highest " + (labels[best] || "") + " " + fmt(v0[best], o) + gapNote(flat)
   });
 }
 bars.table = function(o) {
@@ -1531,6 +1792,7 @@ function combo(o, th) {
     var up = 0, down = 0;
     B.forEach(function(s) {
       var v = val(s, i);
+      if (!ok(v)) return;
       if (stacked) {
         if (v >= 0) up += v;
         else down += v;
@@ -1543,7 +1805,7 @@ function combo(o, th) {
     bottoms.push(down);
   }
   return tile(o, th, h, function(x0, y0, w, h2) {
-    if (!n || !k) return emptyState(th, x0, y0, w, h2);
+    if (!n || !k || !real([].concat.apply([], B.concat(L))).length) return emptyState(th, x0, y0, w, h2);
     var s = defs ? "<defs>" + defs + "</defs>" : "", top = y0;
     var lg = legend(B.map(function(_, j) {
       return barName(j);
@@ -1555,13 +1817,13 @@ function combo(o, th) {
     var titled = has(o.yLabel) || has(o.lineLabel);
     if (titled) top += 16;
     var sc = niceScale(Math.min.apply(null, bottoms), Math.max.apply(null, tops), 4), steps = sc.ticks.length - 1;
-    var all = [].concat.apply([], L);
+    var all = real([].concat.apply([], L));
     var lmin = Math.min.apply(null, all), lmax = Math.max.apply(null, all);
     if (bool(o.lineZero)) {
       lmin = Math.min(0, lmin);
       lmax = Math.max(0, lmax);
     }
-    var sc2 = m ? matched(lmin, lmax, steps) : null;
+    var sc2 = m && all.length ? matched(lmin, lmax, steps) : null;
     var tl = sc.ticks.map(function(t2) {
       return fmt(t2, o, true);
     }), tr = sc2 ? sc2.ticks.map(function(t2) {
@@ -1574,6 +1836,14 @@ function combo(o, th) {
       return tw(t2, 10, true);
     })) + 10 : 0;
     var px = x0 + lw, pw = w - lw - rw, ph = h2 - (top - y0) - (labels.length ? 20 : 4), band = pw / n;
+    var nl = noteLayout(parseNotes(o, labels), n, function(i2) {
+      return { c: px + band * (i2 + 0.5), l: px + band * i2, r: px + band * (i2 + 1) };
+    }, px, pw);
+    var noteTop = top - (titled ? 16 : 0);
+    if (nl.rows) {
+      top += nl.height + 4;
+      ph -= nl.height + 4;
+    }
     var X = function(i2) {
       return px + band * (i2 + 0.5);
     };
@@ -1583,6 +1853,7 @@ function combo(o, th) {
     var Y2 = function(v) {
       return top + ph - (v - sc2.lo) / (sc2.hi - sc2.lo) * ph;
     };
+    if (nl.rows) s += noteMarks(th, nl, noteTop, top + ph);
     sc.ticks.forEach(function(t2, i2) {
       var y = Y(t2);
       s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '"' + (t2 === 0 ? "" : ' stroke-dasharray="2 4"') + "/>" + text(px - 8, y + 3.5, tl[i2], small(th, 10, 'text-anchor="end"')) + (sc2 ? text(px + pw + 8, y + 3.5, tr[i2], small(th, 10, 'text-anchor="start"')) : "");
@@ -1604,6 +1875,10 @@ function combo(o, th) {
       B.forEach(function(ser, j) {
         if (i >= ser.length) return;
         var v = ser[i], a, b, x = stacked ? X(i) - gw / 2 : X(i) - gw / 2 + j * bw;
+        if (!ok(v)) {
+          if (!stacked) s += gapMark(x, bw, Y(0), th);
+          return;
+        }
         if (stacked) {
           if (v >= 0) {
             a = up2;
@@ -1623,29 +1898,35 @@ function combo(o, th) {
       });
     }
     L.forEach(function(ser, j) {
-      var c = lineCol(j), P = ser.map(function(v, i2) {
+      if (!sc2) return;
+      var c = lineCol(j), runs = runsOf(ser.map(function(v, i2) {
         return [X(i2), Y2(v)];
-      }), mk = markOf ? markOf(j) : "none";
-      s += seriesLine(o, pathOf(P, bool(o.straight)), c, j, dashOf ? DASHES[dashOf(j)] : "");
+      })), mk = markOf ? markOf(j) : "none";
+      if (!runs.length) return;
+      var P = [].concat.apply([], runs);
+      s += seriesLine(o, runsPath(runs, bool(o.straight)), c, j, dashOf ? DASHES[dashOf(j)] : "");
       if (mk !== "none") s += pointMarks(o, mk, ser, X, Y2, c, bg, j);
-      else s += '<circle cx="' + r2(P[P.length - 1][0]) + '" cy="' + r2(P[P.length - 1][1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      else {
+        s += loneDots(runs, c);
+        s += '<circle cx="' + r2(P[P.length - 1][0]) + '" cy="' + r2(P[P.length - 1][1]) + '" r="4" fill="' + c + '" stroke="' + bg + '" stroke-width="2"/>';
+      }
     });
     for (i = 0; i < n; i++) {
       var tip = labels[i] || "#" + (i + 1), t = 0;
       B.forEach(function(ser, j) {
         if (i < ser.length) {
-          tip += "\n" + barName(j) + ": " + fmt(ser[i], o);
+          tip += "\n" + barName(j) + ": " + fmtv(ser[i], o);
           t += ser[i];
         }
       });
-      if (stacked) tip += "\nTotal: " + fmt(t, o);
+      if (stacked) tip += "\nTotal: " + fmtv(t, o);
       L.forEach(function(ser, j) {
-        if (i < ser.length) tip += "\n" + lineName(j) + ": " + fmt(ser[i], lo);
+        if (i < ser.length) tip += "\n" + lineName(j) + ": " + fmtv(ser[i], lo);
       });
       s += hit(X(i) - band / 2, top, band, ph, tip, i, at(B.concat(L), i));
     }
     return s;
-  }, { summary: k + " bar series" + (stacked ? " stacked" : "") + " and " + m + (m === 1 ? " line" : " lines") + " over " + n + " points" });
+  }, { summary: k + " bar series" + (stacked ? " stacked" : "") + " and " + m + (m === 1 ? " line" : " lines") + " over " + n + " points" + gapNote([].concat.apply([], B.concat(L))) });
 }
 combo.table = function(o) {
   var B = series(o.values), L = series(o.line), labels = list(o.labels), bn = list(o.series), ln = list(o.lineSeries);
@@ -1714,23 +1995,26 @@ function waterfall(o, th) {
   var v = nums(o.values), n = v.length, labels = list(o.labels), names = list(o.series), c = list(o.color);
   var steps = walk(v, labels, o.totals);
   var cols = { up: c[0] || th.up, down: c[1] || th.down, total: c[2] || th.palette[0] };
-  var kinds = ["up", "down", "total"].filter(function(k) {
+  var KINDS = ["up", "down", "total", "gap"];
+  var kinds = KINDS.filter(function(k) {
     return steps.some(function(st) {
       return st.kind === k;
     });
   });
   var keyNames = kinds.map(function(k) {
-    return names[["up", "down", "total"].indexOf(k)] || { up: "Rise", down: "Fall", total: "Total" }[k];
+    return names[KINDS.indexOf(k)] || { up: "Rise", down: "Fall", total: "Total", gap: "No data" }[k];
   });
   var keyPal = kinds.map(function(k) {
-    return cols[k];
+    return cols[k] || th.muted;
   });
   var key = function(j, x, y) {
-    return '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="10" height="10" rx="2" fill="' + keyPal[j] + '"/>';
+    return kinds[j] === "gap" ? '<rect x="' + r2(x + 0.75) + '" y="' + r2(y + 1.75) + '" width="8.5" height="8.5" rx="2" fill="none" stroke="' + th.muted + '" stroke-width="1.5" stroke-dasharray="2 2"/>' : '<rect x="' + r2(x) + '" y="' + r2(y + 1) + '" width="10" height="10" rx="2" fill="' + keyPal[j] + '"/>';
   };
   var legendH = n ? legend(keyNames, keyPal, th, 0, 0, dims(o).w, key, 15).height : 0;
   var h = num(o.height, 200) + legendH;
-  var end = n ? steps[n - 1].to : 0;
+  var end = n ? steps[n - 1].to : 0, missing = steps.filter(function(st) {
+    return st.kind === "gap";
+  }).length;
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!n) return emptyState(th, x0, y0, w, h2);
     var s = legend(keyNames, keyPal, th, x0, y0, w, key, 15).svg, top0 = y0 + legendH;
@@ -1751,7 +2035,7 @@ function waterfall(o, th) {
     })) + 10;
     var px = x0 + axisW, pw = w - axisW, slot = pw / n, bwid = Math.min(slot * 0.62, 56);
     var tags = steps.map(function(st) {
-      return st.kind === "total" ? fmt(st.to, o, true) : (st.change > 0 ? "+" : "") + fmt(st.change, o, true);
+      return st.kind === "gap" ? "\u2013" : st.kind === "total" ? fmt(st.to, o, true) : (st.change > 0 ? "+" : "") + fmt(st.change, o, true);
     });
     var showTags = Math.max.apply(null, tags.map(function(t) {
       return tw(t, 10, true);
@@ -1760,18 +2044,27 @@ function waterfall(o, th) {
       return tw(l, 10, true);
     })) : 0;
     var every = labels.length ? Math.max(1, Math.ceil(n * (labMax + 8) / pw)) : 1;
-    var negTag = showTags && sc.lo < 0 ? 14 : 0, topPad = showTags ? 16 : 4;
+    var nl = noteLayout(parseNotes(o, labels), n, function(i) {
+      return { c: px + slot * (i + 0.5), l: px + slot * i, r: px + slot * (i + 1) };
+    }, px, pw);
+    var negTag = showTags && sc.lo < 0 ? 14 : 0, topPad = (showTags ? 16 : 4) + (nl.rows ? nl.height + 4 : 0);
     var py = top0 + topPad, ph = h2 - (top0 - y0) - topPad - (labels.length ? 20 : 2) - negTag;
     var Y = function(x) {
       return py + ph - (x - sc.lo) / (sc.hi - sc.lo) * ph;
     };
+    if (nl.rows) s += noteMarks(th, nl, top0, py + ph);
     sc.ticks.forEach(function(t, i) {
       s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(Y(t)) + '" y2="' + r2(Y(t)) + '" stroke="' + th.grid + '"' + (t === 0 ? "" : ' stroke-dasharray="2 4"') + "/>" + text(px - 8, Y(t) + 3.5, tl[i], small(th, 10, 'text-anchor="end"'));
     });
     steps.forEach(function(st, i) {
       var x = px + i * slot + (slot - bwid) / 2, yA = Y(Math.max(st.from, st.to)), yB = Y(Math.min(st.from, st.to));
       var bh = Math.max(1, yB - yA);
-      s += '<rect x="' + r2(x) + '" y="' + r2(yA) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(3, bwid / 2, bh / 2)) + '" fill="' + cols[st.kind] + '"' + anim(o, "bzc-a", Math.min(0.6, i * 0.05)) + "/>";
+      if (st.kind === "gap") {
+        yA = Y(st.to) - 7;
+        yB = yA + 14;
+      }
+      if (st.kind === "gap") s += '<rect x="' + r2(x + 0.75) + '" y="' + r2(yA) + '" width="' + r2(bwid - 1.5) + '" height="14" rx="3" fill="none" stroke="' + th.muted + '" stroke-width="1.5" stroke-dasharray="3 3"' + anim(o, "bzc-a", Math.min(0.6, i * 0.05)) + "/>";
+      else s += '<rect x="' + r2(x) + '" y="' + r2(yA) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(3, bwid / 2, bh / 2)) + '" fill="' + cols[st.kind] + '"' + anim(o, "bzc-a", Math.min(0.6, i * 0.05)) + "/>";
       if (i < n - 1) {
         s += '<line x1="' + r2(x + bwid) + '" x2="' + r2(x + slot) + '" y1="' + r2(Y(st.to)) + '" y2="' + r2(Y(st.to)) + '" stroke="' + th.muted + '" stroke-dasharray="2 2"/>';
       }
@@ -1786,28 +2079,40 @@ function waterfall(o, th) {
       s += hit(px + i * slot, top0, slot, h2 - (top0 - y0), tipOf(st), i, st.change);
     });
     return s;
-  }, { summary: n ? "ends at " + fmt(end, o) + " after " + n + (n === 1 ? " step" : " steps") : "no data" });
+  }, { summary: n ? "ends at " + fmt(end, o) + " after " + n + (n === 1 ? " step" : " steps") + (missing ? ", " + missing + " missing" : "") : "no data" });
   function tipOf(st) {
-    return st.name + (st.kind === "total" ? "\nTotal " + fmt(st.to, o) : "\nChange " + (st.change > 0 ? "+" : "") + fmt(st.change, o) + "\nRunning total " + fmt(st.to, o));
+    if (st.kind === "gap") return st.name + "\nNo data\nRunning total " + fmt(st.to, o) + ", unchanged";
+    return st.name + (st.kind === "total" ? "\nTotal " + fmt(st.to, o) + excludes(st) : "\nChange " + (st.change > 0 ? "+" : "") + fmt(st.change, o) + "\nRunning total " + fmt(st.to, o));
   }
 }
 function walk(v, labels, totals) {
   var at2 = list(totals).map(function(m) {
     var i = labels.indexOf(m);
     return i < 0 && String(parseInt(m, 10)) === m ? parseInt(m, 10) : i;
-  }), run = 0;
+  }), run = 0, gaps = 0;
   return v.map(function(x, i) {
     var name = labels[i] || "Step " + (i + 1), from = run, total2 = at2.indexOf(i) >= 0;
-    run += x;
-    return total2 ? { name, kind: "total", change: x, from: 0, to: run } : { name, kind: x < 0 ? "down" : "up", change: x, from, to: run };
+    if (!ok(x) && !total2) {
+      gaps++;
+      return { name, kind: "gap", change: x, from: run, to: run, gaps };
+    }
+    run += ok(x) ? x : 0;
+    return total2 ? { name, kind: "total", change: x, from: 0, to: run, gaps } : { name, kind: x < 0 ? "down" : "up", change: x, from, to: run };
   });
+}
+function excludes(st) {
+  return st.gaps ? "\nExcludes " + st.gaps + " missing " + (st.gaps === 1 ? "step" : "steps") : "";
 }
 waterfall.table = function(o) {
   var v = nums(o.values), labels = list(o.labels);
   return {
     head: ["Step", "Change", "Running total"],
     rows: walk(v, labels, o.totals).map(function(st) {
-      return [st.name, st.kind === "total" ? "Total" : (st.change > 0 ? "+" : "") + fmt(st.change, o), fmt(st.to, o)];
+      return [
+        st.name,
+        st.kind === "gap" ? "No data" : st.kind === "total" ? "Total" : (st.change > 0 ? "+" : "") + fmt(st.change, o),
+        fmt(st.to, o) + (st.kind === "total" && st.gaps ? " (excludes " + st.gaps + " missing)" : "")
+      ];
     })
   };
 };
@@ -1828,10 +2133,10 @@ function histogram(o, th) {
     return fmt(b.edge(i2), eo) + " to " + fmt(b.edge(i2 + 1), eo);
   };
   var share = function(j, i2) {
-    return Math.round(b.counts[j][i2] / S[j].length * 100);
+    return S[j].length ? Math.round(b.counts[j][i2] / S[j].length * 100) : 0;
   };
   var height = function(j, i2) {
-    return pct ? b.counts[j][i2] / S[j].length * 100 : b.counts[j][i2];
+    return pct ? S[j].length ? b.counts[j][i2] / S[j].length * 100 : 0 : b.counts[j][i2];
   };
   var marks = list(o.mark).filter(function(m) {
     return m === "mean" || m === "median";
@@ -1928,7 +2233,7 @@ function histogram(o, th) {
     }
     return s;
   }, {
-    summary: b ? (multi ? k + " series, " : "") + n + " values in " + b.count + " ranges from " + fmt(b.edge(0), eo) + " to " + fmt(b.edge(b.count), eo) + ", most in " + range(peak) : "no data"
+    summary: b ? (multi ? k + " series, " : "") + n + " values in " + b.count + " ranges from " + fmt(b.edge(0), eo) + " to " + fmt(b.edge(b.count), eo) + ", most in " + range(peak) + (b.missing ? ", " + b.missing + " missing left out" : "") : "no data"
   });
 }
 histogram.table = function(o) {
@@ -1940,7 +2245,7 @@ histogram.table = function(o) {
     if (multi) b.S.forEach(function(_, j) {
       row.push(String(b.counts[j][i]));
     });
-    else row.push(String(b.counts[0][i]), Math.round(b.counts[0][i] / b.S[0].length * 100) + "%");
+    else row.push(String(b.counts[0][i]), (b.S[0].length ? Math.round(b.counts[0][i] / b.S[0].length * 100) : 0) + "%");
     rows.push(row);
   }
   return { head: ["Range"].concat(multi ? b.S.map(function(_, j) {
@@ -1953,8 +2258,9 @@ function niceWidth(raw) {
   return { w: m * p, dp: Math.max(0, m === 10 ? -e - 1 : -e) + (m === 2.5 ? 1 : 0) };
 }
 function binned(o) {
-  var S = series(o.values), all = [].concat.apply([], S);
+  var raw = series(o.values), S = raw.map(real), all = [].concat.apply([], S);
   if (!all.length) return null;
+  var missing = [].concat.apply([], raw).length - all.length;
   var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), w = num(o.binWidth, 0), dp, nice;
   if (w > 0 && (hi - lo) / w <= 200) {
     var str = String(o.binWidth), dot = str.indexOf(".");
@@ -1985,7 +2291,7 @@ function binned(o) {
     });
     return c;
   });
-  return { S, edge, count, counts, dp };
+  return { S, edge, count, counts, dp, missing };
 }
 function total(b, i) {
   var t = 0;
@@ -2026,15 +2332,21 @@ function boxplot(o, th) {
   var f = function(v) {
     return fmt(v, o);
   };
-  var meds = stats.map(function(s) {
+  var live2 = stats.filter(function(s) {
+    return s.n;
+  }), meds = live2.map(function(s) {
     return s.median;
   });
-  var about = k === 1 ? "median " + f(stats[0].median) + ", middle half " + f(stats[0].q1) + " to " + f(stats[0].q3) : k + " groups, medians from " + f(Math.min.apply(null, meds)) + " to " + f(Math.max.apply(null, meds));
+  var missing = stats.reduce(function(t, s) {
+    return t + s.missing;
+  }, 0);
+  var about = !live2.length ? "no data" : k === 1 ? "median " + f(stats[0].median) + ", middle half " + f(stats[0].q1) + " to " + f(stats[0].q3) : k + " groups, medians from " + f(Math.min.apply(null, meds)) + " to " + f(Math.max.apply(null, meds));
+  if (missing && live2.length) about += ", " + missing + " missing left out";
   return tile(o, th, h, function(x0, y0, w, h2) {
-    if (!k) return emptyState(th, x0, y0, w, h2);
-    var lo = Math.min.apply(null, stats.map(function(s2) {
+    if (!live2.length) return emptyState(th, x0, y0, w, h2);
+    var lo = Math.min.apply(null, live2.map(function(s2) {
       return s2.min;
-    })), hi = Math.max.apply(null, stats.map(function(s2) {
+    })), hi = Math.max.apply(null, live2.map(function(s2) {
       return s2.max;
     }));
     if (has(o.goal)) {
@@ -2097,11 +2409,11 @@ function boxplot(o, th) {
     }
     stats.forEach(function(st, i) {
       if (!st.n) return;
-      var tip = nameOf(i) + "\nMedian " + f(st.median) + "\nMiddle half " + f(st.q1) + " to " + f(st.q3) + "\n" + (st.outliers.length ? "Range without outliers " : "Range ") + f(st.low) + " to " + f(st.high) + (st.outliers.length ? "\n" + st.outliers.length + (st.outliers.length === 1 ? " outlier" : " outliers") : "") + (showMean ? "\nMean " + f(st.mean) : "") + "\nn = " + st.n;
+      var tip = nameOf(i) + "\nMedian " + f(st.median) + "\nMiddle half " + f(st.q1) + " to " + f(st.q3) + "\n" + (st.outliers.length ? "Range without outliers " : "Range ") + f(st.low) + " to " + f(st.high) + (st.outliers.length ? "\n" + st.outliers.length + (st.outliers.length === 1 ? " outlier" : " outliers") : "") + (showMean ? "\nMean " + f(st.mean) : "") + "\nn = " + st.n + (st.missing ? ", " + st.missing + " missing left out" : "");
       s += horiz ? hit(px, C(i) - band / 2, pw, band, tip, i, st.median, i) : hit(C(i) - band / 2, y0, band, ph, tip, i, st.median, i);
     });
     return s;
-  }, { summary: k ? about : "no data" });
+  }, { summary: about });
 }
 boxplot.table = function(o) {
   var S = series(o.values), names = list(o.series), showMean = list(o.mark).indexOf("mean") >= 0;
@@ -2126,10 +2438,10 @@ function quantile(s, p) {
   return i + 1 < s.length ? s[i] + (h - i) * (s[i + 1] - s[i]) : s[i];
 }
 function summary(v, range) {
-  var s = v.slice().sort(function(a, b) {
+  var s = real(v).sort(function(a, b) {
     return a - b;
-  }), n = s.length;
-  if (!n) return { n: 0, outliers: [] };
+  }), n = s.length, missing = v.length - n;
+  if (!n) return { n: 0, outliers: [], missing };
   var q1 = quantile(s, 0.25), q3 = quantile(s, 0.75), iqr = q3 - q1, t = 0;
   var lowFence = range ? -Infinity : q1 - 1.5 * iqr, highFence = range ? Infinity : q3 + 1.5 * iqr;
   var inside = s.filter(function(x) {
@@ -2140,6 +2452,7 @@ function summary(v, range) {
   });
   return {
     n,
+    missing,
     min: s[0],
     max: s[n - 1],
     q1,
@@ -2181,23 +2494,32 @@ function fit2(xs, ys) {
 }
 function scatter(o, th) {
   var X = series(o.x), Y = series(o.y), names = list(o.series), labels = list(o.labels), pal = palette(o, th);
-  var groups = [];
+  var groups = [], seen = 0;
   for (var g = 0; g < Math.max(X.length, Y.length); g++) {
     var xs = X[g] || [], ys = Y[g] || [], m = Math.min(xs.length, ys.length);
-    groups.push({ xs: xs.slice(0, m), ys: ys.slice(0, m) });
+    var gr = { xs: [], ys: [], ix: [] };
+    for (var i = 0; i < m; i++) if (ok(xs[i]) && ok(ys[i])) {
+      gr.xs.push(xs[i]);
+      gr.ys.push(ys[i]);
+      gr.ix.push(seen + i);
+    }
+    seen += m;
+    groups.push(gr);
   }
-  groups = groups.filter(function(gr) {
-    return gr.xs.length;
+  var count = groups.reduce(function(a, gr2) {
+    return a + gr2.xs.length;
+  }, 0), missing = seen - count;
+  groups = groups.filter(function(gr2) {
+    return gr2.xs.length;
   });
-  var count = groups.reduce(function(a, gr) {
-    return a + gr.xs.length;
-  }, 0);
   var h = num(o.height, 210), multi = groups.length > 1 || names.length > 0, trend = bool(o.trend);
   var nameOf = function(j) {
     return names[j] || "Group " + (j + 1);
   };
   var xo = { decimals: o.decimals, compact: o.compact, lang: o.lang };
-  var notes = parseNotes(o, labels);
+  var notes = parseNotes(o, labels).filter(function(nt) {
+    return nt.j == null;
+  });
   var markOf = styleOf(o.markers, SHAPES, "circle"), bg = o.background || th.tile;
   var shapeOf = function(j) {
     var m2 = markOf ? markOf(j) : "circle";
@@ -2216,11 +2538,11 @@ function scatter(o, th) {
       s += lg.svg;
       top += lg.height;
     }
-    var ax = [].concat.apply([], groups.map(function(gr) {
-      return gr.xs;
+    var ax = [].concat.apply([], groups.map(function(gr2) {
+      return gr2.xs;
     }));
-    var ay = [].concat.apply([], groups.map(function(gr) {
-      return gr.ys;
+    var ay = [].concat.apply([], groups.map(function(gr2) {
+      return gr2.ys;
     }));
     var ymin = Math.min.apply(null, ay), ymax = Math.max.apply(null, ay);
     if (has(o.goal)) {
@@ -2244,13 +2566,13 @@ function scatter(o, th) {
     var PY = function(v) {
       return top + 6 + ph - 6 - (v - sy.lo) / (sy.hi - sy.lo) * (ph - 6);
     };
-    sy.ticks.forEach(function(t, i) {
+    sy.ticks.forEach(function(t, i2) {
       var y = PY(t);
-      s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>' + text(px - 8, y + 3.5, tly[i], small(th, 10, 'text-anchor="end"'));
+      s += '<line x1="' + r2(px) + '" x2="' + r2(px + pw) + '" y1="' + r2(y) + '" y2="' + r2(y) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>' + text(px - 8, y + 3.5, tly[i2], small(th, 10, 'text-anchor="end"'));
     });
     var every = Math.max(1, Math.ceil(sx.ticks.length * 44 / pw));
-    sx.ticks.forEach(function(t, i) {
-      if (i % every) return;
+    sx.ticks.forEach(function(t, i2) {
+      if (i2 % every) return;
       var x = PX(t);
       s += '<line x1="' + r2(x) + '" x2="' + r2(x) + '" y1="' + r2(top) + '" y2="' + r2(top + ph) + '" stroke="' + th.grid + '" stroke-dasharray="2 4"/>' + text(x, top + ph + 15, fmt(t, xo, true), small(th, 10, 'text-anchor="middle"'));
     });
@@ -2263,31 +2585,30 @@ function scatter(o, th) {
     }
     if (has(o.goal)) s += goalLine(o, th, px, px + pw, PY(+o.goal));
     if (trend) {
-      groups.forEach(function(gr, j) {
-        var f = fit2(gr.xs, gr.ys);
+      groups.forEach(function(gr2, j) {
+        var f = fit2(gr2.xs, gr2.ys);
         if (!f) return;
-        var xa = Math.min.apply(null, gr.xs), xb = Math.max.apply(null, gr.xs);
+        var xa = Math.min.apply(null, gr2.xs), xb = Math.max.apply(null, gr2.xs);
         var ya = f.slope * xa + f.intercept, yb = f.slope * xb + f.intercept;
         var c = pal[j % pal.length];
         s += '<line x1="' + r2(PX(xa)) + '" y1="' + r2(clamp(PY(ya), top, top + ph)) + '" x2="' + r2(PX(xb)) + '" y2="' + r2(clamp(PY(yb), top, top + ph)) + '" stroke="' + c + '" stroke-width="2" stroke-dasharray="6 4" stroke-linecap="round" stroke-opacity=".9"/>';
         s += text(Math.min(PX(xb), px + pw) - 2, clamp(PY(yb), top + 10, top + ph) - 7, "r = " + f.r.toFixed(2), small(th, 10, 'text-anchor="end" font-weight="600"', c));
       });
     }
-    var idx = 0, r = count > 150 ? 3 : 4.5;
-    groups.forEach(function(gr, j) {
+    var r = count > 150 ? 3 : 4.5;
+    groups.forEach(function(gr2, j) {
       var c = pal[j % pal.length];
-      gr.xs.forEach(function(xv, i) {
-        var cx = PX(xv), cy2 = PY(gr.ys[i]);
-        var tip = (labels[idx] ? labels[idx] + "\n" : multi ? nameOf(j) + "\n" : "") + (has(o.xLabel) ? o.xLabel : "x") + ": " + fmt(xv, xo) + "\n" + (has(o.yLabel) ? o.yLabel : "y") + ": " + fmt(gr.ys[i], o);
+      gr2.xs.forEach(function(xv, i2) {
+        var idx = gr2.ix[i2], cx = PX(xv), cy2 = PY(gr2.ys[i2]);
+        var tip = (labels[idx] ? labels[idx] + "\n" : multi ? nameOf(j) + "\n" : "") + (has(o.xLabel) ? o.xLabel : "x") + ": " + fmt(xv, xo) + "\n" + (has(o.yLabel) ? o.yLabel : "y") + ": " + fmt(gr2.ys[i2], o);
         s += marker(shapeOf(j), cx, cy2, r, ' fill="' + c + '" fill-opacity=".85" stroke="' + bg + '" stroke-width="1.5"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(Math.min(0.8, idx * 0.012)) + 's"' : ""));
-        s += hit(cx - 8, cy2 - 8, 16, 16, tip, idx, [xv, gr.ys[i]], j);
-        idx++;
+        s += hit(cx - 8, cy2 - 8, 16, 16, tip, idx, [xv, gr2.ys[i2]], j);
       });
     });
     var flat = [];
-    groups.forEach(function(gr) {
-      gr.xs.forEach(function(xv, i) {
-        flat.push([PX(xv), PY(gr.ys[i])]);
+    groups.forEach(function(gr2) {
+      gr2.xs.forEach(function(xv, i2) {
+        flat[gr2.ix[i2]] = [PX(xv), PY(gr2.ys[i2])];
       });
     });
     notes.forEach(function(nt) {
@@ -2296,7 +2617,7 @@ function scatter(o, th) {
       s += '<circle cx="' + r2(p[0]) + '" cy="' + r2(p[1]) + '" r="' + (r + 4) + '" fill="none" stroke="' + th.fg + '" stroke-width="1.5"/>' + text(clamp(p[0], px + 30, px + pw - 30), p[1] - r - 9, nt.text, small(th, 10, 'text-anchor="middle"', th.fg));
     });
     return s;
-  }, { summary: count + " points" + (multi ? " in " + groups.length + " groups" : "") });
+  }, { summary: count + " points" + (multi ? " in " + groups.length + " groups" : "") + (missing ? ", " + missing + " missing left out" : "") });
 }
 scatter.table = function(o) {
   var X = series(o.x), Y = series(o.y), names = list(o.series), labels = list(o.labels), multi = X.length > 1 || names.length > 0;
@@ -2320,11 +2641,11 @@ function ring(o, th) {
   var max = num(o.max, 100) || 100, h = num(o.height, 140);
   var auto = !has(o.prefix) && !has(o.suffix) && max === 100;
   var show = function(n) {
-    return fmt(n, o) + (auto ? "%" : "");
+    return ok(n) ? fmt(n, o) + (auto ? "%" : "") : "No data";
   };
   var st = statOf(v, o, "");
   return tile(o, th, h, function(x0, y0, w, h2) {
-    if (!v.length) return emptyState(th, x0, y0, w, h2);
+    if (!real(v).length) return emptyState(th, x0, y0, w, h2);
     var s = "", single = v.length === 1;
     var size = Math.min(h2, single ? w : w * 0.55);
     var cx = single ? x0 + w / 2 : x0 + size / 2, cy = y0 + h2 / 2;
@@ -2335,7 +2656,7 @@ function ring(o, th) {
       var pct = clamp(n / max * 100, 0, 100), c = pal[i % pal.length];
       s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="' + c + '" stroke-opacity=".16" stroke-width="' + r2(sw) + '"/>';
       if (pct > 0) s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="' + c + '" stroke-width="' + r2(sw) + '" stroke-linecap="round" pathLength="100" transform="rotate(-90 ' + r2(cx) + " " + r2(cy) + ')" style="stroke-dasharray:' + r2(pct) + " 100" + (o.animate ? ";animation-delay:" + i * 0.12 + "s" : "") + '"' + (o.animate ? ' class="bzc-s"' : "") + "/>";
-      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r + sw / 2) + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="' + esc((labels[i] || "#" + (i + 1)) + ": " + show(n) + (auto ? "" : " of " + fmt(max, o))) + '"' + ref(i, n) + "/>";
+      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r + sw / 2) + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="' + esc((labels[i] || "#" + (i + 1)) + ": " + show(n) + (auto || !ok(n) ? "" : " of " + fmt(max, o))) + '"' + ref(i, n) + "/>";
     });
     if (single) {
       s += text(cx, cy + size * 0.08, show(v[0]), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(size * 0.22) + '" font-weight="800"');
@@ -2355,7 +2676,7 @@ function ring(o, th) {
 ring.table = function(o) {
   var labels = list(o.labels), max = num(o.max, 100) || 100, auto = !has(o.prefix) && !has(o.suffix) && max === 100;
   return { head: ["Label", "Value"], rows: nums(o.values).map(function(n, i) {
-    return [labels[i] || "#" + (i + 1), fmt(n, o) + (auto ? "%" : " of " + fmt(max, o))];
+    return [labels[i] || "#" + (i + 1), ok(n) ? fmt(n, o) + (auto ? "%" : " of " + fmt(max, o)) : "\u2013"];
   }) };
 };
 
@@ -2407,9 +2728,18 @@ function centre(o, th, cx, cy, size, sw, total2) {
   }).join("");
 }
 function donut(o, th) {
-  var raw = nums(o.values).map(function(n) {
-    return Math.max(0, n);
-  }), lab = list(o.labels), pal = palette(o, th);
+  var all = nums(o.values), keep0 = all.map(function(n, i) {
+    return i;
+  }).filter(function(i) {
+    return ok(all[i]);
+  });
+  var lab0 = list(o.labels), missing = all.length - keep0.length, gappy = missing > 0;
+  var raw = keep0.map(function(i) {
+    return Math.max(0, all[i]);
+  }), pal = palette(o, th);
+  var lab = gappy ? keep0.map(function(i) {
+    return lab0[i] || "#" + (i + 1);
+  }) : lab0;
   var v = raw.slice(), labels = lab.slice();
   if (v.length > 6) {
     var idx = v.map(function(n, i) {
@@ -2459,14 +2789,14 @@ function donut(o, th) {
       start += len;
     });
     return s;
-  }, { stat: st, summary: "total " + fmt(total2, o) + " across " + v.length + " parts" });
+  }, { stat: st, summary: "total " + fmt(total2, o) + " across " + v.length + " parts" + (missing ? ", " + missing + " missing" : "") });
 }
 donut.table = function(o) {
   var v = nums(o.values).map(function(n) {
     return Math.max(0, n);
-  }), labels = list(o.labels), total2 = sum(v);
+  }), labels = list(o.labels), total2 = sum(v.filter(ok));
   return { head: ["Label", "Value", "Share"], rows: v.map(function(n, i) {
-    return [labels[i] || "#" + (i + 1), fmt(n, o), (total2 ? Math.round(n / total2 * 100) : 0) + "%"];
+    return [labels[i] || "#" + (i + 1), fmt(n, o), ok(n) ? (total2 ? Math.round(n / total2 * 100) : 0) + "%" : "\u2013"];
   }) };
 };
 
@@ -2479,7 +2809,7 @@ function gauge(o, th) {
   var v = nums(o.values), val = v.length ? v[0] : num(o.value, NaN), labels = list(o.labels);
   var mn = num(o.min, 0), mx = num(o.max, 100), h = num(o.height, 130);
   if (mx === mn) mx = mn + 1;
-  var zones = nums(o.zones), pal = palette(o, th);
+  var zones = real(nums(o.zones)), pal = palette(o, th);
   var zc = list(o.color).filter(Boolean).length > 1 ? pal : [th.up, th.palette[3], th.down];
   var colour = pal[0];
   if (zones.length && isFinite(val)) {
@@ -2535,24 +2865,24 @@ function progress(o, th) {
   var v = nums(o.values).map(function(n) {
     return Math.max(0, n);
   }), labels = list(o.labels), pal = palette(o, th);
-  var single = v.length === 1, total2 = sum(v);
+  var single = v.length === 1, total2 = sum(real(v));
   var max = has(o.max) ? num(o.max, 100) : single ? 100 : total2;
   if (!(max > 0)) max = 1;
   var auto = !has(o.prefix) && !has(o.suffix) && max === 100 && single;
   var show = function(n) {
-    return fmt(n, o) + (auto ? "%" : "");
+    return ok(n) ? fmt(n, o) + (auto ? "%" : "") : "No data";
   };
-  var d0 = dims(o), w0 = d0.w, rows = 0, layout = [];
+  var d0 = dims(o), w0 = d0.w, rows = 0, layout2 = [];
   if (!single && v.length) {
     var x = 0;
     rows = 1;
     v.forEach(function(n, i) {
-      var l = labels[i] || "#" + (i + 1), wd = 14 + tw(l, 12) + 6 + tw(fmt(n, o), 11, true) + 18;
+      var l = labels[i] || "#" + (i + 1), wd = 14 + tw(l, 12) + 6 + tw(show(n), 11, true) + 18;
       if (x > 0 && x + wd > w0) {
         x = 0;
         rows++;
       }
-      layout.push({ x, row: rows - 1, l });
+      layout2.push({ x, row: rows - 1, l });
       x += wd;
     });
   }
@@ -2561,13 +2891,14 @@ function progress(o, th) {
   return tile(o, th, h, function(x0, y0, w, h2) {
     if (!v.length) return emptyState(th, x0, y0, w, h2);
     var s = "", by = y0 + 22, cid = newId("c");
-    var head = single ? show(v[0]) + (auto ? "" : " of " + fmt(max, o)) : fmt(total2, o) + " of " + fmt(max, o);
+    var head = single ? show(v[0]) + (auto || !ok(v[0]) ? "" : " of " + fmt(max, o)) : fmt(total2, o) + " of " + fmt(max, o);
     if (single && labels[0]) s += text(x0, y0 + 11, labels[0], 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
     s += text(x0 + w, y0 + 11, head, 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="11" font-weight="600"');
     s += '<rect x="' + x0 + '" y="' + by + '" width="' + w + '" height="14" rx="7" fill="' + th.grid + '" fill-opacity=".7"/>';
     s += '<clipPath id="' + cid + '"><rect x="' + x0 + '" y="' + by + '" width="' + w + '" height="14" rx="7"/></clipPath><g clip-path="url(#' + cid + ')"><g' + anim(o, "bzc-gx") + ">";
     var acc = 0;
     v.forEach(function(n, i) {
+      if (!ok(n)) return;
       var len = Math.min(n, Math.max(0, max - acc)) / max * w;
       if (len > 0) s += '<rect x="' + r2(x0 + acc / max * w) + '" y="' + by + '" width="' + r2(len) + '" height="14" fill="' + pal[i % pal.length] + '"/>';
       if (i > 0 && len > 0) s += '<rect x="' + r2(x0 + acc / max * w - 1) + '" y="' + by + '" width="2" height="14" fill="' + (o.background || th.tile) + '"/>';
@@ -2580,27 +2911,28 @@ function progress(o, th) {
     }
     acc = 0;
     v.forEach(function(n, i) {
+      if (!ok(n)) return;
       var len = Math.min(n, Math.max(0, max - acc)) / max * w;
       if (len > 0) s += hit(x0 + acc / max * w, by - 4, len, 22, (labels[i] || (single ? "Progress" : "#" + (i + 1))) + ": " + show(n) + (single ? "" : " (" + Math.round(n / max * 100) + "%)"), i, n);
       acc += n;
     });
-    layout.forEach(function(it, i) {
+    layout2.forEach(function(it, i) {
       var lx = x0 + it.x, ly = by + 14 + 12 + it.row * 20 + 8;
-      s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(ly) + '" r="4" fill="' + pal[i % pal.length] + '"/><text x="' + r2(lx + 14) + '" y="' + r2(ly + 4) + '" fill="' + th.fg + '" font-family="' + SANS + '" font-size="12">' + esc(it.l) + '<tspan dx="6" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11">' + esc(fmt(v[i], o)) + "</tspan></text>";
+      s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(ly) + '" r="4" fill="' + pal[i % pal.length] + '"/><text x="' + r2(lx + 14) + '" y="' + r2(ly + 4) + '" fill="' + th.fg + '" font-family="' + SANS + '" font-size="12">' + esc(it.l) + '<tspan dx="6" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11">' + esc(ok(v[i]) ? fmt(v[i], o) : "No data") + "</tspan></text>";
     });
     return s;
-  }, { stat: st, summary: single ? show(v[0]) + (auto ? "" : " of " + fmt(max, o)) : fmt(total2, o) + " of " + fmt(max, o) });
+  }, { stat: st, summary: single ? show(v[0]) + (auto || !ok(v[0]) ? "" : " of " + fmt(max, o)) : fmt(total2, o) + " of " + fmt(max, o) + (real(v).length < v.length ? ", " + (v.length - real(v).length) + " missing" : "") });
 }
 progress.table = function(o) {
   var v = nums(o.values).map(function(n) {
     return Math.max(0, n);
   }), labels = list(o.labels), single = v.length === 1;
-  var max = has(o.max) ? num(o.max, 100) : single ? 100 : sum(v);
+  var max = has(o.max) ? num(o.max, 100) : single ? 100 : sum(real(v));
   if (!(max > 0)) max = 1;
   var auto = !has(o.prefix) && !has(o.suffix) && max === 100 && single;
-  if (single) return { head: ["Label", "Value"], rows: [[labels[0] || "Progress", fmt(v[0], o) + (auto ? "%" : " of " + fmt(max, o))]] };
+  if (single) return { head: ["Label", "Value"], rows: [[labels[0] || "Progress", ok(v[0]) ? fmt(v[0], o) + (auto ? "%" : " of " + fmt(max, o)) : "\u2013"]] };
   return { head: ["Label", "Value", "Share"], rows: v.map(function(n, i) {
-    return [labels[i] || "#" + (i + 1), fmt(n, o), Math.round(n / max * 100) + "%"];
+    return [labels[i] || "#" + (i + 1), fmt(n, o), ok(n) ? Math.round(n / max * 100) + "%" : "\u2013"];
   }) };
 };
 
@@ -2616,7 +2948,7 @@ function bullet(o, th) {
     return T.length === 1 ? T[0] : T[i];
   };
   var zonesOf = function(i) {
-    return (Z.length > 1 ? Z[i] || [] : Z[0] || []).slice().sort(function(a, b) {
+    return real(Z.length > 1 ? Z[i] || [] : Z[0] || []).sort(function(a, b) {
       return a - b;
     });
   };
@@ -2629,7 +2961,7 @@ function bullet(o, th) {
   var nameOf = function(i) {
     return labels[i] || "Measure " + (i + 1);
   };
-  var keyNames = [names[0] || "Actual", names[1] || "Target"];
+  var keyNames = [names[0] || "Value", names[1] || "Target"];
   var key = function(j, x, y) {
     return j ? '<line x1="' + r2(x + 5) + '" x2="' + r2(x + 5) + '" y1="' + r2(y) + '" y2="' + r2(y + 12) + '" stroke="' + th.fg + '" stroke-width="2.5"/>' : '<rect x="' + r2(x) + '" y="' + r2(y + 3) + '" width="10" height="6" rx="1.5" fill="' + pal[0] + '"/>';
   };
@@ -2655,8 +2987,9 @@ function bullet(o, th) {
     var bx = x0 + labW, bw = Math.max(1, w - labW - valW);
     for (var i = 0; i < n; i++) {
       var val = v[i], t = targetOf(i), zs = zonesOf(i), ry = top0 + i * rowH, cy = ry + 12;
-      var lo = Math.min.apply(null, [0, val].concat(zs, hasT(i) ? [t] : []));
-      var hi = has(o.max) ? num(o.max, 1) : Math.max.apply(null, [0, val].concat(zs, hasT(i) ? [t] : [])) * 1.08;
+      var known = [0].concat(ok(val) ? [val] : [], zs, hasT(i) ? [t] : []);
+      var lo = Math.min.apply(null, known);
+      var hi = has(o.max) ? num(o.max, 1) : Math.max.apply(null, known) * 1.08;
       if (hi <= lo) hi = lo + 1;
       var X = function(x) {
         return bx + (Math.min(hi, Math.max(lo, x)) - lo) / (hi - lo) * bw;
@@ -2675,13 +3008,14 @@ function bullet(o, th) {
         s += '<line x1="' + r2(X(t)) + '" x2="' + r2(X(t)) + '" y1="' + r2(cy - 8) + '" y2="' + r2(cy + 8) + '" stroke="' + th.fg + '" stroke-width="2.5"/>';
       }
       if (labels[i] != null) s += text(x0, cy + 4, trunc(labels[i], Math.floor(labW / 6.7)), 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
-      s += text(x0 + w, cy + 4, fmt(val, o), 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="11" font-weight="600"');
+      s += text(x0 + w, cy + 4, ok(val) ? fmt(val, o) : "\u2013", 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="11" font-weight="600"');
       s += hit(x0, ry, w, rowH - 8, tipOf(i), i, val);
     }
     return s;
-  }, { summary: !n ? "no data" : anyT ? met + " of " + n + (n === 1 ? " measure" : " measures") + " at or above target" : n + (n === 1 ? " measure" : " measures") });
+  }, { summary: !n ? "no data" : (anyT ? met + " of " + n + (n === 1 ? " measure" : " measures") + " at or above target" : n + (n === 1 ? " measure" : " measures")) + (real(v).length < n ? ", " + (n - real(v).length) + " missing" : "") });
   function tipOf(i) {
     var row = rowOf(o, i, v[i], targetOf(i), zonesOf(i), zoneNames);
+    if (!ok(v[i])) return nameOf(i) + "\n" + keyNames[0] + ": no data" + (hasT(i) ? "\n" + keyNames[1] + " " + row[1] : "");
     return nameOf(i) + "\n" + keyNames[0] + " " + row[0] + (hasT(i) ? "\n" + keyNames[1] + " " + row[1] + "\nDifference " + row[2] : "") + (row[3] ? "\nBand " + row[3] : "");
   }
 }
@@ -2689,15 +3023,15 @@ function rowOf(o, i, val, t, zs, zoneNames) {
   var j = 0, nb = zs.length + 1;
   while (j < zs.length && val >= zs[j]) j++;
   var d = val - t;
-  return [fmt(val, o), fmt(t, o), isFinite(d) ? (d > 0 ? "+" : "") + fmt(d, o) : "\u2013", zs.length ? zoneNames[j] || j + 1 + " of " + nb : ""];
+  return [fmt(val, o), fmt(t, o), isFinite(d) ? (d > 0 ? "+" : "") + fmt(d, o) : "\u2013", zs.length && ok(val) ? zoneNames[j] || j + 1 + " of " + nb : ""];
 }
 bullet.table = function(o) {
   var v = nums(o.values), labels = list(o.labels), T = nums(o.targets), Z = series(o.zones), zoneNames = list(o.zoneLabels), names = list(o.series);
   var anyT = T.length > 0, anyZ = Z.length > 0;
   return {
-    head: ["Measure", names[0] || "Actual"].concat(anyT ? [names[1] || "Target", "Difference"] : [], anyZ ? ["Band"] : []),
+    head: ["Measure", names[0] || "Value"].concat(anyT ? [names[1] || "Target", "Difference"] : [], anyZ ? ["Band"] : []),
     rows: v.map(function(val, i) {
-      var zs = (Z.length > 1 ? Z[i] || [] : Z[0] || []).slice().sort(function(a, b) {
+      var zs = real(Z.length > 1 ? Z[i] || [] : Z[0] || []).sort(function(a, b) {
         return a - b;
       });
       var row = rowOf(o, i, val, T.length === 1 ? T[0] : T[i], zs, zoneNames);
@@ -2738,7 +3072,7 @@ function heatmap(o, th) {
   }
   var pitch = Math.min(18, (d0.w - leftW) / cols), gap = pitch < 8 ? 1 : 3, cell = pitch - gap;
   var h = 16 + 7 * pitch + 26;
-  var max = v.length ? Math.max.apply(null, v) : 0;
+  var max = real(v).length ? Math.max.apply(null, real(v)) : 0, missing = v.length - real(v).length;
   var dfm = function(opt) {
     return dates(lang, opt);
   };
@@ -2760,17 +3094,18 @@ function heatmap(o, th) {
       }
       var lvl = v[i] <= 0 || !max ? 0 : Math.ceil(v[i] / max * 4);
       var fill = lvl ? c : th.grid, fo = lvl ? op[lvl - 1] : 0.7;
-      s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(cell) + '" height="' + r2(cell) + '" rx="' + r2(cell * 0.24) + '" fill="' + fill + '" fill-opacity="' + fo + '"' + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(col * 0.012) + 's"' : "") + ' data-tip="' + esc(fullF.format(day) + ": " + fmt(v[i], o)) + '"' + ref(i, v[i]) + "/>";
+      var look = ok(v[i]) ? '" fill="' + fill + '" fill-opacity="' + fo + '"' : '" fill="none" stroke="' + th.muted + '" stroke-opacity=".6" stroke-width="1" stroke-dasharray="2 2"';
+      s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(cell) + '" height="' + r2(cell) + '" rx="' + r2(cell * 0.24) + look + (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(col * 0.012) + 's"' : "") + ' data-tip="' + esc(fullF.format(day) + ": " + fmtv(v[i], o)) + '"' + ref(i, v[i]) + "/>";
     }
     var ly = gy + 7 * pitch + 14, lc = 10, lx = x0 + w - 5 * (lc + 3) - 30;
-    s += text(x0, ly + 8, fmt(sum(v), o, true) + " in " + v.length + " days", small(th, 10));
+    s += text(x0, ly + 8, fmt(sum(real(v)), o, true) + " in " + v.length + " days" + (missing ? ", " + missing + " missing" : ""), small(th, 10));
     s += text(lx - 6, ly + 8, "Less", small(th, 9, 'text-anchor="end"'));
     for (var j = 0; j < 5; j++) {
       s += '<rect x="' + r2(lx + j * (lc + 3)) + '" y="' + ly + '" width="' + lc + '" height="' + lc + '" rx="2.5" fill="' + (j ? c : th.grid) + '" fill-opacity="' + (j ? op[j - 1] : 0.7) + '"/>';
     }
     s += text(lx + 5 * (lc + 3) + 3, ly + 8, "More", small(th, 9));
     return s;
-  }, { stat: st, summary: fmt(sum(v), o) + " across " + v.length + " days" });
+  }, { stat: st, summary: fmt(sum(real(v)), o) + " across " + v.length + " days" + (missing ? ", " + missing + " missing" : "") });
 }
 heatmap.table = function(o) {
   var v = nums(o.values), start = startOf(o, v.length), f = dates(o.lang || "en-GB", FULL);
@@ -2783,8 +3118,177 @@ heatmap.table = function(o) {
 register("heatmap", heatmap);
 define("heatmap");
 
+// src/charts/treemap.js
+function treemap(o, th) {
+  var v = nums(o.values), labels = list(o.labels), groups = list(o.groups), pal = palette(o, th);
+  var lay = layout(v, labels, groups), h = num(o.height, 260), st = statOf(v, o, "");
+  var grouped = lay.names.length > 0, d0 = dims(o);
+  var legendH = grouped ? legend(lay.names, pal, th, 0, 0, d0.w).height : 0;
+  return tile(o, th, h + legendH, function(x0, y0, w, h2) {
+    if (!lay.items.length) return emptyState(th, x0, y0, w, h2);
+    var s = "", top = y0;
+    if (legendH) {
+      s += legend(lay.names, pal, th, x0, y0, w).svg;
+      top += legendH;
+    }
+    var ph = h2 - (top - y0), k = 0;
+    squarify(lay.blocks.map(function(b) {
+      return b.total;
+    }), x0, top, w, ph).forEach(function(gr, g) {
+      var b = lay.blocks[g], inner = grouped ? 2 : 0;
+      squarify(b.items.map(function(it) {
+        return it.v;
+      }), gr[0] + inner, gr[1] + inner, gr[2] - inner * 2, gr[3] - inner * 2).forEach(function(r, j) {
+        var it = b.items[j], base = grouped ? pal[b.g % pal.length] : pal[it.i % pal.length];
+        var op = grouped ? 1 - Math.min(j, 4) * 0.08 : 1, ink = inkOn(base, op, th);
+        var x = r[0] + 1, y = r[1] + 1, tw0 = Math.max(0, r[2] - 2), th0 = Math.max(0, r[3] - 2);
+        var share = shareOf(it.v, lay.total);
+        var tip = (it.group ? it.group + " \xB7 " : "") + it.name + "\n" + fmt(it.v, o) + " (" + share + "%)";
+        s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(tw0) + '" height="' + r2(th0) + '" rx="' + r2(Math.min(4, tw0 / 2, th0 / 2)) + '" fill="' + base + '"' + (op < 1 ? ' fill-opacity="' + r2(op) + '"' : "") + anim(o, "bzc-a", Math.min(0.6, k++ * 0.03)) + ' data-tip="' + esc(tip) + '"' + ref(it.i, it.v) + "/>";
+        s += labelIn(it.name, fmt(it.v, o, true), share, x, y, tw0, th0, ink);
+      });
+    });
+    return s;
+  }, {
+    stat: st,
+    summary: lay.items.length ? "total " + fmt(lay.total, o) + " across " + lay.items.length + (lay.items.length === 1 ? " item" : " items") + (grouped ? " in " + lay.names.length + (lay.names.length === 1 ? " group" : " groups") : "") + ", largest " + lay.top.name + " (" + shareOf(lay.top.v, lay.total) + "%)" + (lay.hidden ? ", " + lay.hidden + " not shown" : "") : "no data"
+  });
+}
+function shareOf(n, total2) {
+  var p = total2 ? n / total2 * 100 : 0;
+  return p >= 10 ? Math.round(p) : Math.round(p * 10) / 10;
+}
+function layout(v, labels, groups) {
+  var names = [], blocks = [], items = [], hidden = 0;
+  v.forEach(function(n, i) {
+    if (!ok(n) || n <= 0) {
+      hidden++;
+      return;
+    }
+    var group = groups.length ? String(groups[i] || "") || "Other" : "", g = names.indexOf(group);
+    if (groups.length && g < 0) {
+      g = names.length;
+      names.push(group);
+    }
+    var it = { i, v: n, name: labels[i] || "#" + (i + 1), group };
+    items.push(it);
+    var b = blocks.filter(function(x) {
+      return x.g === Math.max(0, g);
+    })[0];
+    if (!b) blocks.push(b = { g: Math.max(0, g), items: [], total: 0 });
+    b.items.push(it);
+    b.total += n;
+  });
+  var bySize = function(a, b) {
+    return b.v - a.v;
+  };
+  blocks.forEach(function(b) {
+    b.items.sort(bySize);
+  });
+  blocks.sort(function(a, b) {
+    return b.total - a.total;
+  });
+  var top = items.slice().sort(bySize)[0];
+  return { names, blocks, items, total: sum(items.map(function(it) {
+    return it.v;
+  })), hidden, top };
+}
+function squarify(vals, x, y, w, h) {
+  var total2 = sum(vals), out = [];
+  if (!(total2 > 0) || !(w > 0) || !(h > 0)) return vals.map(function() {
+    return [x, y, 0, 0];
+  });
+  var scale = w * h / total2, areas = vals.map(function(a2) {
+    return a2 * scale;
+  }), i = 0;
+  var worst = function(first, last, s2, side2) {
+    return Math.max(side2 * side2 * first / (s2 * s2), s2 * s2 / (side2 * side2 * last));
+  };
+  while (i < areas.length) {
+    var side = Math.min(w, h), s = areas[i], j = i + 1, now = worst(areas[i], areas[i], s, side);
+    while (j < areas.length) {
+      var next = worst(areas[i], areas[j], s + areas[j], side);
+      if (next > now) break;
+      s += areas[j];
+      now = next;
+      j++;
+    }
+    if (w >= h) {
+      var cw = s / h, yy = y;
+      for (var a = i; a < j; a++) {
+        out.push([x, yy, cw, areas[a] / cw]);
+        yy += areas[a] / cw;
+      }
+      x += cw;
+      w -= cw;
+    } else {
+      var rh = s / w, xx = x;
+      for (var b = i; b < j; b++) {
+        out.push([xx, y, areas[b] / rh, rh]);
+        xx += areas[b] / rh;
+      }
+      y += rh;
+      h -= rh;
+    }
+    i = j;
+  }
+  return out;
+}
+function inkOn(c, op, th) {
+  var a = rgb(c), b = rgb(th.tile);
+  if (!a || !b) return th.fg;
+  var mix = a.map(function(x, k) {
+    return x * op + b[k] * (1 - op);
+  });
+  var L = 0.2126 * lin(mix[0]) + 0.7152 * lin(mix[1]) + 0.0722 * lin(mix[2]);
+  return 1.05 / (L + 0.05) >= (L + 0.05) / 0.058 ? "#ffffff" : "#14131a";
+}
+function rgb(c) {
+  var m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c).trim());
+  if (!m) return null;
+  var hx = m[1].length === 3 ? m[1].replace(/./g, "$&$&") : m[1];
+  return [0, 2, 4].map(function(k) {
+    return parseInt(hx.slice(k, k + 2), 16) / 255;
+  });
+}
+function lin(x) {
+  return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+}
+function labelIn(name, value, share, x, y, w, h, ink) {
+  if (w < 36 || h < 20) return "";
+  var room = w - 12, nm = String(name);
+  while (nm.length > 1 && tw(nm, 13.2) > room) nm = nm.slice(0, -2) + "\u2026";
+  if (tw(nm, 13.2) > room) return "";
+  var s = text(x + 6, y + 15, nm, 'fill="' + ink + '" font-family="' + SANS + '" font-size="12" font-weight="600"');
+  if (h >= 36) {
+    var both = value + " \xB7 " + share + "%", one = share + "%";
+    var line2 = tw(both, 11, true) <= room ? both : tw(one, 11, true) <= room ? one : "";
+    if (line2) s += text(x + 6, y + 30, line2, 'fill="' + ink + '" fill-opacity=".85" font-family="' + MONO + '" font-size="11"');
+  }
+  return s;
+}
+treemap.table = function(o) {
+  var v = nums(o.values), labels = list(o.labels), groups = list(o.groups), shown = v.filter(function(n) {
+    return ok(n) && n > 0;
+  });
+  var total2 = sum(shown), g = groups.length > 0;
+  return {
+    head: ["Item"].concat(g ? ["Group"] : [], ["Value", "Share"]),
+    rows: v.map(function(n, i) {
+      return [labels[i] || "#" + (i + 1)].concat(
+        g ? [String(groups[i] || "") || "Other"] : [],
+        [fmt(n, o), ok(n) && n > 0 ? shareOf(n, total2) + "%" : "not shown"]
+      );
+    })
+  };
+};
+
+// src/entries/treemap.js
+register("treemap", treemap);
+define("treemap");
+
 // src/index.js
-var version = "1.11.0";
+var version = "1.12.0";
 var types = NAMES.slice();
 export {
   BezelChart,

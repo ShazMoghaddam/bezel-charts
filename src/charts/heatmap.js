@@ -1,6 +1,10 @@
-import { esc, r2, has, nums, sum, fmt, text, small, palette, emptyState, statOf, ref } from '../core/util.js';
+import { esc, r2, has, nums, sum, fmt, fmtv, ok, real, text, small, palette, emptyState, statOf, ref } from '../core/util.js';
 import { tile, dims } from '../core/tile.js';
 
+/**
+ * Calendar heatmap: one square per day, in weeks left to right with Monday at the top, like a GitHub contributions
+ * chart. Every value is a day, so it isn't a grid of rows by columns; a grid heatmap is planned as its own chart.
+ */
 var FULL = { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' };
 
 /** The first day shown: the start option, or far enough back that the last value is today. */
@@ -29,7 +33,7 @@ export default function heatmap(o, th) {
   }
   var pitch = Math.min(18, (d0.w - leftW) / cols), gap = pitch < 8 ? 1 : 3, cell = pitch - gap;
   var h = 16 + 7 * pitch + 26;
-  var max = v.length ? Math.max.apply(null, v) : 0;
+  var max = real(v).length ? Math.max.apply(null, real(v)) : 0, missing = v.length - real(v).length;
   var dfm = function (opt) { return dates(lang, opt); };
   var monthF = dfm({ month: 'short' }), dayF = dfm({ weekday: 'short' }), fullF = dfm(FULL);
   var st = statOf(v, o, '');
@@ -49,18 +53,21 @@ export default function heatmap(o, th) {
       }
       var lvl = v[i] <= 0 || !max ? 0 : Math.ceil(v[i] / max * 4);
       var fill = lvl ? c : th.grid, fo = lvl ? op[lvl - 1] : 0.7;
-      s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(cell) + '" height="' + r2(cell) + '" rx="' + r2(cell * 0.24) + '" fill="' + fill + '" fill-opacity="' + fo + '"' +
-        (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(col * 0.012) + 's"' : '') + ' data-tip="' + esc(fullF.format(day) + ': ' + fmt(v[i], o)) + '"' + ref(i, v[i]) + '/>';
+      // A missing day is an empty outline, so it can't be mistaken for a day of 0.
+      var look = ok(v[i]) ? '" fill="' + fill + '" fill-opacity="' + fo + '"'
+        : '" fill="none" stroke="' + th.muted + '" stroke-opacity=".6" stroke-width="1" stroke-dasharray="2 2"';
+      s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(cell) + '" height="' + r2(cell) + '" rx="' + r2(cell * 0.24) + look +
+        (o.animate ? ' class="bzc-a" style="animation-delay:' + r2(col * 0.012) + 's"' : '') + ' data-tip="' + esc(fullF.format(day) + ': ' + fmtv(v[i], o)) + '"' + ref(i, v[i]) + '/>';
     }
     var ly = gy + 7 * pitch + 14, lc = 10, lx = x0 + w - 5 * (lc + 3) - 30;
-    s += text(x0, ly + 8, fmt(sum(v), o, true) + ' in ' + v.length + ' days', small(th, 10));
+    s += text(x0, ly + 8, fmt(sum(real(v)), o, true) + ' in ' + v.length + ' days' + (missing ? ', ' + missing + ' missing' : ''), small(th, 10));
     s += text(lx - 6, ly + 8, 'Less', small(th, 9, 'text-anchor="end"'));
     for (var j = 0; j < 5; j++) {
       s += '<rect x="' + r2(lx + j * (lc + 3)) + '" y="' + ly + '" width="' + lc + '" height="' + lc + '" rx="2.5" fill="' + (j ? c : th.grid) + '" fill-opacity="' + (j ? op[j - 1] : 0.7) + '"/>';
     }
     s += text(lx + 5 * (lc + 3) + 3, ly + 8, 'More', small(th, 9));
     return s;
-  }, { stat: st, summary: fmt(sum(v), o) + ' across ' + v.length + ' days' });
+  }, { stat: st, summary: fmt(sum(real(v)), o) + ' across ' + v.length + ' days' + (missing ? ', ' + missing + ' missing' : '') });
 }
 
 // Every day, including the early weeks a narrow chart leaves out.

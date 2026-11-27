@@ -19,10 +19,11 @@ import './entries/gauge.js';
 import './entries/progress.js';
 import './entries/bullet.js';
 import './entries/heatmap.js';
+import './entries/treemap.js';
 import { NAMES, render, toSVG } from './render.js';
 import { THEMES } from './core/themes.js';
 import { BezelChart } from './element.js';
 
-export const version = '1.11.0';
+export const version = '1.12.0';
 export const types = NAMES.slice();
 export { render, toSVG, BezelChart, THEMES as themes };

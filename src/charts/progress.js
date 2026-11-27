@@ -1,18 +1,18 @@
-import { newId, r2, clamp, num, has, nums, list, sum, tw, fmt, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO, esc } from '../core/util.js';
+import { newId, r2, clamp, num, has, nums, list, sum, tw, fmt, ok, real, text, small, hit, anim, palette, emptyState, statOf, SANS, MONO, esc } from '../core/util.js';
 import { tile, dims } from '../core/tile.js';
 
 export default function progress(o, th) {
   var v = nums(o.values).map(function (n) { return Math.max(0, n); }), labels = list(o.labels), pal = palette(o, th);
-  var single = v.length === 1, total = sum(v);
+  var single = v.length === 1, total = sum(real(v));
   var max = has(o.max) ? num(o.max, 100) : single ? 100 : total;
   if (!(max > 0)) max = 1;
   var auto = !has(o.prefix) && !has(o.suffix) && max === 100 && single;
-  var show = function (n) { return fmt(n, o) + (auto ? '%' : ''); };
+  var show = function (n) { return ok(n) ? fmt(n, o) + (auto ? '%' : '') : 'No data'; };
   var d0 = dims(o), w0 = d0.w, rows = 0, layout = [];
   if (!single && v.length) {
     var x = 0; rows = 1;
     v.forEach(function (n, i) {
-      var l = labels[i] || '#' + (i + 1), wd = 14 + tw(l, 12) + 6 + tw(fmt(n, o), 11, true) + 18;
+      var l = labels[i] || '#' + (i + 1), wd = 14 + tw(l, 12) + 6 + tw(show(n), 11, true) + 18;
       if (x > 0 && x + wd > w0) { x = 0; rows++; }
       layout.push({ x: x, row: rows - 1, l: l }); x += wd;
     });
@@ -22,13 +22,14 @@ export default function progress(o, th) {
   return tile(o, th, h, function (x0, y0, w, h) {
     if (!v.length) return emptyState(th, x0, y0, w, h);
     var s = '', by = y0 + 22, cid = newId('c');
-    var head = single ? show(v[0]) + (auto ? '' : ' of ' + fmt(max, o)) : fmt(total, o) + ' of ' + fmt(max, o);
+    var head = single ? show(v[0]) + (auto || !ok(v[0]) ? '' : ' of ' + fmt(max, o)) : fmt(total, o) + ' of ' + fmt(max, o);
     if (single && labels[0]) s += text(x0, y0 + 11, labels[0], 'fill="' + th.fg + '" font-family="' + SANS + '" font-size="12"');
     s += text(x0 + w, y0 + 11, head, 'text-anchor="end" fill="' + th.fg + '" font-family="' + MONO + '" font-size="11" font-weight="600"');
     s += '<rect x="' + x0 + '" y="' + by + '" width="' + w + '" height="14" rx="7" fill="' + th.grid + '" fill-opacity=".7"/>';
     s += '<clipPath id="' + cid + '"><rect x="' + x0 + '" y="' + by + '" width="' + w + '" height="14" rx="7"/></clipPath><g clip-path="url(#' + cid + ')"><g' + anim(o, 'bzc-gx') + '>';
     var acc = 0;
     v.forEach(function (n, i) {
+      if (!ok(n)) return;
       var len = Math.min(n, Math.max(0, max - acc)) / max * w;
       if (len > 0) s += '<rect x="' + r2(x0 + acc / max * w) + '" y="' + by + '" width="' + r2(len) + '" height="14" fill="' + pal[i % pal.length] + '"/>';
       if (i > 0 && len > 0) s += '<rect x="' + r2(x0 + acc / max * w - 1) + '" y="' + by + '" width="2" height="14" fill="' + (o.background || th.tile) + '"/>';
@@ -41,6 +42,7 @@ export default function progress(o, th) {
     }
     acc = 0;
     v.forEach(function (n, i) {
+      if (!ok(n)) return;
       var len = Math.min(n, Math.max(0, max - acc)) / max * w;
       if (len > 0) s += hit(x0 + acc / max * w, by - 4, len, 22, (labels[i] || (single ? 'Progress' : '#' + (i + 1))) + ': ' + show(n) + (single ? '' : ' (' + Math.round(n / max * 100) + '%)'), i, n);
       acc += n;
@@ -50,17 +52,17 @@ export default function progress(o, th) {
       s += '<circle cx="' + r2(lx + 4) + '" cy="' + r2(ly) + '" r="4" fill="' + pal[i % pal.length] + '"/>' +
         // One text element, so the browser places the value right after the label at its real width.
         '<text x="' + r2(lx + 14) + '" y="' + r2(ly + 4) + '" fill="' + th.fg + '" font-family="' + SANS + '" font-size="12">' + esc(it.l) +
-        '<tspan dx="6" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11">' + esc(fmt(v[i], o)) + '</tspan></text>';
+        '<tspan dx="6" fill="' + th.muted + '" font-family="' + MONO + '" font-size="11">' + esc(ok(v[i]) ? fmt(v[i], o) : 'No data') + '</tspan></text>';
     });
     return s;
-  }, { stat: st, summary: single ? show(v[0]) + (auto ? '' : ' of ' + fmt(max, o)) : fmt(total, o) + ' of ' + fmt(max, o) });
+  }, { stat: st, summary: single ? show(v[0]) + (auto || !ok(v[0]) ? '' : ' of ' + fmt(max, o)) : fmt(total, o) + ' of ' + fmt(max, o) + (real(v).length < v.length ? ', ' + (v.length - real(v).length) + ' missing' : '') });
 }
 
 progress.table = function (o) {
   var v = nums(o.values).map(function (n) { return Math.max(0, n); }), labels = list(o.labels), single = v.length === 1;
-  var max = has(o.max) ? num(o.max, 100) : single ? 100 : sum(v);
+  var max = has(o.max) ? num(o.max, 100) : single ? 100 : sum(real(v));
   if (!(max > 0)) max = 1;
   var auto = !has(o.prefix) && !has(o.suffix) && max === 100 && single;
-  if (single) return { head: ['Label', 'Value'], rows: [[labels[0] || 'Progress', fmt(v[0], o) + (auto ? '%' : ' of ' + fmt(max, o))]] };
-  return { head: ['Label', 'Value', 'Share'], rows: v.map(function (n, i) { return [labels[i] || '#' + (i + 1), fmt(n, o), Math.round(n / max * 100) + '%']; }) };
+  if (single) return { head: ['Label', 'Value'], rows: [[labels[0] || 'Progress', ok(v[0]) ? fmt(v[0], o) + (auto ? '%' : ' of ' + fmt(max, o)) : '–']] };
+  return { head: ['Label', 'Value', 'Share'], rows: v.map(function (n, i) { return [labels[i] || '#' + (i + 1), fmt(n, o), ok(n) ? Math.round(n / max * 100) + '%' : '–']; }) };
 };

@@ -327,6 +327,98 @@ export const CASES = {
   ],
 };
 
+// Missing values (1.12.0): gaps in every chart, from strings and from arrays with null.
+const GAPS = {
+  spark: [{ values: '3,,5,null,4,6' }, { values: ',2' }, { values: '1,,3', notes: '1:x;2:y', 'show-values': '', stat: 'last' }, { values: [4, null, 6], theme: 'light' }],
+  line: [{ values: '1,2,,4,5,,7,6|3,4,2,,3,4,,5', series: 'A,B', labels: 'a,b,c,d,e,f,g,h', notes: 'c:Gap', stat: 'last' }, { values: '1,,100,1000', log: '' },
+    { values: '5,null,6,7', markers: '', 'show-values': '' }, { values: '1,,3', dates: '2026-01-01,2026-01-02,2026-01-05', straight: '' },
+    { values: [1, 2, null, 4, null, 6, 7], animate: true }, { values: 'null,null' }],
+  area: [{ values: '3,4,,5,6|2,2,2,3,3', stacked: '', series: 'A,B', 'show-values': '' }, { values: '1,,3|2,1,1', stacked: 'percent' },
+    { values: '1,,3,4|2,2,,2', markers: '', patterns: '' }, { values: '5,,7', theme: 'light', animate: true }],
+  bars: [{ values: '4,7,,6,5', labels: 'a,b,c,d,e', 'show-values': '', goal: 5 }, { values: '4,,6', horizontal: '', labels: 'x,y,z' },
+    { values: '1,2|3,null', stacked: '', 'show-values': '' }, { values: '1,2|null,4', stacked: '', horizontal: '' }, { values: '1,null|2,3', series: 'A,B', patterns: '' }],
+  combo: [{ values: '4,,6,7', line: '3.1,3.4,,4.2', labels: 'Q1,Q2,Q3,Q4' }, { values: '1,2|null,3', line: 'null,null', stacked: '' }, { values: '1,2,3', line: '5,,6', markers: '' }],
+  waterfall: [{ values: '120,30,,-25,0', labels: 'Start,Sales,Costs,Tax,Profit', totals: 'Start,Profit' }, { values: '-5,,null,-3', totals: '3', series: 'Up,Down,Sum,Unknown' },
+    { values: '120,30,-12,null', labels: 'Start,Sales,Costs,Profit', totals: 'Start,Profit' }],
+  histogram: [{ values: '1,2,,3,4,5,null', mark: 'mean,median' }, { values: 'null,1|1,2,2', percent: '', series: 'A,B' }],
+  boxplot: [{ values: '1,2,3,,9', mark: 'mean' }, { values: '1,2,3|null,null|4,5', series: 'A,B,C', horizontal: '' }],
+  scatter: [{ x: '1,2,,4,5', y: '3,,5,6,7', labels: 'a,b,c,d,e', notes: 'd:Last', trend: '' }, { x: '1,2|3,null', y: '1,2|3,4', series: 'A,B' }],
+  ring: [{ values: '40,,70', labels: 'A,B,C' }, { values: '40,null', max: 200 }],
+  donut: [{ values: '3,,2', labels: 'A,B,C' }, { values: '3,,2,1,1,1,1,1', labels: 'a,b,c,d,e,f,g,h' }],
+  gauge: [{ values: 'null' }, { values: '50', zones: '30,,70' }],
+  progress: [{ values: '30,,20', labels: 'A,B,C' }, { values: 'null' }, { values: '30,null', max: 100, goal: 40 }],
+  bullet: [{ values: '182,,7.4', targets: '200,60,', labels: 'Revenue,Margin,NPS', zones: '150,180|40,,55|6,7', 'zone-labels': 'Poor,Fair,Good' }],
+  heatmap: [{ values: Array.from({ length: 70 }, (_, i) => (i % 9 === 4 ? null : i % 5)), start: '2026-01-05' }, { values: '1,,3,0', start: '2026-01-01', theme: 'light' }],
+};
+for (const [type, cases] of Object.entries(GAPS)) CASES[type].push(...cases);
+
+// fill (1.12.0): shading under the first line, every line or none.
+CASES.line.push(
+  { values: '1,3,2|2,2,4', series: 'A,B', fill: 'none' },
+  { values: '1,3,2|2,2,4|3,1,1', series: 'A,B,C', fill: 'all', labels: 'a,b,c' },
+  { values: '1,2,,4,5|2,,3,3,3', fill: 'all', theme: 'light' },
+  { values: '4,6,5', fill: false, animate: true },
+  { values: '4,6,5', fill: 'all' },
+);
+CASES.spark.push({ values: '3,5,4', fill: 'none' }, { values: '3,,5,4', fill: 'off', theme: 'light' });
+
+// Spans and notes on more charts (1.12.0).
+const yrs = '2018,2019,2020,2021,2022,2023,2024', yv = '3,4,2,5,6,6.5,7', many = '2020:A long first note;2021:A long second note;2022:And a third;2023:Fourth';
+CASES.line.push(
+  { values: yv, labels: yrs, notes: '2020:2020 shock;2022..2023:Rate rises' },
+  { values: yv, labels: yrs, notes: many, theme: 'light' },
+  { values: yv, labels: yrs, notes: '2024:A rather long note right at the end;0..1:Start', width: 300 },
+);
+CASES.area.push({ values: yv + '|1,1,1,1,1,1,1', labels: yrs, stacked: '', notes: '2019..2021:Slow years;2023:Peak', animate: true });
+CASES.spark.push({ values: yv, labels: yrs, notes: '2020:Dip;2022..2024:Recovery' });
+CASES.bars.push(
+  { values: yv, labels: yrs, notes: '2020:2020 shock;2022..2023:Rate rises', 'show-values': '', goal: 5 },
+  { values: yv, labels: yrs, notes: many, 'angle-labels': '', width: 300 },
+  { values: yv, labels: yrs, notes: '1..3:Ignored sideways', horizontal: '' },
+);
+CASES.combo.push(
+  { values: yv, line: '1,2,3,2,3,4,5', labels: yrs, notes: '2020:Shock;2022..2023:Rate rises', 'y-label': 'Sales', 'line-label': 'Rate' },
+  { values: yv + '|1,1,1,1,1,1,1', line: '1,2,3,2,3,4,5', labels: yrs, notes: many, stacked: '' },
+);
+CASES.waterfall.push({ values: '120,30,-12,-25,0', labels: 'Start,Sales,Costs,Tax,Profit', totals: 'Start,Profit', notes: 'Costs..Tax:Outgoings;Sales:Best month' });
+CASES.scatter.push({ x: '1,2,3', y: '1,2,3', notes: '1:Middle;0..2:Not on a scatter' });
+
+// Bullet names (1.12.0): "Value" by default, or the two names from series.
+CASES.bullet.push({ values: '182,64', targets: '200,60', labels: 'Revenue,Margin', series: 'This quarter,Plan', zones: '150,180|40,55' });
+
+// Treemap (1.12.0): parts of a whole, with and without groups.
+const holdings = {
+  values: '7.1,6.4,5.9,3.8,2.2,1.9,4.1,3.2,2.6,1.4,3.3,2.8,1.7,2.9,2.1,1.2,2.4,1.6,1.1,0.9',
+  labels: 'Apple,Microsoft,Nvidia,Alphabet,Broadcom,Oracle,JPMorgan,Visa,Mastercard,Goldman Sachs,UnitedHealth,Eli Lilly,Pfizer,Amazon,Tesla,Nike,Exxon,Chevron,NextEra,Duke',
+  groups: 'Tech,Tech,Tech,Tech,Tech,Tech,Finance,Finance,Finance,Finance,Health,Health,Health,Consumer,Consumer,Consumer,Energy,Energy,Utilities,Utilities',
+};
+CASES.treemap = [
+  { heading: 'Portfolio', suffix: '%', decimals: 1, height: 300, ...holdings },
+  { ...holdings, theme: 'light', width: 560, animate: true },
+  { values: '420,310,260,150,90,45', labels: 'North America,Europe,Asia Pacific,Latin America,Middle East,Africa', prefix: '$', suffix: 'm' },
+  { values: '5,3,0,-2,,1', labels: 'a,b,zero,negative,missing,f', groups: 'X,Y,X,Y,X' },
+  { values: '1', labels: 'Only one', groups: 'Solo', stat: 'total' },
+  { values: '10,10,10,10', color: '#ff6600,teal,#00f,rgb(1,2,3)', width: 200, height: 120 },
+  { values: '3,2,1', labels: 'A very long name that will not fit,Short,Mid', groups: 'G1,G2,G1', width: 240, compact: '' },
+  { values: '' },
+];
+CASES.treemap.push({ values: '5,,3', labels: 'a,b,c' }, { values: 'null,null' });
+
+// Bands (1.12.0): fan charts, from attributes and from a bands array.
+const hist = '24,26,25,31,29,37,34,41,47,52', ahead = ',,,,,,,,,52';
+CASES.line.push(
+  { values: hist + ',null,null,null', labels: '2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026,2027,2028', series: 'Actual',
+    'band-low': ahead + ',49,46,44|' + ahead + ',53,54,55|' + ahead + ',55,58,61', 'band-high': ahead + ',52,52,53|' + ahead + ',56,59,62|' + ahead + ',58,64,70',
+    'band-mid': ahead + ',51,49,48|' + ahead + ',54,56,58|' + ahead + ',56,61,66', 'band-series': 'Bad,Middling,Good', prefix: '$', notes: '2020:2020 shock', height: 240 },
+  { values: [1, 2, 3, null, null], bands: [{ name: '10th to 90th', low: [null, null, 3, 2.5, 2], high: [null, null, 3, 4, 5], color: '#6E70F0' },
+    { name: '25th to 75th', low: [null, null, 3, 2.8, 2.6], high: [null, null, 3, 3.6, 4.2], mid: [null, null, 3, 3.2, 3.4], color: '#6E70F0' }], theme: 'light', animate: true },
+  { values: '5,6,7', 'band-low': '4,5,6', 'band-high': '6,7,8', straight: '', fill: 'first' },
+  { 'band-mid': '1,2,3', 'band-series': 'Only a middle line' },
+  { values: '1,10,100,1000', log: '', 'band-low': '0.5,5,,500', 'band-high': '2,20,,2000', markers: '', dash: '' },
+  { values: '3,4', 'band-low': '1,2,3,4,5', 'band-high': '5,6,7,8,9', 'band-color': '#ff6600', min: 2, max: 8, goal: 6 },
+);
+
+
 for (const [type, cases] of Object.entries(CASES)) {
   const rows = cases.map((options) => ({
     options,

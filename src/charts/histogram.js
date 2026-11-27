@@ -1,4 +1,4 @@
-import { newId, r2, num, has, list, series, bool, fmt, tw, text, small, hit, anim, palette, emptyState } from '../core/util.js';
+import { newId, r2, num, has, list, series, bool, fmt, real, tw, text, small, hit, anim, palette, emptyState } from '../core/util.js';
 import { niceScale, legend, styleOf, pattern, PATTERNS } from '../core/series.js';
 import { tile } from '../core/tile.js';
 
@@ -14,8 +14,8 @@ export default function histogram(o, th) {
   // Range edges get as many decimals as the range width needs, so 0.5-wide ranges read 2.5, 3.0, 3.5.
   var eo = Object.assign({}, o, { decimals: has(o.decimals) ? o.decimals : b ? b.dp : 0 });
   var range = function (i) { return fmt(b.edge(i), eo) + ' to ' + fmt(b.edge(i + 1), eo); };
-  var share = function (j, i) { return Math.round(b.counts[j][i] / S[j].length * 100); };
-  var height = function (j, i) { return pct ? b.counts[j][i] / S[j].length * 100 : b.counts[j][i]; };
+  var share = function (j, i) { return S[j].length ? Math.round(b.counts[j][i] / S[j].length * 100) : 0; };
+  var height = function (j, i) { return pct ? (S[j].length ? b.counts[j][i] / S[j].length * 100 : 0) : b.counts[j][i]; };
   var marks = list(o.mark).filter(function (m) { return m === 'mean' || m === 'median'; });
 
   var patOf = k > 1 ? styleOf(o.patterns, PATTERNS, 'solid') : null, defs = '', fills = [];
@@ -96,7 +96,7 @@ export default function histogram(o, th) {
     }
     return s;
   }, {
-    summary: b ? (multi ? k + ' series, ' : '') + n + ' values in ' + b.count + ' ranges from ' + fmt(b.edge(0), eo) + ' to ' + fmt(b.edge(b.count), eo) + ', most in ' + range(peak) : 'no data',
+    summary: b ? (multi ? k + ' series, ' : '') + n + ' values in ' + b.count + ' ranges from ' + fmt(b.edge(0), eo) + ' to ' + fmt(b.edge(b.count), eo) + ', most in ' + range(peak) + (b.missing ? ', ' + b.missing + ' missing left out' : '') : 'no data',
   });
 }
 
@@ -107,7 +107,7 @@ histogram.table = function (o) {
   for (var i = 0; i < b.count; i++) {
     var row = [fmt(b.edge(i), eo) + ' to ' + fmt(b.edge(i + 1), eo)];
     if (multi) b.S.forEach(function (_, j) { row.push(String(b.counts[j][i])); });
-    else row.push(String(b.counts[0][i]), Math.round(b.counts[0][i] / b.S[0].length * 100) + '%');
+    else row.push(String(b.counts[0][i]), (b.S[0].length ? Math.round(b.counts[0][i] / b.S[0].length * 100) : 0) + '%');
     rows.push(row);
   }
   return { head: ['Range'].concat(multi ? b.S.map(function (_, j) { return names[j] || 'Series ' + (j + 1); }) : ['Count', 'Share']), rows: rows };
@@ -125,11 +125,12 @@ function niceWidth(raw) {
 
 /**
  * Sorts every value into ranges. bin-width sets the width; otherwise bins sets roughly how many ranges, and by default
- * there are about log2(n) + 1. Returns null when there is nothing to count.
+ * there are about log2(n) + 1. Missing values are left out and counted. Returns null when there is nothing to count.
  */
 function binned(o) {
-  var S = series(o.values), all = [].concat.apply([], S);
+  var raw = series(o.values), S = raw.map(real), all = [].concat.apply([], S);
   if (!all.length) return null;
+  var missing = [].concat.apply([], raw).length - all.length;
   var lo = Math.min.apply(null, all), hi = Math.max.apply(null, all), w = num(o.binWidth, 0), dp, nice;
   if (w > 0 && (hi - lo) / w <= 200) {
     var str = String(o.binWidth), dot = str.indexOf('.');
@@ -161,7 +162,7 @@ function binned(o) {
     });
     return c;
   });
-  return { S: S, edge: edge, count: count, counts: counts, dp: dp };
+  return { S: S, edge: edge, count: count, counts: counts, dp: dp, missing: missing };
 }
 
 function total(b, i) {

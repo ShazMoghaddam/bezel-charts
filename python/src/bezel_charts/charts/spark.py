@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from .._notes import note_layout, note_marks
 from .._tile import tile
 from .._util import (
-    N, R, anim, bool_, clamp, empty_state, fmt, goal_line, has, hit, jmax, jmin, lst, new_id, num, nums,
+    N, R, anim, bool_, clamp, empty_state, fill_of, fmt, fmtv, gap_note, goal_line, ok, real, runs_of, has, hit, jmax, jmin, lst, new_id, num, nums,
     palette, parse_notes, path_of, small, stat_of, text, to_number, truthy,
 )
 
@@ -16,12 +17,16 @@ def spark(o, th) -> str:
     labels = lst(o.labels)
     notes = parse_notes(o, labels)
     st = stat_of(v, o, "last")
+    vals = real(v)
+    last_ok = len(v) - 1
+    while last_ok >= 0 and not ok(v[last_ok]):
+        last_ok -= 1
 
     def draw(x0, y0, w, h):
-        if not v:
+        if not vals:
             return empty_state(th, x0, y0, w, h)
         pts = [v[0], v[0]] if len(v) == 1 else v
-        mn, mx = jmin(*pts), jmax(*pts)
+        mn, mx = jmin(*vals), jmax(*vals)
         if has(o.goal):
             mn = jmin(mn, to_number(o.goal))
             mx = jmax(mx, to_number(o.goal))
@@ -37,10 +42,14 @@ def spark(o, th) -> str:
             return y0 + h - (n - mn) / (mx - mn) * h
 
         P = [[X(i), Y(n)] for i, n in enumerate(pts)]
-        d = path_of(P, bool_(o.straight))
+        # A missing value breaks the line, and each piece gets its own fill.
+        runs = runs_of(P)
+        straight = bool_(o.straight)
         g = new_id("g")
-        last = P[-1]
-        s = (
+        last = P[1 if len(v) == 1 else last_ok]
+        d = "".join(path_of(r, straight) for r in runs)
+        filled = fill_of(o) != "none"
+        s = "" if not filled else (
             '<defs><linearGradient id="' + g + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + c
             + '" stop-opacity=".32"/><stop offset="1" stop-color="' + c + '" stop-opacity="0"/></linearGradient></defs>'
         )
@@ -49,18 +58,29 @@ def spark(o, th) -> str:
                 '<line x1="' + N(x0) + '" x2="' + N(x0 + w) + '" y1="' + R(y0 + h * f) + '" y2="' + R(y0 + h * f)
                 + '" stroke="' + th["grid"] + '" stroke-dasharray="2 4"/>'
             )
-        s += (
-            '<path d="' + d + "L" + R(last[0]) + "," + N(y0 + h) + "L" + N(x0) + "," + N(y0 + h)
-            + 'Z" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>"
-        )
+        # Spans shade the stretch they cover, labelled along the top, underneath the line. Point notes sit on the line.
+        spans = [n for n in notes if n.get("j") is not None]
+        if spans:
+            s += note_marks(th, note_layout(spans, len(v), lambda i: {"c": X(i), "l": X(i), "r": X(i)}, x0, w), y0, y0 + h)
+        if filled:
+            s += (
+                '<path d="' + "".join(
+                    path_of(r, straight) + "L" + R(r[-1][0]) + "," + N(y0 + h) + "L" + (N(x0) if r[0] is P[0] else R(r[0][0])) + "," + N(y0 + h) + "Z"
+                    for r in runs
+                ) + '" fill="url(#' + g + ')"' + anim(o, "bzc-a") + "/>"
+            )
         s += (
             '<path d="' + d + '" fill="none" stroke="' + c + '" stroke-width="2.5" stroke-linecap="round" '
             'stroke-linejoin="round" pathLength="1" style="stroke-dasharray:1"' + anim(o, "bzc-d") + "/>"
         )
+        # A value on its own between gaps has no line to sit on, so it gets a dot.
+        for r in runs:
+            if len(r) == 1 and r[0] is not last:
+                s += '<circle cx="' + R(r[0][0]) + '" cy="' + R(r[0][1]) + '" r="2.5" fill="' + c + '"/>'
         if has(o.goal):
             s += goal_line(o, th, x0, x0 + w, Y(to_number(o.goal)))
         for n in notes:
-            if n["i"] >= len(v):
+            if n.get("j") is not None or n["i"] >= len(v) or not ok(v[n["i"]]):
                 continue
             p = P[n["i"]]
             s += (
@@ -73,12 +93,12 @@ def spark(o, th) -> str:
         )
         if bool_(o.showValues):
             for i, p in enumerate(P):
-                if i < len(v):
+                if i < len(v) and ok(v[i]):
                     s += text(p[0], p[1] - 8, fmt(v[i], o, True), small(th, 9, 'text-anchor="middle"'))
         step = w / (len(v) - 1) if len(v) > 1 else w
         for i, n in enumerate(v):
             label = labels[i] if i < len(labels) and labels[i] else "#" + str(i + 1)
-            s += hit(X(i) - step / 2, y0 - 6, step, h + 12, label + ": " + fmt(n, o), i, n)
+            s += hit(X(i) - step / 2, y0 - 6, step, h + 12, label + ": " + fmtv(n, o), i, n)
         return s
 
-    return tile(o, th, h, draw, {"stat": st, "summary": "latest " + fmt(v[-1], o) if v else "no data"})
+    return tile(o, th, h, draw, {"stat": st, "summary": "latest " + fmt(v[last_ok], o) + gap_note(v) if vals else "no data"})

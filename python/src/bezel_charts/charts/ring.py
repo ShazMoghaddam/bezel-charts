@@ -6,7 +6,7 @@ import math
 
 from .._tile import tile
 from .._util import (
-    ref, MONO, SANS, N, R, clamp, empty_state, esc, fmt, has, jmin, lst, num, nums, palette, small, stat_of, text,
+    ref, MONO, SANS, N, R, clamp, empty_state, esc, fmt, has, ok, real, jmin, lst, num, nums, palette, small, stat_of, text,
     trunc, truthy,
 )
 
@@ -21,7 +21,7 @@ def ring(o, th) -> str:
     auto = not has(o.prefix) and not has(o.suffix) and mx == 100
 
     def show(n):
-        return fmt(n, o) + ("%" if auto else "")
+        return fmt(n, o) + ("%" if auto else "") if ok(n) else "No data"
 
     def label_of(i):
         return labels[i] if i < len(labels) and labels[i] else "#" + str(i + 1)
@@ -29,7 +29,7 @@ def ring(o, th) -> str:
     st = stat_of(v, o, "")
 
     def draw(x0, y0, w, h):
-        if not v:
+        if not real(v):
             return empty_state(th, x0, y0, w, h)
         s = ""
         single = len(v) == 1
@@ -48,7 +48,7 @@ def ring(o, th) -> str:
                 '<circle cx="' + R(cx) + '" cy="' + R(cy) + '" r="' + R(r) + '" fill="none" stroke="' + c
                 + '" stroke-opacity=".16" stroke-width="' + R(sw) + '"/>'
             )
-            if pct > 0:
+            if ok(n) and pct > 0:
                 s += (
                     '<circle cx="' + R(cx) + '" cy="' + R(cy) + '" r="' + R(r) + '" fill="none" stroke="' + c
                     + '" stroke-width="' + R(sw) + '" stroke-linecap="round" pathLength="100" transform="rotate(-90 '
@@ -59,7 +59,7 @@ def ring(o, th) -> str:
             s += (
                 '<circle cx="' + R(cx) + '" cy="' + R(cy) + '" r="' + R(r + sw / 2)
                 + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="'
-                + esc(label_of(i) + ": " + show(n) + ("" if auto else " of " + fmt(mx, o))) + '"' + ref(i, n) + "/>"
+                + esc(label_of(i) + ": " + show(n) + ("" if auto or not ok(n) else " of " + fmt(mx, o))) + '"' + ref(i, n) + "/>"
             )
         if single:
             s += text(

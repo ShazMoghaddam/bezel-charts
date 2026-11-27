@@ -75,3 +75,14 @@ test('units come from column names and cells', () => {
   assert.deepEqual([spend.prefix, spend.suffix], ['£', '']);
   assert.deepEqual([share.prefix, share.suffix], ['', '%']);
 });
+
+test('blank cells become gaps, not 0 (1.12.0)', async () => {
+  const { toNum, joinNums } = await import('../site/table.js');
+  assert.equal(toNum(''), null);
+  assert.equal(toNum('n/a'), null);
+  assert.equal(toNum('£1,200'), 1200);
+  assert.equal(joinNums([4, null, 6]), '4,,6');
+  assert.equal(joinNums([4, 6, null]), '4,6,null');
+  const t = describe(parseDelimited('date,n\n2026-01-01,1\n2026-01-02,\n2026-01-02,2\n2026-01-04,\n'));
+  assert.deepEqual(daily(t, t.numbers[0]).values, [1, 2, 0, null]);
+});

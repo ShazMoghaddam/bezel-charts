@@ -59,7 +59,7 @@ Then in your README, with `chart.alt` as the alt text:
 ![Monthly revenue: latest £79k. £42k, £48k, £45k, £53k, £61k, £58k, £66k, £72k, £79k](docs/revenue.svg)
 ```
 
-## The sixteen charts
+## The seventeen charts
 
 | Function | What it draws |
 | --- | --- |
@@ -72,14 +72,15 @@ Then in your README, with `chart.alt` as the alt text:
 | `bc.histogram(data)` | How raw values spread out: counts per range, with round edges, mean and median lines and shares. |
 | `bc.boxplot(data)` | Box plots comparing spreads, with quartiles matching pandas, outliers and an optional mean. |
 | `bc.scatter(df, x=, y=)` | A scatter plot with optional groups and a least-squares trend line showing Pearson's r. |
-| `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. |
+| `bc.heatmap(data)` | A calendar heatmap with one square per day, like a GitHub contributions chart. Days only, not a grid of rows by columns. |
 | `bc.ring(data)` | Progress rings, one per value, out of 100 unless you set `max`. |
 | `bc.donut(data)` | Parts of a whole, with the total in the middle and percentages alongside. |
+| `bc.treemap(data, by=)` | Parts of a whole as tiles sized by value, grouped into coloured blocks, for when there are too many parts for a donut. |
 | `bc.gauge(value)` | A half-circle gauge with optional coloured zones and a goal marker. |
 | `bc.progress(data)` | A progress bar, single or stacked with a legend. |
-| `bc.bullet(data, target=)` | Bullet charts: actual against target for each measure, with bands for poor, fair and good. |
+| `bc.bullet(data, target=)` | Bullet charts: each measure's value against its target, with bands for poor, fair and good. |
 
-Grouped bars are `bc.bars()` with several series, which makes sixteen. They are the same sixteen as the web components, and `bc.types` lists them.
+Grouped bars are `bc.bars()` with several series, which makes seventeen. They are the same seventeen as the web components, and `bc.types` lists them.
 
 ### Dates
 
@@ -91,6 +92,39 @@ bc.line(df.set_index("date")["users"], log=True)     # a date index works too
 ```
 
 Tooltips show the full date. Pass `x_format` to name the points your way instead, and the axis keeps its date steps. Text that only looks like a date stays a label.
+
+### Treemaps
+
+```python
+bc.treemap(holdings, x="holding", y="weight", by="sector", suffix="%")  # a block per sector, its holdings inside
+bc.treemap(spend.groupby("category")["amount"].sum(), prefix="£")         # a Series: one tile per category
+```
+
+`by=` is a column name or a list with one group per item. Without it, each tile has its own colour. Zero, negative and missing values are left out and counted in the summary.
+
+![A treemap of a portfolio's holdings in coloured blocks by sector: Tech, Finance, Health and Consumer, with each tile's name, weight and share](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/treemap.svg)
+
+### Fan charts
+
+Bands add shaded ranges with a dashed middle line, for forecast scenarios that carry on from a history line, or percentile ranges. Each band names its columns, or takes lists, with `NaN` where it has no value. Start each band at the last actual value to join it on:
+
+```python
+bc.line(df, x="year", y="revenue", prefix="$", bands=[
+    {"name": "Bad", "low": "bad_lo", "mid": "bad", "high": "bad_hi"},
+    {"name": "Middling", "low": "mid_lo", "mid": "mid", "high": "mid_hi"},
+    {"name": "Good", "low": "good_lo", "mid": "good", "high": "good_hi"},
+])
+
+# Nested percentile bands in one colour deepen towards the middle
+bc.line(history, bands=[
+    {"name": "10th to 90th", "low": p10, "high": p90, "color": "#6E70F0"},
+    {"name": "25th to 75th", "low": p25, "mid": p50, "high": p75, "color": "#6E70F0"},
+])
+```
+
+Columns used by bands are left out of the default `y`, so they aren't drawn as lines too, and a single line takes its column's name for the legend.
+
+![A fan chart of revenue from 2016 to 2025, then bad, middling and good forecast bands to 2030, each a shaded range with a dashed middle line, with a 2020 shock marker and a shaded span for rate rises](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/python/docs/fan.svg)
 
 ### Area
 
@@ -119,7 +153,7 @@ bc.waterfall(df, x="step", y="change", totals=["Opening", "Closing"])  # from a 
 bc.waterfall([120, 30, -12, 0], totals=[0, 3])                          # totals by position
 ```
 
-A total adds its own value first, then shows the running total, so give the opening amount for a start and `0` for a subtotal. A missing value is drawn as 0 with a warning, so use `.fillna(0)` on total rows. `color=[rise, fall, total]` changes the colours.
+A total adds its own value first, then shows the running total, so give the opening amount for a start and `0` for a subtotal. A missing value draws a dashed "No data" step that keeps the level, and later totals say how many steps they leave out. A total row can be left blank (`NaN`), as it just shows the running total. `color=[rise, fall, total]` changes the colours.
 
 ### Histogram
 
@@ -219,6 +253,7 @@ bc.progress({"Done": 46, "In review": 18, "Blocked": 6}, max=100, goal=75, headi
 ```python
 bc.bullet(df, x="kpi", y="actual", target="plan", zones=[[150, 180], [40, 55]], zone_labels=["Poor", "Fair", "Good"])
 bc.bullet({"North": 72, "South": 95}, target=80, zones=[50, 75], suffix="%")  # one target and one set of bands for every row
+bc.bullet(df, x="kpi", y="actual", target="plan", series=["This quarter", "Plan"])  # names for the bar and the target line ("Value" and "Target" if not set)
 ```
 
 `target=` takes a column name, a list with one per row, or one number. `zones=` is one list for every row or one list per row.
@@ -247,7 +282,7 @@ print(f"![{chart.alt}](docs/commits.svg)")
 | A dict like `{"Team A": [...], "Team B": [...]}` | One series per key, named in the legend. |
 | A list of lists | One series per inner list. |
 
-Dates become `2026-03-01`, or anything you like with `x_format="%b %Y"`. Missing values are drawn as 0, like the browser version, with a warning so they never go unnoticed. Call `.dropna()` or `.fillna()` first if you'd rather handle them yourself.
+Dates become `2026-03-01`, or anything you like with `x_format="%b %Y"`. Missing values (`None`, `NaN`, `pd.NA`) are never drawn as 0. Lines break, bars leave a marked empty slot, histograms and box plots leave them out, and tooltips say "No data", the same as the web components. See [Missing values](https://github.com/ShazMoghaddam/bezel-charts#missing-values) for every chart. Call `.fillna()` first if a gap really means 0.
 
 ## Options
 
@@ -262,9 +297,10 @@ Every option from the [web components](https://github.com/ShazMoghaddam/bezel-ch
 | `stat` | `stat="average"` | Headline number: `last`, `total`, `average`, `max`, `min` or `none`. |
 | `delta`, `delta_label` | `delta="inverse"` | Change since the start. `inverse` makes a fall the good direction. |
 | `goal`, `goal_label` | `goal=50, goal_label="Target"` | A dashed target line, labelled clear of bars and values. |
-| `notes` | `notes={"May": "Launch"}` | Notes on points, keyed by label or, if no label matches, position. |
+| `notes` | `notes={"May": "Launch", ("2022", "2023"): "Rate rises"}` | A dashed marker on a point, or a pair of keys for a shaded span, keyed by label or, if no label matches, position. Works on spark, line, area, bars, combo, waterfall and scatter (points only). |
 | `show_values` | `show_values=True` | A label on every point. |
 | `straight` | `straight=True` | Straight segments instead of curves. |
+| `fill` | `fill=False` or `fill="all"` | The soft shading under the first line (the default), under every line (`"all"`), or none (`False`) (line, spark). |
 | `zero` | `zero=True` | Start the axis at zero (line). |
 | `horizontal` | `horizontal=True` | Bars run sideways, good for long labels (bars). |
 | `stacked` | `stacked=True` or `stacked="percent"` | Pile several series up, with the total in the tooltip (bars, area). `"percent"` scales each column to 100% (area). |

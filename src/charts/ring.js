@@ -1,14 +1,14 @@
-import { esc, r2, clamp, num, has, nums, list, trunc, fmt, text, small, hit, palette, emptyState, statOf, SANS, MONO, ref } from '../core/util.js';
+import { esc, r2, clamp, num, has, nums, list, trunc, fmt, ok, real, text, small, hit, palette, emptyState, statOf, SANS, MONO, ref } from '../core/util.js';
 import { tile } from '../core/tile.js';
 
 export default function ring(o, th) {
   var v = nums(o.values), labels = list(o.labels), pal = palette(o, th);
   var max = num(o.max, 100) || 100, h = num(o.height, 140);
   var auto = !has(o.prefix) && !has(o.suffix) && max === 100;
-  var show = function (n) { return fmt(n, o) + (auto ? '%' : ''); };
+  var show = function (n) { return ok(n) ? fmt(n, o) + (auto ? '%' : '') : 'No data'; };
   var st = statOf(v, o, '');
   return tile(o, th, h, function (x0, y0, w, h) {
-    if (!v.length) return emptyState(th, x0, y0, w, h);
+    if (!real(v).length) return emptyState(th, x0, y0, w, h);
     var s = '', single = v.length === 1;
     var size = Math.min(h, single ? w : w * 0.55);
     var cx = single ? x0 + w / 2 : x0 + size / 2, cy = y0 + h / 2;
@@ -21,7 +21,7 @@ export default function ring(o, th) {
       if (pct > 0) s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r) + '" fill="none" stroke="' + c + '" stroke-width="' + r2(sw) +
         '" stroke-linecap="round" pathLength="100" transform="rotate(-90 ' + r2(cx) + ' ' + r2(cy) + ')" style="stroke-dasharray:' + r2(pct) + ' 100' +
         (o.animate ? ';animation-delay:' + i * 0.12 + 's' : '') + '"' + (o.animate ? ' class="bzc-s"' : '') + '/>';
-      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r + sw / 2) + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="' + esc((labels[i] || '#' + (i + 1)) + ': ' + show(n) + (auto ? '' : ' of ' + fmt(max, o))) + '"' + ref(i, n) + '/>';
+      s += '<circle cx="' + r2(cx) + '" cy="' + r2(cy) + '" r="' + r2(r + sw / 2) + '" fill="#000" fill-opacity="0" class="bzc-hit" data-tip="' + esc((labels[i] || '#' + (i + 1)) + ': ' + show(n) + (auto || !ok(n) ? '' : ' of ' + fmt(max, o))) + '"' + ref(i, n) + '/>';
     });
     if (single) {
       s += text(cx, cy + size * 0.08, show(v[0]), 'text-anchor="middle" fill="' + th.fg + '" font-family="' + SANS + '" font-size="' + r2(size * 0.22) + '" font-weight="800"');
@@ -42,6 +42,6 @@ export default function ring(o, th) {
 ring.table = function (o) {
   var labels = list(o.labels), max = num(o.max, 100) || 100, auto = !has(o.prefix) && !has(o.suffix) && max === 100;
   return { head: ['Label', 'Value'], rows: nums(o.values).map(function (n, i) {
-    return [labels[i] || '#' + (i + 1), fmt(n, o) + (auto ? '%' : ' of ' + fmt(max, o))];
+    return [labels[i] || '#' + (i + 1), ok(n) ? fmt(n, o) + (auto ? '%' : ' of ' + fmt(max, o)) : '–'];
   }) };
 };

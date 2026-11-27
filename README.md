@@ -9,18 +9,18 @@
 [![Python](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml/badge.svg)](https://github.com/ShazMoghaddam/bezel-charts/actions/workflows/python.yml)
 [![MIT licence](https://img.shields.io/badge/licence-MIT-D99A0E)](LICENSE)
 
-Bezel Charts is a set of free, open-source web components: sixteen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
+Bezel Charts is a set of free, open-source web components: seventeen chart tiles drawn in pure SVG, so they stay sharp on a phone, a 4K screen or a printed report. Build one in the Studio, paste one line of HTML into any site, or save any chart as a static SVG for a README, Notion page or slide, where JavaScript can't run.
 
-![All sixteen Bezel Charts in light and dark tiles: a sparkline, a progress bar, rings, a gauge and a donut; a line chart with a launch day note and a bars-and-line chart on two axes; a waterfall from revenue to profit, a bullet scorecard and bars with a target; stacked areas and a histogram with its median; a scatter plot with a trend line, box plots and grouped bars; and an activity heatmap](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/docs/bezel-charts-16.png)
+![All seventeen Bezel Charts in light and dark tiles: a sparkline, a progress bar, rings, a gauge and a donut; a line chart with a launch day note and a bars-and-line chart on two axes; a fan chart forecasting revenue under bad, middling and good scenarios with a shaded span for rate rises, and a treemap of a portfolio grouped by sector; a waterfall from revenue to profit, a bullet scorecard and bars with a target; stacked areas and a histogram with its median; a scatter plot with a trend line, box plots and grouped bars; and an activity heatmap](https://raw.githubusercontent.com/ShazMoghaddam/bezel-charts/main/docs/bezel-charts-17.png)
 
 **[Open the Studio](https://shazmoghaddam.github.io/bezel-charts/site/#studio)** to build a chart and copy its code.
 
 - **One tag per chart.** `<bezel-bars values="4,9,6">` is a finished, labelled, animated chart.
 - **Yours to style.** Any colour, light and dark themes that follow the viewer's setting, rounder or squarer corners, with or without the bezel frame.
 - **Made for READMEs.** Every chart exports as a clean static SVG, so a GitHub README can show a real chart.
-- **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, histograms, box plots, waterfalls, bullet charts, grouped series, goal lines and notes on key points.
+- **Data science friendly.** Scatter plots with a least-squares trend line and Pearson's r, fan charts for forecasts and percentile ranges, histograms, box plots, waterfalls, treemaps, bullet charts, grouped series, goal lines, notes and shaded spans, and missing values shown as gaps, never as 0.
 - **Speaks your language.** Numbers and dates follow any locale, including Persian.
-- **Light.** About 26 kB gzipped for all sixteen charts, or 8 to 13 kB for a page that loads just one. No dependencies and no build step.
+- **Light.** About 32 kB gzipped for all seventeen charts, or 9 to 15 kB for a page that loads just one. No dependencies and no build step.
 - **Accessible.** Tab to any chart and step through its values with the arrow keys. Screen readers hear each value and get a hidden table of the data. Dashes, shapes and patterns tell series apart without relying on colour, and animation respects reduced-motion settings.
 - **Python too.** `pip install bezel-charts` draws the same charts straight from a pandas DataFrame, for notebooks, reports and READMEs.
 
@@ -33,6 +33,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 - [The Studio](#the-studio)
 - [The charts](#the-charts)
 - [Options for every chart](#options-for-every-chart)
+- [Missing values](#missing-values)
 - [Colours and dark mode](#colours-and-dark-mode)
 - [Accessibility](#accessibility)
 - [Charts in a README](#charts-in-a-readme)
@@ -49,7 +50,7 @@ A sibling of [Bezel](https://github.com/ShazMoghaddam/bezel), the clock, calenda
 <bezel-bars heading="Commits this week" values="4,9,6,3,8,5,3" labels="M,T,W,T,F,S,S" stat="total"></bezel-bars>
 ```
 
-`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.11.0` instead.
+`@1` always loads the latest 1.x release, so you get fixes without changing anything. To pin an exact version, use `@v1.12.0` instead.
 
 That's all. Charts fill the width of whatever they sit in and redraw when it changes, so they work in a sidebar, a card grid or a full-width section without extra CSS.
 
@@ -83,11 +84,12 @@ import { toSVG } from 'bezel-charts/line'; // render and toSVG work for every ch
 
 | Page | Gzipped |
 | --- | --- |
-| One sparkline, ring, donut, gauge, progress bar or heatmap | 7.7 to 8.0 kB |
-| One waterfall, bullet, histogram, box plot, scatter, bar or bars-and-line chart | 9.5 to 11.0 kB |
-| One line or area chart | 12.5 to 12.9 kB |
-| A line and a bar chart | 15.3 kB |
-| Every chart: the full bundle | 26.4 kB |
+| One sparkline, ring, donut, gauge, progress bar or heatmap | 8.5 to 9.4 kB |
+| One bullet, box plot, treemap, scatter, histogram or waterfall | 10.3 to 11.3 kB |
+| One bar or bars-and-line chart | 12.7 kB |
+| One line or area chart | 14.6 to 15.3 kB |
+| A line and a bar chart | 18.7 kB |
+| Every chart: the full bundle | 32.4 kB |
 
 Once a page needs four or five different charts, load the full bundle instead. `<bezel-chart type="…">` works with whichever charts are loaded, and tells you which file to add if its type isn't one of them. The classic `iife.js` script always has every chart, because a classic script can't load the shared file.
 
@@ -142,7 +144,7 @@ A sparkline with the latest value up front and its change since the start.
 | `height`      | chart height in px                          | `64`    |
 | `straight`    | boolean, straight lines instead of curves   | off     |
 
-Also takes `stat`, `goal`, `notes` and `show-values` from [the shared options](#options-for-every-chart). `stat` is `last` by default here.
+Also takes `stat`, `goal`, `notes` and `show-values` from [the shared options](#options-for-every-chart). `stat` is `last` by default here. `fill="none"` removes the shading under the line.
 
 ### `<bezel-line>`
 
@@ -162,6 +164,7 @@ One or more lines over time, with an axis, a legend and notes on key moments. Se
 | `height`      | chart height in px                          | `170`   |
 | `zero`        | boolean, start the axis at zero             | off     |
 | `straight`    | boolean, straight lines instead of curves   | off     |
+| `fill`        | the soft shading underneath: `first` line, `all` lines, or `none` | `first` |
 | `dash`        | a line style per series: `solid`, `dashed`, `dotted`, `dashdot`. On its own, gives each series the next style | off |
 | `markers`     | a shape on each point, per series: `circle`, `square`, `triangle`, `diamond`, `none`. On its own, gives each series the next shape | off |
 | `dates`       | one date per point, `2026-01-05` or `2026-01-05T14:30`: points sit where they fall in time | evenly spaced |
@@ -169,6 +172,27 @@ One or more lines over time, with an axis, a legend and notes on key moments. Se
 | `log`         | boolean, a log scale: each power of ten gets the same height | off |
 
 **Dates.** With `dates`, a reading on 1 January, one on 2 January and one on 1 March sit where they fall, instead of evenly spaced. The axis picks its own step for the span and the width: hours (`14:00`), days or weeks (`5 Jan`), months (`Jan 2026`, then `Feb`, `Mar`), or years. Tooltips and the data table show the full date, and `labels`, if you give them, still name the points. Dates are read as written, with no time zone conversion.
+
+**Fan charts.** Bands add shaded ranges, each with an optional dashed middle line: forecast scenarios that carry on from a history line, or percentile ranges such as 10th to 90th. Give each band's low and high values, and its middle if it has one, with bands separated by `|`. A band is blank where it has no value, so history and forecast can share one set of labels. To join the forecast onto the history, start each band at the last actual value:
+
+```html
+<bezel-line heading="Revenue forecast" series="Actual" prefix="$"
+  labels="2021,2022,2023,2024,2025,2026,2027,2028"
+  values="37,34,41,47,52,null,null,null"
+  band-series="Bad,Middling,Good"
+  band-low="  ,,,,52,48,45,42 | ,,,,52,52,53,54 | ,,,,52,55,59,63"
+  band-mid="  ,,,,52,50,49,47 | ,,,,52,54,56,59 | ,,,,52,56,61,66"
+  band-high=" ,,,,52,52,52,53 | ,,,,52,56,60,64 | ,,,,52,58,64,70"></bezel-line>
+```
+
+| Attribute     | Values                                                         | Default |
+| ------------- | -------------------------------------------------------------- | ------- |
+| `band-low`, `band-high` | each band's range, bands separated by `\|`          |         |
+| `band-mid`    | each band's middle line, optional                              |         |
+| `band-series` | band names for the legend and tooltips                         | `Band 1` |
+| `band-color`  | one colour per band. Give nested percentile bands the same colour so they deepen towards the middle | the colours after the lines' |
+
+From JavaScript, set `chart.data = { bands: [{ name, low, high, mid, color }] }` instead. Each band is shaded with a faint edge, and middle lines take turns at dashed, dotted and dash-dot, so bands differ by more than colour. The soft fill under the first line is off when there are bands, unless you set `fill`. Tooltips give each band's range and middle, such as "Good: 54.6 to 57.9, mid 56.2", the data table gets low, middle and high columns, and the years a line stops for its forecast aren't counted as missing.
 
 **Log scale.** `log` suits values that grow fast, like users or prices over years: 100, 1,000, 10k and 100k sit evenly apart. Zero and negative values have no place on a log scale, so the line leaves a gap there, and the tooltip and data table still show them.
 
@@ -370,6 +394,27 @@ How a total splits into parts. More than six slices are grouped into "Other".
 | `center-label` | the words under the total. Long ones shrink, wrap onto two lines, then shorten to fit the hole | `Total` |
 | `height`       | chart height in px           | `150`    |
 
+### `<bezel-treemap>`
+
+Parts of a whole as tiles sized by value, for when there are too many parts for a donut: holdings by sector, spending by category, traffic by page. Each group is a block in its own colour with its items inside, so a sector's holdings stay together.
+
+```html
+<bezel-treemap heading="Portfolio by holding" suffix="%" decimals="1"
+  values="7.1,6.4,5.9,3.8,4.1,3.2,2.6,3.3,2.8,2.9,2.1"
+  labels="Apple,Microsoft,Nvidia,Alphabet,JPMorgan,Visa,Mastercard,UnitedHealth,Eli Lilly,Amazon,Tesla"
+  groups="Tech,Tech,Tech,Tech,Finance,Finance,Finance,Health,Health,Consumer,Consumer"></bezel-treemap>
+```
+
+| Attribute | Values                                                        | Default |
+| --------- | ------------------------------------------------------------- | ------- |
+| `values`  | one number per tile                                           |         |
+| `labels`  | one per tile, written on the tile when it fits                |         |
+| `groups`  | one per tile. Each group is a block in its own colour, in the order they first appear, with a legend | a colour per tile |
+| `color`   | one colour per group, or per tile without groups              | theme   |
+| `height`  | chart height in px                                            | `260`   |
+
+Tiles are laid out squarified, so they stay close to square and easy to compare, biggest first. Within a group, smaller tiles step down a little in strength, so neighbours stay easy to tell apart. Each tile shows its name and its value and share when they fit, shortened if needed, in white or near-black, whichever stands out more against that tile. Zero, negative and missing values can't be drawn as an area, so they're left out, and the summary and data table say so. The arrow keys move from the biggest tile to the smallest.
+
 ### `<bezel-gauge>`
 
 A reading on a scale, optionally coloured by zone.
@@ -406,29 +451,29 @@ A progress bar, or stacked parts against a target.
 
 ### `<bezel-bullet>`
 
-Bullet charts: one row per measure, comparing the actual value with its target against bands for poor, fair and good. A compact choice for a KPI scorecard.
+Bullet charts: one row per measure, comparing each value with its target against bands for poor, fair and good. A compact choice for a KPI scorecard.
 
 ```html
 <bezel-bullet heading="Q3 scorecard" values="182,64,7.4" targets="200,60,8" labels="Revenue £k,Margin %,NPS"
-  zones="150,180|40,55|6,7" zone-labels="Poor,Fair,Good"></bezel-bullet>
+  zones="150,180|40,55|6,7" zone-labels="Poor,Fair,Good" series="This quarter,Plan"></bezel-bullet>
 ```
 
 | Attribute     | Values                                                          | Default |
 | ------------- | --------------------------------------------------------------- | ------- |
-| `values`      | the actual values, one per row                                  |         |
+| `values`      | the values, one per row, drawn as bars                          |         |
 | `targets`     | one per row, or one number for every row, drawn as an upright line |      |
 | `labels`      | one per row, on the left                                        |         |
 | `zones`       | band edges, the same as the gauge: `150,180` makes three bands. Give each row its own with `\|` |  |
 | `zone-labels` | names for the bands, shown in tooltips and the data table       | `2 of 3` |
 | `max`         | the same end for every row                                      | each row fits its own numbers |
-| `series`      | names for the legend: actual and target                         | `Actual,Target` |
+| `series`      | two names: the bar, then the target line. Used in the legend, tooltips and data table | `Value,Target` |
 | `color`       | one colour, or one per row                                      | theme   |
 
-Each row has its own scale from zero, so measures in different units sit together. The bands use one grey, darkest at the low end, so they read in greyscale and in print. The summary counts how many measures meet their target, and the tooltip and data table give the actual, target, difference and band.
+Each row has its own scale from zero, so measures in different units sit together. The bands use one grey, darkest at the low end, so they read in greyscale and in print. The summary counts how many measures meet their target, and the tooltip and data table give the value, target, difference and band, under the names from `series`.
 
 ### `<bezel-heatmap>`
 
-Activity by day, GitHub style, with Monday at the top.
+A calendar heatmap: one square per day, in weeks running left to right with Monday at the top, like a GitHub contributions chart. Use it for anything counted per day, such as commits, runs, sales or sign-ups.
 
 ```html
 <bezel-heatmap heading="Contributions" start="2026-01-01" values="0,3,5,1,0,2,8,4" suffix=" commits"></bezel-heatmap>
@@ -436,10 +481,13 @@ Activity by day, GitHub style, with Monday at the top.
 
 | Attribute     | Values                                      | Default |
 | ------------- | ------------------------------------------- | ------- |
-| `values`      | one number per day                          |         |
+| `values`      | one number per day, in date order           |         |
 | `start`       | the first day, `YYYY-MM-DD`                 | so the last value is today |
+| `color`       | the colour the squares deepen towards       | theme   |
 
-On narrow screens the heatmap shows the most recent weeks that fit rather than shrinking the squares.
+Squares deepen in four steps up to the largest value. A day of 0 is a plain grey square, and a missing day is an empty dashed outline, so the two can't be confused. Month names run along the top, and the total and the Less to More key along the bottom. On narrow screens the heatmap shows the most recent weeks that fit rather than shrinking the squares.
+
+**Days, not grids.** Every value is one day in a calendar, so this isn't a heatmap of rows by columns, such as a correlation matrix or sales by region and month. A grid heatmap is planned as its own chart for 1.13.0.
 
 ### `<bezel-chart>`
 
@@ -465,14 +513,42 @@ Any of the above, picked with `type`: `<bezel-chart type="donut" values="3,2,1">
 | `delta-label`   | wording after the change                                        | `since start` |
 | `goal`          | a dashed goal line, or a marker on gauges and progress bars     |               |
 | `goal-label`    | wording for the goal line. Its label moves to stay clear of bars and values | `Goal` |
-| `notes`         | `point:text` pairs separated by `;`, e.g. `Jun:Launch;9:Peak`. A point is a label or, if no label matches, a position counted from 0 | |
+| `notes`         | `point:text` pairs separated by `;`, e.g. `Jun:Launch;9:Peak`, for a dashed marker. `from..to:text` shades a span, e.g. `2022..2023:Rate rises`. A point is a label or, if no label matches, a position counted from 0 | |
 | `show-values`   | boolean, writes each value on the chart                         | off           |
 | `width`         | a fixed width in px instead of filling the container            |               |
 | `no-tooltips`   | boolean, turns off hover, tap and keyboard values, and leaves the chart out of the Tab order | off |
 | `static`        | boolean, skips the entrance animation                           | off           |
 | `clickable`     | boolean, a pointer over each value and an Enter hint for screen readers, when you handle `bezel-click` | off |
 
-Not every option suits every chart: `notes` works on spark, line, area and scatter; `show-values` on spark, line, area and bars; `goal-label` on spark, line, area, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
+Not every option suits every chart: `notes` works on spark, line, area, bars (upright), combo, waterfall and scatter, and spans on all of those but scatter; `show-values` on spark, line, area and bars; `goal-label` on spark, line, area, bars and scatter; `stat` on everything except the gauge and scatter. The Studio only shows what applies.
+
+**Notes and spans.** Mark events on any chart with an x-axis: `notes="2020:2020 shock;2022..2023:Rate rises"` draws a dashed marker at 2020 and shades 2022 to 2023, each labelled along the top. Labels that would overlap move down a row, up to three, and long ones stay inside the chart. On bars, combo charts and waterfalls a span covers whole columns, and the labels get their own strip above the bars so they never sit on one. A span's end that doesn't match a label is a position, so one past the end runs to the last point.
+
+## Missing values
+
+A missing value is never drawn as 0. Leave the slot blank, or write `null`, `NaN` or `-`:
+
+```html
+<bezel-line heading="Readings" values="12,14,,15,null,18" labels="Mon,Tue,Wed,Thu,Fri,Sat"></bezel-line>
+```
+
+From JavaScript, `null`, `undefined` and `NaN` in an array do the same, and from Python so do `None`, `NaN` and `pd.NA`. Anything else that isn't a number is a gap too. A trailing comma is ignored, so to leave the last value out, end with `null`.
+
+Each chart shows a gap in the way that suits it, and the tooltip says "No data":
+
+| Chart | A missing value |
+| --- | --- |
+| Spark, line, combo lines | The line breaks. A value on its own between two gaps gets a small dot. |
+| Area | The area breaks. In a stack, the whole column breaks, since its total isn't known. |
+| Bars, combo bars | No bar, and a short dash on the zero line so the slot doesn't read as 0. A stacked total with a missing part shows as unknown. |
+| Waterfall | A dashed "No data" step that keeps the level where it was. Totals after it say how many steps they leave out. A blank total just shows the running total. |
+| Histogram, box plot, scatter | Left out, and the summary says how many. A scatter point needs both its x and its y. |
+| Ring, progress, bullet | That item shows "No data" and draws nothing. A bullet row keeps its target and bands. |
+| Donut | The slice is left out, and the data table lists it. |
+| Gauge | "No data yet", as with no value at all. |
+| Heatmap | An empty dashed outline, so it can't be mistaken for a day of 0. |
+
+The summary screen readers hear counts the gaps ("1 series over 6 points, 2 missing"), the data table shows "–" for each one, and `bezel-click` gives `null` as its value. The Studio keeps blank cells from a file as gaps too.
 
 ## Colours and dark mode
 
@@ -603,7 +679,7 @@ bc.line(df, x="month", y=["sales", "costs"], heading="Sales", prefix="£")
 bc.spark(df["signups"], heading="Signups").save("docs/signups.svg")
 ```
 
-All sixteen charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
+All seventeen charts are available, and the Python output matches the JavaScript byte for byte, checked in CI. `chart.alt` gives ready-made alt text for the saved image. See the [Python README](python/README.md).
 
 ## Frameworks
 

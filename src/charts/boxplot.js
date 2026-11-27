@@ -1,4 +1,4 @@
-import { r2, num, has, list, series, bool, fmt, tw, trunc, text, small, hit, anim, palette, emptyState, goalLine } from '../core/util.js';
+import { r2, num, has, list, series, bool, fmt, real, tw, trunc, text, small, hit, anim, palette, emptyState, goalLine } from '../core/util.js';
 import { niceScale, marker } from '../core/series.js';
 import { tile } from '../core/tile.js';
 
@@ -16,14 +16,16 @@ export default function boxplot(o, th) {
   var h = num(o.height, horiz ? Math.max(120, k * 36 + 24) : 200);
   var f = function (v) { return fmt(v, o); };
 
-  var meds = stats.map(function (s) { return s.median; });
-  var about = k === 1
+  var live = stats.filter(function (s) { return s.n; }), meds = live.map(function (s) { return s.median; });
+  var missing = stats.reduce(function (t, s) { return t + s.missing; }, 0);
+  var about = !live.length ? 'no data' : k === 1
     ? 'median ' + f(stats[0].median) + ', middle half ' + f(stats[0].q1) + ' to ' + f(stats[0].q3)
     : k + ' groups, medians from ' + f(Math.min.apply(null, meds)) + ' to ' + f(Math.max.apply(null, meds));
+  if (missing && live.length) about += ', ' + missing + ' missing left out';
 
   return tile(o, th, h, function (x0, y0, w, h) {
-    if (!k) return emptyState(th, x0, y0, w, h);
-    var lo = Math.min.apply(null, stats.map(function (s) { return s.min; })), hi = Math.max.apply(null, stats.map(function (s) { return s.max; }));
+    if (!live.length) return emptyState(th, x0, y0, w, h);
+    var lo = Math.min.apply(null, live.map(function (s) { return s.min; })), hi = Math.max.apply(null, live.map(function (s) { return s.max; }));
     if (has(o.goal)) { lo = Math.min(lo, +o.goal); hi = Math.max(hi, +o.goal); }
     var sc = niceScale(lo, hi, 4), s = '';
     var tl = sc.ticks.map(function (t) { return fmt(t, o, true); });
@@ -86,11 +88,11 @@ export default function boxplot(o, th) {
       var tip = nameOf(i) + '\nMedian ' + f(st.median) + '\nMiddle half ' + f(st.q1) + ' to ' + f(st.q3) +
         '\n' + (st.outliers.length ? 'Range without outliers ' : 'Range ') + f(st.low) + ' to ' + f(st.high) +
         (st.outliers.length ? '\n' + st.outliers.length + (st.outliers.length === 1 ? ' outlier' : ' outliers') : '') +
-        (showMean ? '\nMean ' + f(st.mean) : '') + '\nn = ' + st.n;
+        (showMean ? '\nMean ' + f(st.mean) : '') + '\nn = ' + st.n + (st.missing ? ', ' + st.missing + ' missing left out' : '');
       s += horiz ? hit(px, C(i) - band / 2, pw, band, tip, i, st.median, i) : hit(C(i) - band / 2, y0, band, ph, tip, i, st.median, i);
     });
     return s;
-  }, { summary: k ? about : 'no data' });
+  }, { summary: about });
 }
 
 boxplot.table = function (o) {
@@ -118,16 +120,19 @@ function quantile(s, p) {
   return i + 1 < s.length ? s[i] + (h - i) * (s[i + 1] - s[i]) : s[i];
 }
 
-/** The five numbers, the mean and the outliers for one group. range makes the whiskers reach the extremes. */
+/**
+ * The five numbers, the mean and the outliers for one group, with missing values left out and counted. range makes
+ * the whiskers reach the extremes.
+ */
 function summary(v, range) {
-  var s = v.slice().sort(function (a, b) { return a - b; }), n = s.length;
-  if (!n) return { n: 0, outliers: [] };
+  var s = real(v).sort(function (a, b) { return a - b; }), n = s.length, missing = v.length - n;
+  if (!n) return { n: 0, outliers: [], missing: missing };
   var q1 = quantile(s, 0.25), q3 = quantile(s, 0.75), iqr = q3 - q1, t = 0;
   var lowFence = range ? -Infinity : q1 - 1.5 * iqr, highFence = range ? Infinity : q3 + 1.5 * iqr;
   var inside = s.filter(function (x) { return x >= lowFence && x <= highFence; });
   s.forEach(function (x) { t += x; });
   return {
-    n: n, min: s[0], max: s[n - 1], q1: q1, median: quantile(s, 0.5), q3: q3, mean: t / n,
+    n: n, missing: missing, min: s[0], max: s[n - 1], q1: q1, median: quantile(s, 0.5), q3: q3, mean: t / n,
     low: inside[0], high: inside[inside.length - 1],
     outliers: s.filter(function (x) { return x < lowFence || x > highFence; }),
   };

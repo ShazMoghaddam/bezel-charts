@@ -1,6 +1,7 @@
-import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, text, small, hit, anim, palette, emptyState, goalLine, goalText, statOf, SANS, MONO, at } from '../core/util.js';
+import { newId, r2, num, has, list, series, tw, trunc, bool, fmt, fmtv, ok, real, gapNote, gapMark, text, small, hit, anim, palette, emptyState, goalLine, goalText, statOf, SANS, MONO, at, parseNotes } from '../core/util.js';
 import { legend, seriesTable, styleOf, pattern, PATTERNS } from '../core/series.js';
 import { tile, dims } from '../core/tile.js';
+import { noteLayout, noteMarks } from '../core/notes.js';
 
 /** How far angled labels lean, and the longest label they show before shortening it. */
 var ANGLE = 40, ANGLE_MAX_CHARS = 24;
@@ -14,13 +15,15 @@ export default function bars(o, th) {
   var k = S.length, n = Math.max.apply(null, [0].concat(S.map(function (s) { return s.length; })));
   var grouped = k > 1, horiz = bool(o.horizontal), stacked = grouped && bool(o.stacked);
   var many = !grouped && list(o.color).filter(Boolean).length > 1;
-  var v0 = S[0] || [], all = [].concat.apply([], S);
+  var v0 = S[0] || [], flat = [].concat.apply([], S), all = real(flat);
   // A stack's height is its parts added up, positive parts upwards and negative parts downwards.
   var sumOf = function (i, sign) {
     return S.reduce(function (t, s) { return i < s.length && s[i] * sign > 0 ? t + s[i] : t; }, 0);
   };
   var totals = [], ups = [], downs = [];
-  for (var t = 0; stacked && t < n; t++) { ups.push(sumOf(t, 1)); downs.push(sumOf(t, -1)); totals.push(ups[t] + downs[t]); }
+  // A stack with a missing part has no known total.
+  var whole = function (i) { return S.every(function (s) { return i >= s.length || ok(s[i]); }); };
+  for (var t = 0; stacked && t < n; t++) { ups.push(sumOf(t, 1)); downs.push(sumOf(t, -1)); totals.push(whole(t) ? ups[t] + downs[t] : NaN); }
   var scale = stacked ? ups.concat(downs) : all;
   var top = scale.length ? Math.max.apply(null, scale) : 0;
   var nameOf = function (j) { return names[j] || 'Series ' + (j + 1); };
@@ -37,9 +40,9 @@ export default function bars(o, th) {
   var opac = function (val) { return grouped || many || o.highlight === 'none' || val === top ? 1 : 0.5; };
   var labelOf = function (i) { return labels[i] || '#' + (i + 1); };
   var tipOf = function (i) {
-    if (!grouped) return labelOf(i) + ': ' + fmt(v0[i], o);
-    return labelOf(i) + S.map(function (s, j) { return i < s.length ? '\n' + nameOf(j) + ': ' + fmt(s[i], o) : ''; }).join('') +
-      (stacked ? '\nTotal: ' + fmt(totals[i], o) : '');
+    if (!grouped) return labelOf(i) + ': ' + fmtv(v0[i], o);
+    return labelOf(i) + S.map(function (s, j) { return i < s.length ? '\n' + nameOf(j) + ': ' + fmtv(s[i], o) : ''; }).join('') +
+      (stacked ? '\nTotal: ' + fmtv(totals[i], o) : '');
   };
 
   // Horizontal rows need their height up front, and so does a legend that may wrap.
@@ -51,10 +54,10 @@ export default function bars(o, th) {
   // Horizontal bars put the goal's label in a strip above the first row.
   var goalH = horiz && n && has(o.goal) && +o.goal > 0 ? 16 : 0;
   var h = horiz ? legendH + goalH + Math.max(1, n) * rowH - 6 : num(o.height, 140) + legendH;
-  var best = v0.indexOf(Math.max.apply(null, v0.length ? v0 : [0]));
+  var best = v0.indexOf(Math.max.apply(null, real(v0).length ? real(v0) : [0]));
 
   return tile(o, th, h, function (x0, y0, w, h) {
-    if (!n) return emptyState(th, x0, y0, w, h);
+    if (!all.length) return emptyState(th, x0, y0, w, h);
     var s = defs ? '<defs>' + defs + '</defs>' : '', top0 = y0;
     if (legendH) {
       s += legend(S.map(function (_, j) { return nameOf(j); }), pal, th, x0, y0, w, key, key && 15).svg;
@@ -106,7 +109,7 @@ export default function bars(o, th) {
       var at = 0;
       S.forEach(function (ser, j) {
         var val = i < ser.length ? ser[i] : 0, len = Math.max(0, val) / span * bw;
-        if (len <= 0) return;
+        if (!(len > 0)) return;
         var gapL = at > 0 ? 1.5 : 0;
         out += '<rect x="' + r2(bx + at + gapL) + '" y="' + r2(by) + '" width="' + r2(Math.max(2, len - gapL)) + '" height="' + subH + '" rx="' + r2(Math.min(3, len / 2)) +
           '" fill="' + colourOf(j, i) + '"' + anim(o, 'bzc-gx', i * 0.06 + j * 0.03) + '/>';
@@ -129,7 +132,9 @@ export default function bars(o, th) {
     }
     var negLab = bool(o.showValues) && lo < 0 ? 14 : 0;
     var labDrop = angled ? Math.ceil(Math.sin(rad) * Math.min(labMax, tw('x'.repeat(ANGLE_MAX_CHARS), 10, true))) + 18 : 20;
-    var bottom = (labels.length ? labDrop : 2) + negLab, topPad = bool(o.showValues) ? 16 : 4;
+    // Notes take a strip above the bars, one row per line of labels, so no label sits on a bar.
+    var slotW = w / n, nl = noteLayout(parseNotes(o, labels), n, function (i) { return { c: x0 + slotW * (i + 0.5), l: x0 + slotW * i, r: x0 + slotW * (i + 1) }; }, x0, w);
+    var bottom = (labels.length ? labDrop : 2) + negLab, topPad = (bool(o.showValues) ? 16 : 4) + (nl.rows ? nl.height + 4 : 0);
     var ph = h - (top0 - y0) - bottom - topPad, py = top0 + topPad;
     var Y = function (x) { return py + ph - (x - lo) / (hi - lo) * ph; };
     var slot = w / n, groupW = Math.min(slot * (thin ? 0.78 : 0.62), thin ? k * 30 : 56);
@@ -138,6 +143,7 @@ export default function bars(o, th) {
     var boxes = legendH ? [[x0, y0, w, legendH]] : [];
     if (labels.length) boxes.push([x0, py + ph + negLab + 4, w, h - (py + ph + negLab + 4 - y0)]);
     var valueBox = function (cx, ty, str, size) { var vw = tw(str, size, true); boxes.push([cx - vw / 2, ty - 9, vw, 12]); };
+    if (nl.rows) s += noteMarks(th, nl, top0, py + ph);
     s += '<line x1="' + x0 + '" x2="' + (x0 + w) + '" y1="' + r2(Y0) + '" y2="' + r2(Y0) + '" stroke="' + th.grid + '"/>';
     for (var c = 0; c < n; c++) {
       var gx0 = x0 + c * slot + (slot - groupW) / 2;
@@ -147,6 +153,8 @@ export default function bars(o, th) {
         S.forEach(function (ser, j) {
           if (c >= ser.length) return;
           var val = ser[c], x = gx0 + j * (bwid + gap), y = Math.min(Y(val), Y0), bh = Math.abs(Y(val) - Y0);
+          // A missing value gets a short dash on the zero line, so its empty slot doesn't read as 0.
+          if (!ok(val)) { s += gapMark(x, bwid, Y0, th); return; }
           if (bh > 0.5) {
             s += '<rect x="' + r2(x) + '" y="' + r2(y) + '" width="' + r2(bwid) + '" height="' + r2(bh) + '" rx="' + r2(Math.min(6, bwid / 2, bh / 2)) +
               '" fill="' + colourOf(j, c) + '" fill-opacity="' + opac(val) + '"' + anim(o, val < 0 ? 'bzc-gn' : 'bzc-g', c * 0.05 + j * 0.03) + '/>';
@@ -191,7 +199,7 @@ export default function bars(o, th) {
         }
       });
       if (bool(o.showValues)) {
-        var tot = totals[c], ty = tot < 0 ? Y(downs[c]) + 12 : Y(ups[c]) - 5, ts = fmt(tot, o, true);
+        var tot = totals[c], ty = tot < 0 ? Y(downs[c]) + 12 : Y(ups[c]) - 5, ts = ok(tot) ? fmt(tot, o, true) : '–';
         out += text(x + bwid / 2, ty, ts,
           'text-anchor="middle" fill="' + th.fg + '" font-family="' + MONO + '" font-size="10" font-weight="600"');
         valueBox(x + bwid / 2, ty, ts, 10);
@@ -200,7 +208,7 @@ export default function bars(o, th) {
     }
   }, {
     stat: statOf(v0, o, ''),
-    summary: !n ? 'no data' : stacked ? k + ' series stacked across ' + n + ' groups' : grouped ? k + ' series across ' + n + ' groups' : 'highest ' + (labels[best] || '') + ' ' + fmt(v0[best], o),
+    summary: !n ? 'no data' : stacked ? k + ' series stacked across ' + n + ' groups' : grouped ? k + ' series across ' + n + ' groups' : 'highest ' + (labels[best] || '') + ' ' + fmt(v0[best], o) + gapNote(flat),
   });
 }
 

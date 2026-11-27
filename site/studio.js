@@ -1,7 +1,7 @@
 // The Studio: pick a chart, edit its data and look, copy the code or save an SVG.
 // State is a flat map of HTML attributes, exactly what the generated code contains.
 import { toast, copyText, saveFile, sampleYear } from './ui.js';
-import { readFile, describe, daily, parseDelimited, parseDate, toNum } from './table.js';
+import { readFile, describe, daily, parseDelimited, parseDate, toNum, joinNums } from './table.js';
 
 const CDN = 'https://cdn.jsdelivr.net/gh/ShazMoghaddam/bezel-charts@1/dist/bezel-charts.min.js';
 const SCRIPT = `<script type="module" src="${CDN}"></script>`;
@@ -26,13 +26,14 @@ const CHARTS = [
   { id: 'scatter', tag: 'scatter', name: 'Scatter', icon: 'M6 17h.01M9 12h.01M13 14h.01M17 8h.01M19 11h.01M8 7h.01' },
   { id: 'ring', tag: 'ring', name: 'Rings', icon: 'M12 4a8 8 0 1 1-8 8M12 8a4 4 0 1 1-4 4' },
   { id: 'donut', tag: 'donut', name: 'Donut', icon: 'M12 3a9 9 0 0 1 9 9M19.4 17.2A9 9 0 1 1 12 3' },
+  { id: 'treemap', tag: 'treemap', name: 'Treemap', icon: 'M3 4h10v10H3zM15 4h6v6h-6zM15 12h6v8h-6zM3 16h10v4H3z' },
   { id: 'gauge', tag: 'gauge', name: 'Gauge', icon: 'M4 17a8 8 0 0 1 16 0M12 17l4-5' },
   { id: 'progress', tag: 'progress', name: 'Progress', icon: 'M4 10h16v4H4zM4 10h9v4H4z' },
   { id: 'bullet', tag: 'bullet', name: 'Bullet', icon: 'M3 7h18v4H3zM3 8.5h11v1H3zM16 6v6M3 15h18v4H3zM3 16.5h8v1H3zM13 14v6' },
-  { id: 'heatmap', tag: 'heatmap', name: 'Heatmap', icon: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4zM4 16h4v4H4z' },
+  { id: 'heatmap', tag: 'heatmap', name: 'Calendar heatmap', icon: 'M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM16 10h4v4h-4zM10 16h4v4h-4zM4 16h4v4H4z' },
 ];
 const byId = Object.fromEntries(CHARTS.map((c) => [c.id, c]));
-const WIDE = new Set(['line', 'area', 'combo', 'waterfall', 'grouped', 'histogram', 'boxplot', 'scatter', 'heatmap']);
+const WIDE = new Set(['line', 'area', 'combo', 'waterfall', 'grouped', 'histogram', 'boxplot', 'scatter', 'heatmap', 'treemap']);
 
 const PRESETS = {
   spark: { heading: 'London · 7 day high', values: '17,16,15,15,13,12,14', labels: 'Mon,Tue,Wed,Thu,Fri,Sat,Sun', suffix: '°C', 'delta-label': 'since Monday' },
@@ -48,15 +49,16 @@ const PRESETS = {
   scatter: { heading: 'Study hours vs exam score', x: '2,3,3.5,4,5,5.5,6,6.5,7,8,8.5,9,10,11,12', y: '48,52,61,55,63,58,70,66,72,75,71,82,80,88,91', 'x-label': 'Hours studied', 'y-label': 'Score', suffix: '%', trend: '' },
   ring: { heading: 'Today', values: '72,45,90', labels: 'Move,Focus,Sleep' },
   donut: { heading: 'Monthly budget', values: '1200,420,210,160,140', labels: 'Rent,Food,Bills,Travel,Fun', prefix: '£' },
+  treemap: { heading: 'Portfolio by holding', values: '7.1,6.4,5.9,3.8,2.2,4.1,3.2,2.6,3.3,2.8,2.9,2.1,2.4,1.6', labels: 'Apple,Microsoft,Nvidia,Alphabet,Broadcom,JPMorgan,Visa,Mastercard,UnitedHealth,Eli Lilly,Amazon,Tesla,Exxon,Chevron', groups: 'Tech,Tech,Tech,Tech,Tech,Finance,Finance,Finance,Health,Health,Consumer,Consumer,Energy,Energy', suffix: '%', decimals: '1' },
   gauge: { heading: 'Server load', values: '63', labels: 'CPU', zones: '60,85' },
   progress: { heading: 'Sprint 14', values: '18,6,3', labels: 'Done,In review,Blocked', max: '34' },
   heatmap: { heading: 'Contributions', suffix: ' commits' },
 };
-const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], histogram: [120, 360, 190], combo: [120, 360, 200], waterfall: [140, 400, 200], boxplot: [120, 360, 200], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130] };
+const HEIGHTS = { spark: [40, 160, 64], line: [120, 360, 170], area: [120, 360, 170], histogram: [120, 360, 190], combo: [120, 360, 200], waterfall: [140, 400, 200], boxplot: [120, 360, 200], bars: [90, 320, 140], grouped: [90, 320, 140], scatter: [150, 400, 210], ring: [100, 260, 140], donut: [110, 260, 150], gauge: [90, 220, 130], treemap: [160, 480, 260] };
 // Look settings survive a change of chart type; data does not.
 const KEEP = ['theme', 'frame', 'corners', 'background', 'lang', 'static', 'no-tooltips'];
-const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
-  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'dash', 'markers', 'patterns', 'zones', 'zone-labels', 'targets', 'totals',
+const ORDER = ['heading', 'values', 'series', 'x', 'y', 'x-label', 'y-label', 'labels', 'groups', 'start', 'min', 'max', 'prefix', 'suffix', 'decimals', 'compact', 'lang', 'stat', 'delta',
+  'delta-label', 'goal', 'goal-label', 'notes', 'show-values', 'straight', 'fill', 'zero', 'horizontal', 'stacked', 'angle-labels', 'highlight', 'trend', 'bins', 'bin-width', 'mark', 'percent', 'whiskers', 'line', 'line-series', 'line-prefix', 'line-suffix', 'line-decimals', 'line-label', 'line-zero', 'dates', 'log', 'band-low', 'band-high', 'band-mid', 'band-series', 'dash', 'markers', 'patterns', 'zones', 'zone-labels', 'targets', 'totals',
   'center-label', 'theme', 'frame', 'corners', 'height', 'color', 'background', 'no-tooltips', 'static'];
 
 const all = CHARTS.map((c) => c.id);
@@ -76,16 +78,16 @@ const FIELDS = [
     hint: 'Read against the right-hand axis. Separate several lines with |.' },
   { tab: 'data', key: 'line-series', kind: 'text', label: 'Line names', placeholder: 'e.g. Conversion', only: only('combo') },
   { tab: 'data', kind: 'groups', only: only('scatter') },
-  { tab: 'data', key: 'values', kind: 'numbers', only: only('spark', 'ring', 'donut', 'progress', 'heatmap'),
-    label: { spark: 'Values', ring: 'Values, one ring each', donut: 'Values, one slice each', progress: 'Values, one segment each', heatmap: 'Values, one per day' },
+  { tab: 'data', key: 'values', kind: 'numbers', only: only('spark', 'ring', 'donut', 'treemap', 'progress', 'heatmap'),
+    label: { spark: 'Values', ring: 'Values, one ring each', donut: 'Values, one slice each', treemap: 'Values, one tile each', progress: 'Values, one segment each', heatmap: 'Values, one per day' },
     hint: 'Separate with commas, spaces or new lines. You can paste two columns from a spreadsheet to fill the labels as well.' },
   { tab: 'data', key: 'values', kind: 'number', label: 'Reading', only: only('gauge') },
   { tab: 'data', key: 'values', kind: 'numbers', label: 'Changes, in order', only: only('waterfall'),
     hint: 'Rises are positive and falls negative. For a total bar, put the opening amount for a start or 0 for a subtotal.' },
-  { tab: 'data', key: 'values', kind: 'numbers', label: 'Actual values, one row each', only: only('bullet') },
+  { tab: 'data', key: 'values', kind: 'numbers', label: 'Values, one row each', only: only('bullet') },
   { tab: 'data', key: 'targets', kind: 'numbers', label: 'Targets', only: only('bullet'), hint: 'One per row, or one number for every row. Drawn as an upright line.' },
-  { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'area', 'bars', 'grouped', 'combo', 'waterfall', 'ring', 'donut', 'progress', 'bullet'),
-    hint: { waterfall: 'One per step, along the bottom.', bullet: 'One per row, on the left.', spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', area: 'One per point, along the bottom.', combo: 'One per column, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
+  { tab: 'data', key: 'labels', kind: 'list', label: 'Labels', only: only('spark', 'line', 'area', 'bars', 'grouped', 'combo', 'waterfall', 'ring', 'donut', 'treemap', 'progress', 'bullet'),
+    hint: { treemap: 'One per tile, written on the tile when it fits.', waterfall: 'One per step, along the bottom.', bullet: 'One per row, on the left.', spark: 'One per value, shown in tooltips.', line: 'One per point, along the bottom.', area: 'One per point, along the bottom.', combo: 'One per column, along the bottom.', bars: 'One per bar, along the bottom.', grouped: 'One per group, along the bottom.', ring: 'One per ring.', donut: 'One per slice.', progress: 'One per segment.' } },
   { tab: 'data', key: 'labels', kind: 'text', label: 'Caption', placeholder: 'e.g. CPU', only: only('gauge') },
   { tab: 'data', key: 'labels', kind: 'list', label: 'Point names (optional)', hint: 'Shown in tooltips, in the same order as the points.', only: only('scatter') },
   { tab: 'data', kind: 'pair', only: only('gauge'), fields: [{ key: 'min', kind: 'number', label: 'Lowest', placeholder: '0' }, { key: 'max', kind: 'number', label: 'Highest', placeholder: '100' }] },
@@ -121,8 +123,10 @@ const FIELDS = [
   { tab: 'extras', key: 'zones', kind: 'text', label: 'Band edges', placeholder: 'e.g. 150, 180', only: only('bullet'),
     hint: 'Two numbers make three bands, darkest at the low end. Give each row its own with | between them.' },
   { tab: 'extras', key: 'zone-labels', kind: 'list', label: 'Band names', placeholder: 'e.g. Poor, Fair, Good', only: only('bullet'), hint: 'Shown in tooltips and the data table.' },
+  { tab: 'extras', key: 'series', kind: 'list', label: 'Names for the bar and the target', placeholder: 'e.g. This quarter, Plan', only: only('bullet'), hint: 'Value and Target if left empty.' },
   { tab: 'extras', key: 'max', kind: 'number', label: 'Scale up to', placeholder: 'Automatic', only: only('bullet'), hint: 'The same end for every row. Leave empty and each row fits its own numbers.' },
   { tab: 'extras', key: 'center-label', kind: 'text', label: 'Centre wording', placeholder: 'Total', only: only('donut') },
+  { tab: 'data', key: 'groups', kind: 'list', label: 'Groups', placeholder: 'e.g. Tech, Tech, Finance', only: only('treemap'), hint: 'One per tile. Each group is a block in its own colour; leave empty for a colour per tile.' },
   { tab: 'extras', key: 'show-values', kind: 'toggle', label: 'Show values on the chart', only: only('spark', 'line', 'area', 'bars', 'grouped') },
   { tab: 'extras', key: 'horizontal', kind: 'toggle', label: 'Horizontal bars', only: only('bars', 'grouped') },
   { tab: 'extras', key: 'horizontal', kind: 'toggle', label: 'Lay the boxes on their side', only: only('boxplot') },
@@ -134,9 +138,18 @@ const FIELDS = [
   { tab: 'extras', key: 'angle-labels', kind: 'toggle', label: 'Slant labels so every one fits', only: only('bars', 'grouped'), when: (a) => !('horizontal' in a) },
   { tab: 'extras', key: 'highlight', kind: 'toggle', invert: 'none', label: 'Highlight the highest bar', only: only('bars') },
   { tab: 'extras', key: 'straight', kind: 'toggle', label: 'Straight lines instead of curves', only: only('spark', 'line', 'area') },
+  { tab: 'extras', key: 'fill', kind: 'seg', label: 'Shading under the line', options: [['', 'Auto'], ['first', 'First line'], ['all', 'Every line'], ['none', 'None']], only: only('line'),
+    hint: 'Auto shades under the first line, or nothing when there are bands.' },
+  { tab: 'extras', key: 'fill', kind: 'toggle', invert: 'none', label: 'Shading under the line', only: only('spark') },
   { tab: 'extras', key: 'zero', kind: 'toggle', label: 'Start the axis at zero', only: only('line', 'scatter') },
   { tab: 'extras', kind: 'pair', only: only('line', 'area'), fields: [{ key: 'min', kind: 'number', label: 'Axis from', placeholder: 'Auto' }, { key: 'max', kind: 'number', label: 'Axis to', placeholder: 'Auto' }] },
   { tab: 'extras', key: 'log', kind: 'toggle', label: 'Log scale, for values that grow fast', only: only('line') },
+  // Fan charts: shaded bands with a middle line, such as forecast scenarios carrying on from the line.
+  { tab: 'extras', key: 'band-low', kind: 'text', label: 'Band lows', placeholder: 'e.g. , , , 52, 48, 45', only: only('line'),
+    hint: 'Shade a range, such as a forecast. One per point, blank where the band has no value; separate bands with |.' },
+  { tab: 'extras', key: 'band-high', kind: 'text', label: 'Band highs', placeholder: 'e.g. , , , 52, 56, 60', only: only('line') },
+  { tab: 'extras', key: 'band-mid', kind: 'text', label: 'Band middle lines', placeholder: 'e.g. , , , 52, 52, 53', only: only('line'), hint: 'Optional, drawn dashed.' },
+  { tab: 'extras', key: 'band-series', kind: 'list', label: 'Band names', placeholder: 'e.g. Bad, Middling, Good', only: only('line') },
   { tab: 'extras', key: 'trend', kind: 'toggle', label: 'Trend line with its r value', only: only('scatter') },
   { tab: 'extras', kind: 'pair', only: only('histogram'), fields: [{ key: 'bins', kind: 'number', label: 'About how many ranges', placeholder: 'Auto' }, { key: 'bin-width', kind: 'number', label: 'Or each range’s width', placeholder: 'Auto' }] },
   { tab: 'extras', key: 'mark', kind: 'select', label: 'Lines for', only: only('histogram'),
@@ -156,13 +169,20 @@ const FIELDS = [
 /* ---------- small parsing helpers ---------- */
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const tokens = (text) => String(text ?? '').split(/[\s,;]+/).filter(Boolean);
+// Split the same way the charts read numbers: a blank between commas is a gap, and blanks at the end are ignored.
+const tokens = (text) => {
+  const t = String(text ?? '').trim().split(/\s*[,;]\s*|\s+/);
+  while (t.length && t[t.length - 1] === '') t.pop();
+  return t;
+};
+// Ways to write a gap on purpose, which get no warning.
+const GAP = /^(|null|nan|-|–|n\/a|na)$/i;
 const cleanNum = (s) => String(s).trim().replace(/[£$€¥%\s]/g, '').replace(/,(?=\d{3}\b)/g, '');
 const isNum = (s) => cleanNum(s) !== '' && Number.isFinite(Number(cleanNum(s)));
-const numbersFrom = (text) => tokens(text).map((t) => (isNum(t) ? String(Number(cleanNum(t))) : t)).join(',');
+const numbersFrom = (text) => tokens(text).map((t) => (isNum(t) ? String(Number(cleanNum(t))) : GAP.test(t) ? (t ? 'null' : '') : t)).join(',');
 const listFrom = (text) => String(text ?? '').split(/\n|,/).map((s) => s.trim()).filter((s, i, arr) => s || i < arr.length - 1).join(',');
 const listOf = (v) => (v ? String(v).split(',') : []);
-const badTokens = (text) => tokens(text).filter((t) => !isNum(t));
+const badTokens = (text) => tokens(text).filter((t) => !isNum(t) && !GAP.test(t));
 
 /** A tidy title from a file name: "monthly-sales_2026.csv" becomes "Monthly sales 2026". */
 const titleFrom = (name) => {
@@ -366,8 +386,8 @@ export function createStudio(root) {
     switch (ui) {
       case 'combo': {
         if (N.length < 2) return '!Bars and a line need two number columns: one for the bars and one for the line.';
-        attrs.values = col(N[0]).join(',');
-        attrs.line = col(N[1]).join(',');
+        attrs.values = joinNums(col(N[0]));
+        attrs.line = joinNums(col(N[1]));
         attrs.series = (N[0].name || 'Bars').replace(/,/g, ' ');
         attrs['line-series'] = (N[1].name || 'Line').replace(/,/g, ' ');
         return `${rows}.${from} bars from ${name(N[0])}, the line from ${name(N[1])}.`;
@@ -380,7 +400,7 @@ export function createStudio(root) {
           if (days.every(Boolean)) { attrs.dates = days.join(','); delete attrs.labels; }
         }
         const use = N.slice(0, 6);
-        attrs.values = use.map((c) => col(c).join(',')).join('|');
+        attrs.values = use.map((c) => joinNums(col(c))).join('|');
         if (use.length > 1) attrs.series = use.map((c, i) => (c.name || `Series ${i + 1}`).replace(/,/g, ' ')).join(',');
         const extra = N.length > 6 ? ` The first 6 of ${N.length} number columns are shown.` : '';
         return `${rows}.${from} ${use.length > 1 ? 'series' : 'values'} from ${listNames(use.map(name))}.${extra}`;
@@ -396,14 +416,14 @@ export function createStudio(root) {
         if (!attrs['y-label']) delete attrs['y-label'];
         if (t.group) {
           const names = [...new Set(B.map((r) => t.cell(r, t.group)))];
-          const pick = (g, c) => B.filter((r) => t.cell(r, t.group) === g).map((r) => toNum(t.cell(r, c))).join(',');
-          attrs.x = names.map((g) => pick(g, cx)).join('|');
-          attrs.y = names.map((g) => pick(g, cy)).join('|');
+          const pick = (g, c) => B.filter((r) => t.cell(r, t.group) === g).map((r) => toNum(t.cell(r, c)));
+          attrs.x = names.map((g) => joinNums(pick(g, cx))).join('|');
+          attrs.y = names.map((g) => joinNums(pick(g, cy))).join('|');
           attrs.series = names.map((g) => g.replace(/,/g, ' ') || 'Other').join(',');
           if (L) attrs.labels = names.flatMap((g) => B.filter((r) => t.cell(r, t.group) === g).map((r) => t.cell(r, L).replace(/,/g, ' '))).join(',');
           return `${rows}.${from} across from ${name(cx)}, up from ${name(cy)}, grouped by ${t.group.name || 'the text column'}.`;
         }
-        attrs.x = col(cx).join(','); attrs.y = col(cy).join(',');
+        attrs.x = joinNums(col(cx)); attrs.y = joinNums(col(cy));
         return `${rows}.${from} across from ${name(cx)}, up from ${name(cy)}.`;
       }
       case 'heatmap': {
@@ -411,15 +431,15 @@ export function createStudio(root) {
         const c = N[0];
         if (t.date) {
           const d = daily(t, c);
-          attrs.start = d.start; attrs.values = d.values.join(',');
+          attrs.start = d.start; attrs.values = joinNums(d.values);
           return `${rows}. ${name(c)} added up per day from ${d.start}${d.clipped ? ', showing the latest two years' : ''}.`;
         }
-        attrs.values = col(c).join(',');
+        attrs.values = joinNums(col(c));
         return `${rows}. One square per row from ${name(c)}, ending today. Add a date column to place them on the right days.`;
       }
       case 'gauge': {
         delete attrs.labels;
-        const vals = col(N[0]), last = vals[vals.length - 1];
+        const vals = col(N[0]).filter((v) => v != null), last = vals[vals.length - 1];
         if (N[0].name) attrs.labels = N[0].name.replace(/,/g, ' ');
         const lo = Math.min(0, ...vals), hi = Math.max(...vals);
         const percent = N[0].suffix === '%' || /percent|%/i.test(N[0].name);
@@ -429,19 +449,29 @@ export function createStudio(root) {
         return `${rows}. Showing the last value of ${name(N[0])}.`;
       }
       case 'waterfall': {
-        attrs.values = col(N[0]).join(',');
+        attrs.values = joinNums(col(N[0]));
         delete attrs.totals;
         return `${rows}.${from} changes from ${name(N[0])}. Mark any totals under Totals.`;
       }
       case 'bullet': {
-        attrs.values = col(N[0]).join(',');
+        attrs.values = joinNums(col(N[0]));
         delete attrs.zones; delete attrs['zone-labels'];
-        if (N[1]) attrs.targets = col(N[1]).join(','); else delete attrs.targets;
+        if (N[1]) attrs.targets = joinNums(col(N[1])); else delete attrs.targets;
         return `${rows}.${from} values from ${name(N[0])}${N[1] ? `, targets from ${name(N[1])}` : ''}.`;
       }
+      case 'treemap': {
+        // A text column besides the labels groups the tiles, such as a sector for each holding.
+        attrs.values = joinNums(col(N[0]));
+        delete attrs.groups;
+        if (t.group) {
+          attrs.groups = B.map((r) => t.cell(r, t.group).replace(/,/g, ' ')).join(',');
+          return `${rows}.${from} values from ${name(N[0])}, grouped by ${t.group.name || 'the text column'}.`;
+        }
+        return `${rows}.${from} values from ${name(N[0])}.`;
+      }
       case 'ring': {
-        const vals = col(N[0]).slice(0, 6), top = Math.max(...vals);
-        attrs.values = vals.join(',');
+        const vals = col(N[0]).slice(0, 6), top = Math.max(...vals.filter((v) => v != null));
+        attrs.values = joinNums(vals);
         if (labels.length) attrs.labels = labels.slice(0, 6).join(',');
         // Percentages fill against 100. Anything else fills against a round number just above the largest value.
         const percent = N[0].suffix === '%' || /percent|%/i.test(N[0].name);
@@ -449,7 +479,7 @@ export function createStudio(root) {
         return `${rows}.${from} values from ${name(N[0])}.${B.length > 6 ? ' Rings show the first 6.' : ''}`;
       }
       default: {
-        attrs.values = col(N[0]).join(',');
+        attrs.values = joinNums(col(N[0]));
         return `${rows}.${from} values from ${name(N[0])}.${N.length > 1 ? ` This chart uses one number column; try Line or Grouped bars to see all ${N.length}.` : ''}`;
       }
     }
@@ -614,6 +644,11 @@ export function createStudio(root) {
         const rows = groupRows();
         return rows.length > 1 ? rows.map((r, i) => r.name || `Group ${i + 1}`) : ['Points'];
       }
+      case 'treemap': {
+        // With groups, one colour per group in the order they first appear; without, one per tile.
+        const groups = [...new Set(listOf(attrs.groups).map((g) => g || 'Other'))];
+        return groups.length ? groups : Array.from({ length: Math.max(1, Math.min(8, valuesCount)) }, (_, i) => labels[i] || `#${i + 1}`);
+      }
       case 'ring': case 'donut': case 'progress': {
         const n = Math.max(1, Math.min(ui === 'donut' ? 6 : 8, valuesCount));
         return Array.from({ length: n }, (_, i) => (ui === 'donut' && valuesCount > 6 && i === 5 ? 'Other' : labels[i] || `#${i + 1}`));
@@ -621,7 +656,7 @@ export function createStudio(root) {
       case 'waterfall':
         return ['Rise', 'Fall', 'Total'];
       case 'bullet':
-        return ['Actual'];
+        return ['Value'];
       case 'gauge': {
         const z = tokens(attrs.zones).length;
         return z ? ['Low', 'Middle', 'High', 'Very high', 'Top'].slice(0, Math.min(5, z + 1)) : ['Reading'];
@@ -664,7 +699,7 @@ export function createStudio(root) {
     if (!warn) return;
     const bad = badTokens(textarea.value);
     warn.hidden = !bad.length;
-    warn.textContent = bad.length ? `“${bad[0]}” isn't a number, so it's drawn as 0.` : '';
+    warn.textContent = bad.length ? `“${bad[0]}” isn't a number, so it's left as a gap.` : '';
   }
   function validateAll() {
     root.querySelectorAll('[data-numbers], [data-svalues], [data-num]').forEach(warnFor);
@@ -674,7 +709,7 @@ export function createStudio(root) {
       const warn = row.querySelector('.warn'), nx = tokens(gx.value).length, ny = tokens(gy.value).length;
       const bad = badTokens(gx.value + ' ' + gy.value);
       warn.hidden = nx === ny && !bad.length;
-      warn.textContent = bad.length ? `“${bad[0]}” isn't a number, so it's drawn as 0.` : nx !== ny ? `Across has ${nx} values and up has ${ny}. Points need one of each, so ${Math.abs(nx - ny)} will be left out.` : '';
+      warn.textContent = bad.length ? `“${bad[0]}” isn't a number, so it's left as a gap.` : nx !== ny ? `Across has ${nx} values and up has ${ny}. Points need one of each, so ${Math.abs(nx - ny)} will be left out.` : '';
     });
   }
 

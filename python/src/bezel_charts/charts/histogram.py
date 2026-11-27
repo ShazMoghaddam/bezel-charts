@@ -7,7 +7,7 @@ import math
 from .._js import js_round, to_fixed_number
 from .._tile import tile
 from .._util import (
-    PATTERNS, Opts, R, anim, bool_, empty_state, fmt, has, hit, jmax, jmin, legend, lst, new_id, nice_scale, num,
+    PATTERNS, Opts, R, anim, bool_, empty_state, fmt, has, real, hit, jmax, jmin, legend, lst, new_id, nice_scale, num,
     palette, pattern, series, small, style_of, text, to_string, truthy, tw,
 )
 
@@ -32,10 +32,10 @@ def histogram(o, th) -> str:
         return fmt(b["edge"](i), eo) + " to " + fmt(b["edge"](i + 1), eo)
 
     def share(j, i):
-        return js_round(b["counts"][j][i] / len(S[j]) * 100)
+        return js_round(b["counts"][j][i] / len(S[j]) * 100) if S[j] else 0
 
     def height(j, i):
-        return b["counts"][j][i] / len(S[j]) * 100 if pct else b["counts"][j][i]
+        return (b["counts"][j][i] / len(S[j]) * 100 if S[j] else 0) if pct else b["counts"][j][i]
 
     marks = [m for m in lst(o.mark) if m in ("mean", "median")]
 
@@ -146,6 +146,7 @@ def histogram(o, th) -> str:
     summary = (
         (str(k) + " series, " if multi else "") + R(n) + " values in " + R(b["count"]) + " ranges from "
         + fmt(b["edge"](0), eo) + " to " + fmt(b["edge"](b["count"]), eo) + ", most in " + rng(peak)
+        + (", " + str(b["missing"]) + " missing left out" if b["missing"] else "")
         if b else "no data"
     )
     return tile(o, th, h, draw, {"summary": summary})
@@ -161,11 +162,14 @@ def nice_width(raw):
 
 
 def binned(o):
-    """Sorts every value into ranges, exactly as the JavaScript does. None when there is nothing to count."""
-    S = series(o.values)
+    """Sorts every value into ranges, exactly as the JavaScript does. Missing values are left out and counted.
+    None when there is nothing to count."""
+    raw = series(o.values)
+    S = [real(s) for s in raw]
     flat = [x for s in S for x in s]
     if not flat:
         return None
+    missing = sum(len(s) for s in raw) - len(flat)
     lo, hi = jmin(*flat), jmax(*flat)
     w = num(o.binWidth, 0)
     if w > 0 and (hi - lo) / w <= 200:
@@ -201,7 +205,7 @@ def binned(o):
                 i += 1
             c[i] += 1
         counts.append(c)
-    return {"S": S, "edge": edge, "count": count, "counts": counts, "dp": dp}
+    return {"S": S, "edge": edge, "count": count, "counts": counts, "dp": dp, "missing": missing}
 
 
 def total(b, i):

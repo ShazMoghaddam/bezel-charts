@@ -46,3 +46,33 @@ bc.gauge(63, label="CPU", zones=[60, 85], goal=80, heading="Server load", width=
 bc.progress({"Done": 46, "In review": 18, "Blocked": 6}, max=100, goal=75, heading="Sprint", width=420).save(
     here / "progress.svg")
 print("Saved the example charts to", here)
+
+# 1.12.0: a fan chart of forecast scenarios, and a treemap grouped by sector.
+years = list(range(2016, 2031))
+history = [24, 26, 25, 31, 29, 37, 34, 41, 47, 52] + [None] * 5
+
+
+def scenario(rate, spread):
+    path = [None] * 9 + [52.0]
+    for i in range(1, 6):
+        path.append(round(52 * (1 + rate) ** i, 1))
+    lo = [None if v is None else round(v * (1 - spread * i / 5), 1) for i, v in enumerate(path, -9)]
+    hi = [None if v is None else round(v * (1 + spread * i / 5), 1) for i, v in enumerate(path, -9)]
+    return lo, path, hi
+
+
+forecast = pd.DataFrame({"year": years, "revenue": history})
+for name, rate, spread in (("bad", -0.02, 0.08), ("middling", 0.04, 0.06), ("good", 0.08, 0.07)):
+    forecast[name + "_lo"], forecast[name], forecast[name + "_hi"] = scenario(rate, spread)
+bc.line(forecast, x="year", y="revenue", series=["Actual"], heading="Revenue forecast", prefix="$", suffix="bn", width=560, theme="light",
+        notes={2020: "2020 shock", (2022, 2023): "Rate rises"},
+        bands=[{"name": n.capitalize(), "low": n + "_lo", "mid": n, "high": n + "_hi"} for n in ("bad", "middling", "good")],
+        ).save(here / "fan.svg")
+
+holdings = pd.DataFrame({
+    "holding": ["Apple", "Microsoft", "Nvidia", "Alphabet", "JPMorgan", "Visa", "Mastercard", "UnitedHealth", "Eli Lilly", "Amazon", "Tesla"],
+    "weight": [7.1, 6.4, 5.9, 3.8, 4.1, 3.2, 2.6, 3.3, 2.8, 2.9, 2.1],
+    "sector": ["Tech"] * 4 + ["Finance"] * 3 + ["Health"] * 2 + ["Consumer"] * 2,
+})
+bc.treemap(holdings, x="holding", y="weight", by="sector", heading="Portfolio by holding", suffix="%", decimals=1,
+           width=560, theme="dark").save(here / "treemap.svg")

@@ -148,18 +148,72 @@ def _as_list(v):
     return v if isinstance(v, (list, tuple)) else None
 
 
-def _finite_or_zero(x) -> float:
-    n = to_number(x)
-    return n if math.isfinite(n) else 0.0
+def _num_of(x) -> float:
+    """A number, or NaN for a gap: None and "" as well as anything that isn't a number."""
+    return NAN if x is None or (isinstance(x, str) and x == "") else to_number(x)
+
+
+_SPLIT = re.compile(r"\s*[,;]\s*|\s+")
 
 
 def nums(v) -> list:
+    """Numbers from a list or a string. A missing value stays missing as NaN, and is never drawn as 0: in a string
+    that's a blank slot (4,,6), null, NaN, a dash or anything else that isn't a number; in a list it's also None.
+    Blanks at the very end are ignored, so a trailing comma doesn't add a gap."""
     arr = _as_list(v)
     if arr is not None:
-        return [_finite_or_zero(x) for x in arr]
+        return [_num_of(x) for x in arr]
     if not has(v):
         return []
-    return [_finite_or_zero(x) for x in re.split(r"[\s,;]+", to_string(v)) if x]
+    t = _SPLIT.split(_js_trim(to_string(v)))
+    while t and t[-1] == "":
+        t.pop()
+    return [_num_of(x) for x in t]
+
+
+def _js_trim(s: str) -> str:
+    return s.strip(" \t\n\r\v\f\u00a0\ufeff\u2028\u2029")
+
+
+def ok(v) -> bool:
+    """Whether a value is a real number, not a gap."""
+    return finite(v)
+
+
+def real(v) -> list:
+    """The real numbers in a list, gaps left out."""
+    return [x for x in v if finite(x)]
+
+
+def fmtv(n, o) -> str:
+    """A number for a tooltip or label: "No data" for a gap."""
+    return fmt(n, o) if finite(n) else "No data"
+
+
+def fill_of(o) -> str:
+    """Which lines get the soft fill underneath: "first" (the default), "all", or "none" (also False, "false" and "off")."""
+    f = o.fill
+    if f is False or f in ("false", "none", "off"):
+        return "none"
+    return "all" if f == "all" else "first"
+
+
+def gap_note(v) -> str:
+    """For summaries: ", 2 missing" when a list has gaps, otherwise nothing."""
+    m = len(v) - len(real(v))
+    return ", " + str(m) + " missing" if m else ""
+
+
+def runs_of(P) -> list:
+    """Splits [x, y] points into runs wherever a point can't be placed, so a line breaks at a gap (or, on a log
+    scale, at zero and below) instead of joining across it."""
+    runs = [[]]
+    for p in P:
+        if math.isfinite(p[1]):
+            runs[-1].append(p)
+        elif runs[-1]:
+            runs.append([])
+    return [r for r in runs if r]
 
 
 def lst(v) -> list:
@@ -283,7 +337,7 @@ def ref(i, v, s=None) -> str:
     vals = v if isinstance(v, list) else [v]
     return (
         ' data-i="' + str(i) + '"' + ("" if s is None else ' data-s="' + str(s) + '"')
-        + ' data-v="' + ",".join(x if isinstance(x, str) else js_str(x) for x in vals) + '"'
+        + ' data-v="' + ",".join(x if isinstance(x, str) else "" if is_num(x) and not math.isfinite(x) else js_str(x) for x in vals) + '"'
     )
 
 
@@ -318,20 +372,33 @@ def empty_state(th, x, y, w, h) -> str:
 
 
 def parse_notes(o, labels) -> list:
+    """Notes as {i, text} for a point, or {i, j, text} for a span from point i to point j: "Jun:Launch;2022..2023:Rate
+    rises". A point is a label or, if no label matches, a position counting from 0."""
     if not has(o.notes):
         return []
+    names = [to_string(label) for label in labels]
+
+    # A label wins, so a note on "1976" finds the year. Otherwise a whole number is a position.
+    def find(key):
+        i = names.index(key) if key in names else -1
+        return int(parse_int(key)) if i < 0 and js_str(parse_int(key)) == key else i
+
     out = []
     for part in to_string(o.notes).split(";"):
         k = part.find(":")
         if k < 0:
             continue
         key, t = part[:k].strip(), part[k + 1:].strip()
-        # A label wins, so a note on "1976" finds the year. Otherwise a whole number is a position.
-        names = [to_string(label) for label in labels]
-        i = names.index(key) if key in names else -1
-        if i < 0 and js_str(parse_int(key)) == key:
-            i = parse_int(key)
-        if i >= 0 and t:
+        i, dots = find(key), key.find("..")
+        if not t:
+            continue
+        # A span, unless the whole key is a label that happens to contain "..".
+        if i < 0 and dots > 0:
+            a, b = find(key[:dots].strip()), find(key[dots + 2:].strip())
+            if a >= 0 and b >= 0:
+                out.append({"i": min(a, b), "j": max(a, b), "text": t})
+            continue
+        if i >= 0:
             out.append({"i": int(i), "text": t})
     return out
 
@@ -351,7 +418,9 @@ def goal_text(o) -> str:
 
 
 def stat_of(v, o, fallback=None):
+    """The headline number. Gaps are left out, so "last" is the last real value and its change runs from the first."""
     k = to_string(o.stat if has(o.stat) else (fallback or "")).lower()
+    v = real(v)
     if not k or k == "none" or not v:
         return None
     s = total(v)
@@ -439,7 +508,7 @@ def pattern(pid, kind, c, bg) -> str:
 
 __all__ = [
     "DASHES", "INF", "NAN", "MONO", "PATTERNS", "SANS", "SHAPES", "N", "Opts", "R", "anim", "bool_", "clamp", "empty_state", "esc", "finite",
-    "fmt", "goal_line", "goal_text", "has", "hash_id", "hit", "is_num", "jmax", "jmin", "legend", "lst", "marker", "new_id", "nice_scale", "num",
-    "nums", "palette", "parse_notes", "path_of", "pattern", "r2", "series", "small", "stat_of", "style_of", "text", "to_number",
+    "fill_of", "fmt", "fmtv", "gap_note", "goal_line", "goal_text", "has", "hash_id", "hit", "is_num", "jmax", "jmin", "legend", "lst", "marker", "new_id", "nice_scale", "num",
+    "nums", "ok", "palette", "parse_notes", "path_of", "pattern", "r2", "real", "runs_of", "series", "small", "stat_of", "style_of", "text", "to_number",
     "to_string", "total", "trunc", "truthy", "tw",
 ]

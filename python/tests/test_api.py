@@ -82,10 +82,135 @@ def test_dict_and_list_of_lists_make_series():
     assert "2 series" in bc.line([[1, 2, 3], [3, 2, 1]]).svg
 
 
-def test_missing_values_warn_and_draw_as_zero():
-    with pytest.warns(UserWarning, match="1 missing"):
+def test_missing_values_are_gaps_not_zeros():
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         chart = bc.spark(pd.Series([1.0, None, 3.0]))
-    assert "latest 3" in chart.svg
+    assert "latest 3, 1 missing" in chart.svg
+    # NaN, None, pd.NA and NaT all draw the same gap as null does in JavaScript.
+    js = bc.to_svg("line", values="1,,3,4")
+    for gap in (float("nan"), None, pd.NA, np.nan):
+        assert bc.line([1, gap, 3, 4]).svg == js
+    df = pd.DataFrame({"m": ["Jan", "Feb", "Mar"], "a": [1.0, np.nan, 3.0], "b": [2.0, 2.0, np.nan]})
+    svg = bc.line(df, x="m", y=["a", "b"]).svg
+    assert ", 2 missing" in svg
+    assert "M" in svg and "NaN" not in svg
+
+
+def test_missing_values_in_every_chart():
+    gaps = [4.0, np.nan, 6.0]
+    for chart in (bc.spark, bc.line, bc.area, bc.bars, bc.histogram, bc.boxplot, bc.ring, bc.donut, bc.progress, bc.bullet, bc.waterfall):
+        svg = chart(gaps).svg
+        assert "NaN" not in svg and "None" not in svg, chart.__name__
+    assert "1 missing" in bc.waterfall(gaps).svg
+    assert "No data" in bc.ring(gaps).svg
+
+
+def test_fill_turns_the_line_shading_off_or_on_for_every_line():
+    df = pd.DataFrame({"a": [1, 3, 2], "b": [2, 2, 4]})
+    assert bc.line(df).svg.count('fill="url(#') == 1
+    assert bc.line(df, fill=False).svg.count('fill="url(#') == 0
+    assert bc.line(df, fill="all").svg.count('fill="url(#') == 2
+    assert bc.line(df, fill=False).svg == bc.to_svg("line", values="1,3,2|2,2,4", series="a,b", fill="none")
+
+
+def _forecast():
+    return pd.DataFrame({
+        "year": [2022, 2023, 2024, 2025, 2026, 2027],
+        "revenue": [10.0, 12.0, 13.0, 15.0, np.nan, np.nan],
+        "bad_lo": [np.nan, np.nan, np.nan, 15, 13, 11], "bad": [np.nan, np.nan, np.nan, 15, 14, 13], "bad_hi": [np.nan, np.nan, np.nan, 15, 15.5, 16],
+        "good_lo": [np.nan, np.nan, np.nan, 15, 16, 17], "good": [np.nan, np.nan, np.nan, 15, 17, 19], "good_hi": [np.nan, np.nan, np.nan, 15, 18, 21],
+    })
+
+
+BANDS = [{"name": "Bad", "low": "bad_lo", "mid": "bad", "high": "bad_hi"}, {"name": "Good", "low": "good_lo", "mid": "good", "high": "good_hi"}]
+
+
+def test_bands_from_dataframe_columns():
+    chart = bc.line(_forecast(), x="year", bands=BANDS)
+    # Band columns aren't drawn as lines too, and the one line takes its column's name.
+    assert "1 series and 2 bands over 6 points" in chart.svg
+    assert "revenue" in texts(chart.svg) and "Bad" in texts(chart.svg) and "Good" in texts(chart.svg)
+    # The forecast years after the history ends aren't counted as missing.
+    assert "missing" not in chart.svg
+
+
+def test_bands_match_javascript():
+    js = bc.to_svg(
+        "line", values="10,12,13,15,null,null", series="revenue", labels="2022,2023,2024,2025,2026,2027",
+        band_low=",,,15,13,11|,,,15,16,17", band_mid=",,,15,14,13|,,,15,17,19", band_high=",,,15,15.5,16|,,,15,18,21",
+        band_series="Bad,Good",
+    )
+    assert bc.line(_forecast(), x="year", y="revenue", bands=BANDS).svg == js
+
+
+def test_bands_from_lists_and_bad_input():
+    chart = bc.line([1, 2, 3], bands={"low": [None, None, 3, 2], "high": [None, None, 3, 5], "name": "Range"})
+    assert "1 series and 1 band over 4 points" in chart.svg
+    with pytest.raises(TypeError, match="names a column"):
+        bc.line([1, 2, 3], bands=[{"low": "p10", "high": "p90"}])
+    with pytest.raises(KeyError, match="nope"):
+        bc.line(_forecast(), x="year", bands=[{"low": "nope", "high": "bad_hi"}])
+    with pytest.raises(TypeError, match="not \\['lo'\\]"):
+        bc.line([1, 2], bands=[{"lo": [1, 2]}])
+
+
+def test_blank_waterfall_total_shows_the_running_total():
+    df = pd.DataFrame({"step": ["Start", "Sales", "Costs", "Profit"], "v": [120, 30, -12, np.nan]})
+    chart = bc.waterfall(df, x="step", y="v", totals=["Start", "Profit"])
+    assert "Profit total 138" in chart.alt
+    assert "missing" not in chart.svg
+
+
+def test_bullet_names_default_to_value_and_target():
+    assert "Value" in texts(bc.bullet([182], target=200).svg)
+    svg = bc.bullet({"Revenue": 182}, target=200, series=["This quarter", "Plan"]).svg
+    assert "This quarter" in texts(svg) and "Plan" in texts(svg) and "Value" not in texts(svg)
+
+
+def test_treemap_groups_from_a_column():
+    df = pd.DataFrame({
+        "holding": ["Apple", "Microsoft", "Nvidia", "JPMorgan", "Visa"],
+        "weight": [31, 22, 18, 9, 7],
+        "sector": ["Tech", "Tech", "Tech", "Finance", "Finance"],
+    })
+    chart = bc.treemap(df, x="holding", y="weight", by="sector", suffix="%")
+    assert chart.svg == bc.to_svg(
+        "treemap", values="31,22,18,9,7", labels="Apple,Microsoft,Nvidia,JPMorgan,Visa", groups="Tech,Tech,Tech,Finance,Finance", suffix="%"
+    )
+    assert "Tech" in texts(chart.svg) and "Finance" in texts(chart.svg)
+    assert "in 2 groups" in chart.svg
+    # by= also takes a list, and without it each item has its own colour.
+    assert "in 2 groups" in bc.treemap({"a": 3, "b": 1}, by=["X", "Y"]).svg
+    assert "groups" not in bc.treemap({"a": 3, "b": 1}).svg
+    with pytest.raises(KeyError, match="nope"):
+        bc.treemap(df, x="holding", y="weight", by="nope")
+    with pytest.raises(TypeError, match="names a column"):
+        bc.treemap([1, 2], by="sector")
+
+
+def test_treemap_leaves_out_what_it_cant_draw():
+    svg = bc.treemap(pd.Series([5.0, 0.0, -2.0, np.nan, 3.0], index=list("abcde"))).svg
+    assert "total 8 across 2 items, largest a (63%), 3 not shown" in svg
+
+
+def test_alt_text_says_no_data():
+    assert bc.bars([4, None, 6], labels=["a", "b", "c"]).alt.endswith("a 4, b No data, c 6")
+    assert "b no data" in bc.waterfall([4, None, 6], labels=["a", "b", "c"]).alt
+
+
+def test_heatmap_day_with_only_missing_values_is_a_gap():
+    df = pd.DataFrame({"d": pd.to_datetime(["2026-01-01", "2026-01-02", "2026-01-02", "2026-01-04"]), "n": [1.0, np.nan, 2.0, np.nan]})
+    from bezel_charts import _data
+
+    values, start = _data.daily(df, x="d", y="n")
+    # 2 January keeps its real value, 3 January had no rows so it's 0, and 4 January is missing.
+    assert values[:3] == [1.0, 2.0, 0.0] and values[3] != values[3]
+    svg = bc.heatmap(df, x="d", y="n").svg
+    assert "3 across 4 days, 1 missing" in svg
+    assert svg.count('fill="none" stroke=') == 1
 
 
 def test_notes_on_year_labels():
@@ -95,6 +220,21 @@ def test_notes_on_year_labels():
     assert "Third" in str(bc.line([1, 2, 3], labels=years, notes={2: "Third"}))
     df = pd.DataFrame({"year": years, "n": [1, 2, 3]})
     assert "Boycott" in str(bc.line(df, x="year", y="n", notes={"1980": "Boycott"}))
+
+
+def test_span_notes_from_a_dict():
+    years = [2019, 2020, 2021, 2022, 2023, 2024]
+    chart = bc.line([3, 1, 4, 5, 6, 7], labels=years, notes={2020: "2020 shock", (2022, 2023): "Rate rises"})
+    assert "Rate rises" in texts(chart.svg) and "2020 shock" in texts(chart.svg)
+    assert chart.svg == bc.to_svg("line", values="3,1,4,5,6,7", labels="2019,2020,2021,2022,2023,2024", notes="2020:2020 shock;2022..2023:Rate rises")
+    assert 'fill-opacity=".07"' in chart.svg
+    for chart_type in (bc.bars, bc.waterfall, bc.area, bc.spark):
+        svg = chart_type([3, 1, 4, 5, 6, 7], labels=years, notes={(2022, 2023): "Rate rises"}).svg
+        assert "Rate rises" in texts(svg), chart_type.__name__
+    svg = bc.combo(bars=[3, 1, 4, 5, 6, 7], line=[1, 2, 3, 2, 3, 4], labels=years, notes={(2022, 2023): "Rate rises", 2020: "Dip"}).svg
+    assert "Rate rises" in texts(svg) and "Dip" in texts(svg)
+    with pytest.raises(ValueError, match="two points"):
+        bc.line([1, 2, 3], notes={(1, 2, 3): "Too many"})
 
 
 def test_notes_from_a_dict():

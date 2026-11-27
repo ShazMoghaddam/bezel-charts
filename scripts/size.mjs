@@ -1,11 +1,12 @@
 // Fails when a bundle grows past its gzip budget, so size never creeps up unnoticed.
 // The full bundle has one budget, and each chart file has its own, counting the shared file it loads too.
+// Each budget is the next whole kB that leaves at least 0.3 kB of room, so a small fix doesn't fail CI but real growth does.
 import { readFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import { NAMES } from '../src/render.js';
 
-const FULL_KB = 28;
-const CHART_KB = { spark: 9, line: 13, area: 14, bars: 12, combo: 12, waterfall: 10, histogram: 11, boxplot: 11, scatter: 11, ring: 9, donut: 9, gauge: 9, progress: 9, bullet: 10, heatmap: 9 };
+const FULL_KB = 33;
+const CHART_KB = { spark: 10, line: 16, area: 15, bars: 13, combo: 13, waterfall: 12, histogram: 12, boxplot: 11, scatter: 12, ring: 9, donut: 10, gauge: 9, progress: 9, bullet: 11, heatmap: 10, treemap: 11 };
 
 const gz = async (f) => gzipSync(await readFile(f), { level: 9 }).length / 1024;
 
